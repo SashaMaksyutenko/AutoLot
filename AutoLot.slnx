@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/AutoLot.Api/AutoLot.Api.csproj" />
+    <Project Path="backend/AutoLot.Application/AutoLot.Application.csproj" />
+    <Project Path="backend/AutoLot.Domain/AutoLot.Domain.csproj" />
+    <Project Path="backend/AutoLot.Infrastructure/AutoLot.Infrastructure.csproj" />
+    <Project Path="backend/AutoLot.Tests/AutoLot.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,1119 @@
+<title>Салон, Швидкість і Техпаспорт</title>
+
+<style>
+  /* ================= сторінка-дека ================= */
+
+  :root {
+    --deck: #131A23;
+    --deck-ink: #DCE4EC;
+    --page: #E7EAEE;
+    --page-ink: #101720;
+    --page-ink-2: #586574;
+    --page-ink-3: #8794A3;
+    --page-accent: #0E6B74;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --deck: #06090D;
+      --deck-ink: #C3CFDB;
+      --page: #0B0F15;
+      --page-ink: #E9EEF4;
+      --page-ink-2: #97A5B4;
+      --page-ink-3: #6B7A8A;
+      --page-accent: #35A8B2;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --deck: #06090D;
+    --deck-ink: #C3CFDB;
+    --page: #0B0F15;
+    --page-ink: #E9EEF4;
+    --page-ink-2: #97A5B4;
+    --page-ink-3: #6B7A8A;
+    --page-accent: #35A8B2;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--page-ink);
+    font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible { outline: 2px solid var(--page-accent); outline-offset: 2px; }
+
+  .wrap { width: min(1160px, 100% - 40px); margin-inline: auto; }
+  .wrap--narrow { width: min(1000px, 100% - 40px); margin-inline: auto; }
+
+  .deck {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--deck);
+    color: var(--deck-ink);
+    border-bottom: 1px solid rgba(255, 255, 255, .1);
+  }
+
+  .deck__inner { display: flex; align-items: center; gap: 18px; min-height: 54px; padding-block: 8px; flex-wrap: wrap; }
+
+  .deck__label {
+    font-family: "Cascadia Mono", ui-monospace, Consolas, monospace;
+    font-size: 10.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: #7C8C9C;
+    white-space: nowrap;
+  }
+
+  .deck__tabs { display: flex; gap: 3px; margin-inline-end: auto; overflow-x: auto; }
+
+  .dtab {
+    appearance: none;
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    padding: 7px 13px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #93A2B2;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .dtab:hover { color: #E4ECF3; background: rgba(255, 255, 255, .07); }
+  .dtab[aria-selected="true"] { color: #0B0F15; background: #E9EEF4; }
+
+  .icon-btn {
+    appearance: none;
+    background: rgba(255, 255, 255, .07);
+    border: 1px solid rgba(255, 255, 255, .13);
+    color: var(--deck-ink);
+    border-radius: 6px;
+    width: 32px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  .icon-btn:hover { background: rgba(255, 255, 255, .15); }
+  .icon-btn svg { width: 15px; height: 15px; fill: currentColor; }
+
+  .brief { background: var(--page); padding-block: 26px 34px; }
+  .brief__grid { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 28px; align-items: start; }
+
+  .brief__eyebrow {
+    font-family: "Cascadia Mono", ui-monospace, Consolas, monospace;
+    font-size: 10.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--page-ink-3);
+  }
+
+  .brief h3 { margin: 6px 0 0; font-size: 19px; }
+  .brief ul { margin: 0; padding-left: 18px; columns: 2; column-gap: 32px; }
+  .brief li { margin-bottom: 8px; font-size: 13.5px; color: var(--page-ink-2); break-inside: avoid; }
+  .brief li b { color: var(--page-ink); }
+
+  .swatches { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+  .swatches i { width: 26px; height: 26px; border-radius: 5px; border: 1px solid rgba(128, 128, 128, .35); display: block; }
+
+  .worldnote { text-align: center; font-size: 12px; color: var(--page-ink-3); padding-block: 14px 0; }
+
+  /* ================= 1. САЛОН ================= */
+
+  .s {
+    --paper: #F6F7F5;
+    --white: #FFFFFF;
+    --ink: #1C211E;
+    --ink-2: #6B736E;
+    --ink-3: #9AA19C;
+    --hair: #E1E4E0;
+    --pine: #1F4A3C;
+    --brass: #93773C;
+    background: var(--paper);
+    color: var(--ink);
+    font-weight: 300;
+  }
+
+  .s-bar { padding-block: 26px; }
+  .s-bar__in { display: flex; align-items: center; gap: 34px; flex-wrap: wrap; }
+
+  .s-word { font-size: 17px; letter-spacing: .38em; text-transform: uppercase; font-weight: 400; }
+
+  .s-nav { display: flex; gap: 28px; margin-inline-start: auto; flex-wrap: wrap; }
+  .s-nav a { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); text-decoration: none; }
+  .s-nav a:hover { color: var(--pine); }
+
+  .s-hair { height: 1px; background: var(--hair); border: 0; margin: 0; }
+
+  .s-lead { padding-block: 78px 62px; max-width: 30ch; }
+  .s-lead h1 { margin: 0; font-size: clamp(34px, 4.6vw, 52px); font-weight: 300; letter-spacing: -.018em; line-height: 1.1; }
+  .s-lead p { margin: 20px 0 0; font-size: 16px; color: var(--ink-2); max-width: 42ch; line-height: 1.65; }
+
+  .s-lab { font-size: 10px; letter-spacing: .26em; text-transform: uppercase; color: var(--ink-3); }
+
+  .s-lot { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 56px; align-items: center; padding-block: 54px; border-top: 1px solid var(--hair); }
+  .s-lot:nth-child(even) > .s-shot { order: 2; }
+
+  .s-shot { aspect-ratio: 3 / 2; background: linear-gradient(160deg, #EFF1EE, #E4E7E3); display: grid; place-items: center; }
+  .s-shot svg { width: 52%; color: #B4BAB5; }
+
+  .s-lot h2 { margin: 14px 0 0; font-size: 29px; font-weight: 300; letter-spacing: -.015em; line-height: 1.14; }
+  .s-lot .s-spec { margin-top: 10px; font-size: 14px; color: var(--ink-2); line-height: 1.7; }
+
+  .s-rows { margin-top: 26px; }
+  .s-rows div { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; border-top: 1px solid var(--hair); font-size: 14px; }
+  .s-rows dt { color: var(--ink-2); }
+  .s-rows dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .s-rows dd.s-time { color: var(--brass); font-variant-numeric: tabular-nums; }
+  .s-rows dd.s-time.is-urgent { color: #9A3B2E; }
+
+  .s-link {
+    display: inline-block;
+    margin-top: 24px;
+    font-size: 12px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--pine);
+    text-decoration: none;
+    border-bottom: 1px solid var(--pine);
+    padding-bottom: 4px;
+  }
+
+  .s-detail { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 64px; padding-block: 62px 78px; border-top: 1px solid var(--hair); align-items: start; }
+  .s-detail .s-shot { aspect-ratio: 16 / 10; }
+  .s-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+  .s-strip .s-shot { aspect-ratio: 4 / 3; }
+  .s-strip .s-shot svg { width: 62%; }
+
+  .s-side h2 { margin: 14px 0 0; font-size: 32px; font-weight: 300; letter-spacing: -.018em; line-height: 1.12; }
+
+  .s-figure { margin-top: 34px; }
+  .s-figure b { display: block; font-size: 44px; font-weight: 300; letter-spacing: -.025em; font-variant-numeric: tabular-nums; line-height: 1; margin-top: 8px; }
+  .s-figure .s-alt { margin-top: 8px; font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+  .s-clock { font-size: 26px; font-weight: 300; color: var(--brass); font-variant-numeric: tabular-nums; letter-spacing: .01em; margin-top: 6px; }
+  .s-clock.is-urgent { color: #9A3B2E; }
+
+  .s-input {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid var(--ink);
+    background: none;
+    padding: 10px 0;
+    font-family: inherit;
+    font-weight: 300;
+    font-size: 26px;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .s-btn {
+    width: 100%;
+    margin-top: 22px;
+    border: 1px solid var(--pine);
+    background: none;
+    color: var(--pine);
+    padding: 15px;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease;
+  }
+
+  .s-btn:hover { background: var(--pine); color: var(--paper); }
+  .s-btn--quiet { border-color: var(--hair); color: var(--ink-2); margin-top: 10px; }
+  .s-btn--quiet:hover { background: none; border-color: var(--ink); color: var(--ink); }
+
+  .s-hist { margin-top: 44px; }
+  .s-hist div { display: flex; justify-content: space-between; gap: 16px; padding: 13px 0; border-top: 1px solid var(--hair); font-size: 14px; }
+  .s-hist span { color: var(--ink-2); }
+  .s-hist b { font-weight: 400; font-variant-numeric: tabular-nums; }
+  .s-hist div:nth-of-type(1) b { color: var(--pine); }
+
+  /* ================= 2. ШВИДКІСТЬ ================= */
+
+  .r {
+    --paper: #EFEFED;
+    --white: #FFFFFF;
+    --graph: #1E2126;
+    --ink-2: #5A5F66;
+    --red: #D6202B;
+    --silver: #C2C6CB;
+    background: var(--paper);
+    color: var(--graph);
+    font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, system-ui, sans-serif;
+  }
+
+  .r-disp {
+    font-family: "Arial Narrow", "Segoe UI", system-ui, sans-serif;
+    font-style: italic;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: -.012em;
+    line-height: .95;
+    margin: 0;
+  }
+
+  .r-flag {
+    height: 9px;
+    background-image: conic-gradient(var(--graph) 0 25%, transparent 0 50%, var(--graph) 0 75%, transparent 0);
+    background-size: 12px 12px;
+    background-color: var(--white);
+  }
+
+  .r-bar { background: var(--graph); color: var(--white); }
+  .r-bar__in { display: flex; align-items: center; gap: 26px; min-height: 58px; flex-wrap: wrap; padding-block: 8px; }
+  .r-word { font-size: 26px; }
+  .r-word em { font-style: italic; color: var(--red); }
+
+  .r-nav { display: flex; gap: 22px; margin-inline-start: auto; flex-wrap: wrap; }
+  .r-nav a { color: #B9BEC4; text-decoration: none; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+  .r-nav a:hover { color: var(--white); }
+
+  .r-skew { transform: skewX(-11deg); display: inline-block; }
+  .r-skew > * { transform: skewX(11deg); display: inline-block; }
+
+  .r-tag {
+    background: var(--red);
+    color: var(--white);
+    padding: 4px 14px;
+    font-family: "Arial Narrow", system-ui, sans-serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+  }
+
+  .r-hero { padding-block: 40px 30px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .82fr); gap: 34px; align-items: end; }
+  .r-hero h1 { font-size: clamp(40px, 6.4vw, 78px); max-width: 11ch; }
+  .r-hero h1 em { font-style: italic; color: var(--red); }
+  .r-hero p { margin: 18px 0 0; max-width: 38ch; color: var(--ink-2); font-size: 15.5px; }
+
+  .r-shot {
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(112deg, #E2E3E1 0 62%, #D6D8D6 62%);
+    display: grid;
+    place-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .r-shot svg { width: 48%; color: #A8ACAF; }
+  .r-shot::after { content: ""; position: absolute; inset: auto 0 0; height: 5px; background: var(--red); }
+
+  .r-panel { background: var(--white); box-shadow: 0 2px 0 var(--silver); }
+  .r-panel__h { background: var(--graph); color: var(--white); display: flex; justify-content: space-between; gap: 10px; padding: 8px 14px; font-family: "Arial Narrow", system-ui, sans-serif; font-style: italic; font-weight: 700; font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; }
+  .r-panel__b { padding: 15px; display: grid; gap: 13px; }
+
+  .r-num {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--graph);
+    color: var(--white);
+    display: grid;
+    place-items: center;
+    font-family: "Arial Narrow", system-ui, sans-serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 19px;
+    flex: none;
+  }
+
+  .r-num--p1 { background: var(--red); }
+
+  .r-sec { padding-block: 32px; }
+  .r-sec__h { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+  .r-sec__h h2 { font-size: 27px; }
+  .r-sec__h i { flex: 1; height: 3px; background: var(--graph); font-style: normal; min-width: 30px; }
+
+  .r-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .r-card .r-shot { aspect-ratio: 4 / 3; }
+  .r-card h3 { font-size: 19px; }
+  .r-meta { font-size: 12.5px; color: var(--ink-2); }
+
+  .r-split { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; border-top: 3px solid var(--graph); padding-top: 10px; }
+  .r-lab { font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-2); font-weight: 700; }
+  .r-val { font-family: "Arial Narrow", system-ui, sans-serif; font-style: italic; font-weight: 700; font-size: 25px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .r-val--time { color: var(--red); }
+
+  .r-detail { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 24px; padding-block: 30px 46px; align-items: start; }
+
+  .r-timing { background: var(--graph); color: var(--white); padding: 16px 18px; display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; flex-wrap: wrap; }
+  .r-timing .r-val { font-size: clamp(34px, 5vw, 48px); color: var(--white); }
+  .r-timing .r-val.is-urgent { color: var(--red); }
+  .r-timing .r-lab { color: #9BA1A8; }
+
+  .r-board div { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--silver); }
+  .r-board div:last-child { border-bottom: 0; }
+  .r-board div:first-child { background: #FBECEC; }
+  .r-board .r-who { font-weight: 600; font-size: 14px; }
+  .r-board .r-gap { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; min-width: 54px; text-align: right; }
+  .r-board .r-amt { font-family: "Arial Narrow", system-ui, sans-serif; font-style: italic; font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums; min-width: 78px; text-align: right; }
+
+  .r-input {
+    width: 100%;
+    border: 3px solid var(--graph);
+    background: var(--white);
+    padding: 11px;
+    font-family: "Arial Narrow", system-ui, sans-serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 24px;
+    text-align: center;
+    color: var(--graph);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .r-go {
+    width: 100%;
+    border: 0;
+    background: var(--red);
+    color: var(--white);
+    padding: 15px;
+    font-family: "Arial Narrow", system-ui, sans-serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .r-go:hover { background: #B81A24; }
+
+  .r-note { border-left: 5px solid var(--red); background: var(--white); padding: 10px 13px; font-size: 12.5px; line-height: 1.45; }
+
+  .r-specs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; background: var(--silver); border: 2px solid var(--silver); }
+  .r-specs div { background: var(--white); padding: 10px 13px; }
+  .r-specs dt { font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); font-weight: 700; }
+  .r-specs dd { margin: 2px 0 0; font-size: 15px; font-weight: 600; }
+
+  /* ================= 3. ТЕХПАСПОРТ ================= */
+
+  .p {
+    --paper: #ECEFF2;
+    --form: #F8FAFB;
+    --ink: #16202B;
+    --ink-2: #566372;
+    --ink-3: #8A97A4;
+    --rule: #B9C4CE;
+    --blue: #1D4E89;
+    --stamp: #6B2F73;
+    background: var(--paper);
+    color: var(--ink);
+    background-image:
+      repeating-radial-gradient(circle at 22% 12%, transparent 0 8px, rgba(29, 78, 137, .045) 8px 9px),
+      repeating-radial-gradient(circle at 78% 88%, transparent 0 11px, rgba(29, 78, 137, .035) 11px 12px);
+  }
+
+  .p-mono { font-family: "Cascadia Mono", "SF Mono", ui-monospace, Consolas, monospace; }
+
+  .p-bar { background: var(--blue); color: #EAF0F6; }
+  .p-bar__in { display: flex; align-items: center; gap: 24px; min-height: 50px; flex-wrap: wrap; padding-block: 7px; }
+  .p-word { font-size: 16px; letter-spacing: .3em; text-transform: uppercase; font-weight: 600; }
+  .p-bar__meta { margin-inline-start: auto; font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: #A9C2DB; }
+
+  .p-sheet {
+    background: var(--form);
+    border: 2px solid var(--ink);
+    margin-block: 30px;
+    position: relative;
+  }
+
+  .p-sheet__h {
+    border-bottom: 2px solid var(--ink);
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+
+  .p-title { font-size: 15px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; margin: 0; }
+  .p-serial { font-size: 12px; letter-spacing: .12em; color: var(--ink-2); }
+
+  .p-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; }
+
+  .p-f {
+    padding: 9px 13px 11px;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    min-width: 0;
+  }
+
+  .p-f:nth-child(4n) { border-right: 0; }
+  .p-f--wide { grid-column: span 2; }
+  .p-f--full { grid-column: 1 / -1; border-right: 0; }
+
+  .p-f dt { font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+  .p-f dd { margin: 4px 0 0; font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-size: 14px; color: var(--ink); overflow-wrap: break-word; }
+
+  .p-stamp {
+    position: absolute;
+    right: 20px;
+    top: 74px;
+    transform: rotate(-13deg);
+    border: 3px double var(--stamp);
+    color: var(--stamp);
+    padding: 8px 14px;
+    text-align: center;
+    opacity: .82;
+    pointer-events: none;
+  }
+
+  .p-stamp b { display: block; font-size: 14px; letter-spacing: .18em; text-transform: uppercase; }
+  .p-stamp span { display: block; font-size: 9px; letter-spacing: .14em; margin-top: 2px; font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; }
+
+  .p-shot { aspect-ratio: 16 / 8; background: linear-gradient(165deg, #E6EBEF, #D9E0E6); display: grid; place-items: center; border-bottom: 2px solid var(--ink); }
+  .p-shot svg { width: 40%; color: #A5B2BE; }
+
+  .p-reg { padding: 0; }
+  .p-reg table { width: 100%; border-collapse: collapse; }
+  .p-reg th { text-align: left; font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; padding: 8px 13px; border-bottom: 1px solid var(--rule); }
+  .p-reg td { padding: 9px 13px; border-bottom: 1px solid var(--rule); font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-size: 13px; }
+  .p-reg tbody tr:last-child td { border-bottom: 0; }
+  .p-reg tbody tr:first-child td { background: #EAF1F8; color: var(--blue); }
+
+  .p-two { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 22px; align-items: start; padding-bottom: 40px; }
+
+  .p-act { padding: 16px 18px; display: grid; gap: 14px; }
+
+  .p-fill {
+    border: 1px solid var(--ink);
+    background: #FFF;
+    padding: 4px 0 0;
+  }
+
+  .p-fill span { display: block; font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); padding: 4px 11px 0; }
+
+  .p-fill input {
+    width: 100%;
+    border: 0;
+    background: none;
+    padding: 4px 11px 9px;
+    font-family: "Cascadia Mono", ui-monospace, Consolas, monospace;
+    font-size: 20px;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .p-fill input:focus { outline: none; background: #F3F8FD; }
+
+  .p-btn {
+    width: 100%;
+    border: 2px solid var(--ink);
+    background: var(--blue);
+    color: #F1F6FB;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .p-btn:hover { background: #17406F; }
+  .p-btn--plain { background: none; color: var(--ink); }
+  .p-btn--plain:hover { background: #E4EBF1; }
+
+  .p-clock { font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-size: 27px; font-variant-numeric: tabular-nums; color: var(--blue); }
+  .p-clock.is-urgent { color: #A8332B; }
+
+  .p-legal { font-size: 11px; color: var(--ink-2); line-height: 1.5; border-top: 1px solid var(--rule); padding-top: 10px; }
+  .p-legal b { color: var(--ink); }
+
+  .p-perf { height: 12px; background-image: radial-gradient(circle at 6px 6px, var(--paper) 3.5px, transparent 4px); background-size: 12px 12px; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+  @media (max-width: 1000px) {
+    .brief__grid, .s-lot, .s-detail, .r-hero, .r-detail, .p-two { grid-template-columns: minmax(0, 1fr); }
+    .s-lot:nth-child(even) > .s-shot { order: 0; }
+    .s-lot, .s-detail { gap: 28px; }
+    .r-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .p-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .p-f:nth-child(4n) { border-right: 1px solid var(--rule); }
+    .p-f:nth-child(2n) { border-right: 0; }
+    .brief ul { columns: 1; }
+  }
+
+  @media (max-width: 660px) {
+    .r-grid, .r-specs, .p-fields { grid-template-columns: minmax(0, 1fr); }
+    .p-f { border-right: 0 !important; }
+    .s-nav, .r-nav { display: none; }
+    .p-stamp { top: auto; bottom: 12px; right: 12px; }
+  }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="car" viewBox="0 0 120 48">
+    <path d="M10 34c0-5 3-7 8-8l16-3 13-10c3-2 6-3 10-3h18c5 0 8 1 11 4l9 10 9 2c5 1 7 3 7 8v3c0 1-1 2-2 2H12c-1 0-2-1-2-2z"/>
+    <circle cx="36" cy="38" r="8"/>
+    <circle cx="90" cy="38" r="8"/>
+  </symbol>
+  <symbol id="sun" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10m0-13a1 1 0 0 1-1-1V1a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1m0 20a1 1 0 0 1-1-1v-2a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1M4 13H2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2m18 0h-2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2M5.6 6.99 4.2 5.58a1 1 0 1 1 1.4-1.4l1.4 1.4a1 1 0 0 1-1.4 1.41m12.8 12.8-1.4-1.4a1 1 0 0 1 1.4-1.42l1.4 1.41a1 1 0 0 1-1.4 1.41m-12.8 0a1 1 0 0 1 0-1.41l1.4-1.41a1 1 0 1 1 1.4 1.41l-1.4 1.41a1 1 0 0 1-1.4 0m12.8-12.8a1 1 0 0 1 0-1.41l1.4-1.4a1 1 0 1 1 1.4 1.4l-1.4 1.41a1 1 0 0 1-1.4 0"/></symbol>
+</svg>
+
+<div class="deck">
+  <div class="wrap deck__inner">
+    <span class="deck__label">AutoLot · напрямки 4—6</span>
+    <div class="deck__tabs" role="tablist" aria-label="Напрямки">
+      <button class="dtab" role="tab" aria-selected="true" data-dir="salon">Салон</button>
+      <button class="dtab" role="tab" aria-selected="false" data-dir="race">Швидкість</button>
+      <button class="dtab" role="tab" aria-selected="false" data-dir="doc">Техпаспорт</button>
+    </div>
+    <button class="icon-btn" id="themeToggle" title="Світла / темна тема" aria-label="Перемкнути тему">
+      <svg><use href="#sun"/></svg>
+    </button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ============================ 4. САЛОН ============================ -->
+  <section id="dir-salon">
+    <div class="s">
+      <div class="s-bar">
+        <div class="wrap s-bar__in">
+          <span class="s-word">Autolot</span>
+          <nav class="s-nav">
+            <a href="#">Колекція</a>
+            <a href="#">Торги</a>
+            <a href="#">Салони</a>
+            <a href="#">Про сервіс</a>
+            <a href="#">Кабінет</a>
+          </nav>
+        </div>
+      </div>
+      <hr class="s-hair">
+
+      <div class="wrap">
+        <div class="s-lead">
+          <div class="s-lab">Торги 16 серпня</div>
+          <h1>Дев'ять автомобілів. Одна ставка вирішує.</h1>
+          <p>Кожен лот проходить перевірку історії та огляд перед публікацією. Ми не поспішаємо — і не поспішаємо вас.</p>
+        </div>
+
+        <div class="s-lot">
+          <div class="s-shot"><svg aria-hidden="true"><use href="#car"/></svg></div>
+          <div>
+            <div class="s-lab">Лот 17</div>
+            <h2>BMW X5 xDrive30d G05</h2>
+            <p class="s-spec">2019 · 128 000 км · 3.0 дизель · автомат · повний привід · Київ. Один власник, повна сервісна історія в офіційного дилера.</p>
+            <dl class="s-rows">
+              <div><dt>Поточна ставка</dt><dd>$41 250</dd></div>
+              <div><dt>Резерв</dt><dd>досягнуто</dd></div>
+              <div><dt>До закриття</dt><dd class="s-time" data-ends="8073">02:14:33</dd></div>
+            </dl>
+            <a class="s-link" href="#">Перейти до лота</a>
+          </div>
+        </div>
+
+        <div class="s-lot">
+          <div class="s-shot"><svg aria-hidden="true"><use href="#car"/></svg></div>
+          <div>
+            <div class="s-lab">Лот 18</div>
+            <h2>Toyota Land Cruiser Prado 150</h2>
+            <p class="s-spec">2016 · 194 000 км · 2.8 дизель · автомат · Одеса. Два власники, обслуговування за регламентом.</p>
+            <dl class="s-rows">
+              <div><dt>Поточна ставка</dt><dd>$27 800</dd></div>
+              <div><dt>Резерв</dt><dd>досягнуто</dd></div>
+              <div><dt>До закриття</dt><dd class="s-time" data-ends="62" data-extend="1">01:02</dd></div>
+            </dl>
+            <a class="s-link" href="#">Перейти до лота</a>
+          </div>
+        </div>
+
+        <div class="s-detail">
+          <div>
+            <div class="s-shot"><svg aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="s-strip">
+              <div class="s-shot"><svg aria-hidden="true"><use href="#car"/></svg></div>
+              <div class="s-shot"><svg aria-hidden="true"><use href="#car"/></svg></div>
+              <div class="s-shot"><svg aria-hidden="true"><use href="#car"/></svg></div>
+              <div class="s-shot"><svg aria-hidden="true"><use href="#car"/></svg></div>
+            </div>
+
+            <div class="s-hist">
+              <div class="s-lab" style="padding-bottom:10px">Хід торгів · 23 ставки</div>
+              <div><span>o***v_87 · автоставка · щойно</span><b>$41 250</b></div>
+              <div><span>Andrii_K · 2 хвилини тому</span><b>$41 000</b></div>
+              <div><span>o***v_87 · автоставка · 2 хвилини тому</span><b>$40 750</b></div>
+              <div><span>m***a_zt · 7 хвилин тому</span><b>$40 500</b></div>
+              <div><span>Andrii_K · 12 хвилин тому</span><b>$39 800</b></div>
+            </div>
+          </div>
+
+          <div class="s-side">
+            <div class="s-lab">Лот 17 · торги відкриті</div>
+            <h2>BMW X5 xDrive30d</h2>
+
+            <div class="s-figure">
+              <div class="s-lab">Поточна ставка</div>
+              <b>$41 250</b>
+              <div class="s-alt">1 724 250 ₴ · 38 074 €</div>
+            </div>
+
+            <div class="s-figure">
+              <div class="s-lab">До закриття</div>
+              <div class="s-clock" data-ends="8073">02:14:33</div>
+            </div>
+
+            <div class="s-figure">
+              <div class="s-lab">Ваша ставка · мінімум $41 500</div>
+              <input class="s-input" type="text" value="41 500" inputmode="numeric" aria-label="Сума ставки">
+            </div>
+
+            <button class="s-btn">Зробити ставку</button>
+            <button class="s-btn s-btn--quiet">Автоставка до $45 000</button>
+
+            <dl class="s-rows" style="margin-top:30px">
+              <div><dt>Крок</dt><dd>$250</dd></div>
+              <div><dt>Продовження при пізній ставці</dt><dd>3 хвилини</dd></div>
+              <div><dt>Депозит</dt><dd>8 000 ₴</dd></div>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brief">
+      <div class="wrap brief__grid">
+        <div>
+          <span class="brief__eyebrow">Напрямок 4</span>
+          <h3>Салон</h3>
+          <div class="swatches">
+            <i style="background:#F6F7F5"></i><i style="background:#1C211E"></i><i style="background:#1F4A3C"></i><i style="background:#93773C"></i>
+          </div>
+        </div>
+        <ul>
+          <li><b>Тиша як прийом.</b> Жодних карток, рамок, тіней і заокруглень — тільки волосяні лінії, повітря й фотографія.</li>
+          <li><b>Легка вага шрифту великим кеглем.</b> Заголовки набрані тонким накресленням — так роблять преміальні автомобільні бренди, і в списку конкурентів такого немає ніхто.</li>
+          <li><b>Лоти йдуть по одному на екран</b>, з чергуванням сторін. Не сітка товарів, а показ.</li>
+          <li><b>Латунний колір лише для часу</b>, хвойний — лише для дії. Більше кольору на сторінці немає.</li>
+          <li><b>Кому підходить:</b> дорогим лотам і аудиторії, яка не любить, коли на неї кричать.</li>
+          <li><b>Ризик, і серйозний:</b> цей стиль глушить терміновість, а вона — паливо аукціону. Таймер тут тихіший, ніж має бути.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 5. ШВИДКІСТЬ ============================ -->
+  <section id="dir-race" hidden>
+    <div class="r">
+      <div class="r-bar">
+        <div class="wrap r-bar__in">
+          <span class="r-word r-disp">AUTO<em>LOT</em></span>
+          <nav class="r-nav">
+            <a href="#">Купити</a>
+            <a href="#">Торги</a>
+            <a href="#">Салони</a>
+            <a href="#">Оцінка</a>
+          </nav>
+          <span class="r-skew"><span class="r-tag">214 у ефірі</span></span>
+        </div>
+      </div>
+      <div class="r-flag"></div>
+
+      <div class="wrap r-hero">
+        <div>
+          <span class="r-skew"><span class="r-tag">Фінішна пряма</span></span>
+          <h1 class="r-disp" style="margin-top:16px">Останні секунди <em>вирішують усе</em></h1>
+          <p>Двісті чотирнадцять лотів у торгах. Ставка в останні три хвилини перезапускає відлік — переганяйте суперника, а не годинник.</p>
+        </div>
+
+        <div class="r-panel">
+          <div class="r-panel__h"><span>Лот A-4417</span><span>P1 · o***v_87</span></div>
+          <div class="r-shot"><svg aria-hidden="true"><use href="#car"/></svg></div>
+          <div class="r-panel__b">
+            <div>
+              <h3 class="r-disp" style="font-size:23px">BMW X5 xDrive30d</h3>
+              <div class="r-meta">2019 · 128 000 км · 3.0 дизель · Київ</div>
+            </div>
+            <div class="r-split">
+              <div>
+                <div class="r-lab">Ставка · 23</div>
+                <div class="r-val">$41 250</div>
+              </div>
+              <div style="text-align:right">
+                <div class="r-lab">Лишилось</div>
+                <div class="r-val r-val--time" data-ends="8073">02:14:33</div>
+              </div>
+            </div>
+            <button class="r-go">Обігнати</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="wrap r-sec">
+        <div class="r-sec__h"><h2 class="r-disp">Фінішують сьогодні</h2><i></i></div>
+
+        <div class="r-grid">
+          <article class="r-panel r-card">
+            <div class="r-panel__h"><span>A-4390</span><span>14 ставок</span></div>
+            <div class="r-shot"><svg aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="r-panel__b">
+              <div>
+                <h3 class="r-disp">Toyota Prado 150</h3>
+                <div class="r-meta">2016 · 194 000 км · Одеса</div>
+              </div>
+              <div class="r-split">
+                <div><div class="r-lab">Ставка</div><div class="r-val" style="font-size:21px">$27 800</div></div>
+                <div class="r-val r-val--time" style="font-size:20px" data-ends="62" data-extend="1">01:02</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="r-panel r-card">
+            <div class="r-panel__h"><span>A-4402</span><span>31 ставка</span></div>
+            <div class="r-shot"><svg aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="r-panel__b">
+              <div>
+                <h3 class="r-disp">VW Golf VII GTI</h3>
+                <div class="r-meta">2017 · 121 000 км · Львів</div>
+              </div>
+              <div class="r-split">
+                <div><div class="r-lab">Ставка</div><div class="r-val" style="font-size:21px">$16 450</div></div>
+                <div class="r-val r-val--time" style="font-size:20px" data-ends="1080">18:00</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="r-panel r-card">
+            <div class="r-panel__h"><span>A-4425</span><span>6 ставок</span></div>
+            <div class="r-shot"><svg aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="r-panel__b">
+              <div>
+                <h3 class="r-disp">Tesla Model 3 LR</h3>
+                <div class="r-meta">2021 · 64 000 км · Київ</div>
+              </div>
+              <div class="r-split">
+                <div><div class="r-lab">Ставка</div><div class="r-val" style="font-size:21px">$24 900</div></div>
+                <div class="r-val" style="font-size:20px" data-ends="100800">1 д 04:00</div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="wrap r-detail">
+        <div style="display:grid;gap:18px">
+          <div class="r-timing">
+            <div>
+              <div class="r-lab">До картатого прапора</div>
+              <div class="r-val r-val--time" data-ends="8073" style="color:#FFF">02:14:33</div>
+            </div>
+            <div style="text-align:right">
+              <div class="r-lab">Крок</div>
+              <div class="r-val" style="font-size:26px;color:#FFF">$250</div>
+            </div>
+          </div>
+
+          <div class="r-panel">
+            <div class="r-panel__h"><span>Турнірна таблиця</span><span>23 ставки · 9 учасників</span></div>
+            <div class="r-board" id="board">
+              <div>
+                <span class="r-num r-num--p1">P1</span>
+                <span class="r-who">o***v_87 <span class="r-meta">автоставка</span></span>
+                <span class="r-gap">лідер</span>
+                <span class="r-amt">$41 250</span>
+              </div>
+              <div>
+                <span class="r-num">P2</span>
+                <span class="r-who">Andrii_K</span>
+                <span class="r-gap">−$250</span>
+                <span class="r-amt">$41 000</span>
+              </div>
+              <div>
+                <span class="r-num">P3</span>
+                <span class="r-who">m***a_zt</span>
+                <span class="r-gap">−$750</span>
+                <span class="r-amt">$40 500</span>
+              </div>
+              <div>
+                <span class="r-num">P4</span>
+                <span class="r-who">AutoHub Kyiv <span class="r-meta">салон</span></span>
+                <span class="r-gap">−$2 750</span>
+                <span class="r-amt">$38 500</span>
+              </div>
+              <div>
+                <span class="r-num">P5</span>
+                <span class="r-who">k***n_kh</span>
+                <span class="r-gap">−$3 350</span>
+                <span class="r-amt">$37 900</span>
+              </div>
+            </div>
+          </div>
+
+          <dl class="r-specs">
+            <div><dt>Рік</dt><dd>2019</dd></div>
+            <div><dt>Пробіг</dt><dd>128 000 км</dd></div>
+            <div><dt>Двигун</dt><dd>3.0 дизель</dd></div>
+            <div><dt>Коробка</dt><dd>Автомат</dd></div>
+            <div><dt>Привід</dt><dd>Повний</dd></div>
+            <div><dt>Місто</dt><dd>Київ</dd></div>
+          </dl>
+        </div>
+
+        <div class="r-panel">
+          <div class="r-panel__h"><span>Ваш заїзд</span><span>P — не в грі</span></div>
+          <div class="r-panel__b">
+            <div>
+              <div class="r-lab">Щоб вийти на P1, потрібно</div>
+              <div class="r-val" style="font-size:33px">$41 500</div>
+            </div>
+            <input class="r-input" type="text" value="41 500" inputmode="numeric" aria-label="Сума ставки">
+            <button class="r-go">Зробити ставку</button>
+            <div>
+              <div class="r-lab" style="margin-bottom:5px">Автоставка · ваш максимум</div>
+              <input class="r-input" type="text" value="45 000" inputmode="numeric" aria-label="Максимум автоставки" style="font-size:20px">
+            </div>
+            <div class="r-note"><b>Продовження на 3 хвилини.</b> Кожна ставка в останні три хвилини відсуває фініш. Виграти на останній секунді неможливо.</div>
+          </div>
+        </div>
+      </div>
+      <div class="r-flag"></div>
+    </div>
+
+    <div class="brief">
+      <div class="wrap brief__grid">
+        <div>
+          <span class="brief__eyebrow">Напрямок 5</span>
+          <h3>Швидкість</h3>
+          <div class="swatches">
+            <i style="background:#EFEFED"></i><i style="background:#1E2126"></i><i style="background:#D6202B"></i><i style="background:#C2C6CB"></i>
+          </div>
+        </div>
+        <ul>
+          <li><b>Метафора — гоночний заїзд.</b> Не список ставок, а турнірна таблиця: P1, P2, P3 і відставання в доларах.</li>
+          <li><b>«Відставання» — це справжня знахідка.</b> Одна колонка пояснює учаснику його становище краще, ніж уся історія ставок.</li>
+          <li><b>Курсивний вузький шрифт і нахилені плашки</b> дають відчуття руху без жодної анімації.</li>
+          <li><b>Картатий кант</b> обрамляє сторінку зверху й знизу — одна деталь, яка тримає всю тему.</li>
+          <li><b>Кому підходить:</b> азартній частині аудиторії; чудово працює на push-сповіщеннях «вас обійшли на $250».</li>
+          <li><b>Ризик:</b> перетворює купівлю авто на гру. Частина покупців сприйме це як несерйозність, а регулятори — як азарт.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 6. ТЕХПАСПОРТ ============================ -->
+  <section id="dir-doc" hidden>
+    <div class="p">
+      <div class="p-bar">
+        <div class="wrap p-bar__in">
+          <span class="p-word">Autolot</span>
+          <span class="p-bar__meta">Реєстр торгів · сесія 16.08.2026</span>
+        </div>
+      </div>
+
+      <div class="wrap--narrow">
+        <div class="p-sheet">
+          <div class="p-sheet__h">
+            <h1 class="p-title">Картка лота № A-4417</h1>
+            <span class="p-serial p-mono">Внесено 14.08.2026 · перевірено модератором</span>
+          </div>
+
+          <div class="p-stamp">
+            <b>Торги тривають</b>
+            <span>23 ставки</span>
+          </div>
+
+          <div class="p-shot"><svg aria-hidden="true"><use href="#car"/></svg></div>
+
+          <dl class="p-fields">
+            <div class="p-f p-f--wide"><dt>Марка, модель</dt><dd>BMW X5 xDrive30d G05</dd></div>
+            <div class="p-f"><dt>Рік випуску</dt><dd>2019</dd></div>
+            <div class="p-f"><dt>Пробіг</dt><dd>128 000 км</dd></div>
+            <div class="p-f"><dt>Двигун</dt><dd>3.0 · дизель</dd></div>
+            <div class="p-f"><dt>Коробка передач</dt><dd>Автоматична</dd></div>
+            <div class="p-f"><dt>Тип приводу</dt><dd>Повний</dd></div>
+            <div class="p-f"><dt>Колір</dt><dd>Чорний металік</dd></div>
+            <div class="p-f p-f--wide"><dt>Ідентифікаційний номер (VIN)</dt><dd>WBAJA71050B*****</dd></div>
+            <div class="p-f"><dt>Кількість власників</dt><dd>1</dd></div>
+            <div class="p-f"><dt>Розмитнення</dt><dd>Розмитнений</dd></div>
+            <div class="p-f"><dt>Участь у ДТП</dt><dd>Не зафіксовано</dd></div>
+            <div class="p-f"><dt>Місце огляду</dt><dd>Київ, Оболонь</dd></div>
+            <div class="p-f"><dt>Стартова ціна</dt><dd>$34 000</dd></div>
+            <div class="p-f"><dt>Резервна ціна</dt><dd>Досягнуто</dd></div>
+          </dl>
+        </div>
+
+        <div class="p-two">
+          <div class="p-sheet" style="margin-top:0">
+            <div class="p-sheet__h">
+              <h2 class="p-title">Реєстр ставок</h2>
+              <span class="p-serial p-mono">останні 6 записів</span>
+            </div>
+            <div class="p-reg">
+              <table>
+                <thead>
+                  <tr><th>№</th><th>Час</th><th>Учасник</th><th>Спосіб</th><th>Сума</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>23</td><td>14:02:11</td><td>o***v_87</td><td>автоставка</td><td>$41 250</td></tr>
+                  <tr><td>22</td><td>14:00:48</td><td>Andrii_K</td><td>вручну</td><td>$41 000</td></tr>
+                  <tr><td>21</td><td>14:00:47</td><td>o***v_87</td><td>автоставка</td><td>$40 750</td></tr>
+                  <tr><td>20</td><td>13:55:02</td><td>m***a_zt</td><td>вручну</td><td>$40 500</td></tr>
+                  <tr><td>19</td><td>13:50:19</td><td>Andrii_K</td><td>вручну</td><td>$39 800</td></tr>
+                  <tr><td>18</td><td>13:38:33</td><td>AutoHub Kyiv</td><td>вручну</td><td>$38 500</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="p-perf"></div>
+          </div>
+
+          <div class="p-sheet p-act" style="margin-top:0">
+            <div>
+              <div style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)">Поточна ставка</div>
+              <div class="p-mono" style="font-size:31px;font-variant-numeric:tabular-nums;margin-top:3px">$41 250</div>
+              <div class="p-mono" style="font-size:12px;color:var(--ink-2);margin-top:3px">1 724 250 ₴ · 38 074 €</div>
+            </div>
+
+            <div>
+              <div style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)">До закриття торгів</div>
+              <div class="p-clock" data-ends="8073">02:14:33</div>
+            </div>
+
+            <div class="p-fill">
+              <span>Сума вашої ставки, USD</span>
+              <input type="text" value="41 500" inputmode="numeric" aria-label="Сума ставки">
+            </div>
+
+            <div class="p-fill">
+              <span>Максимум для автоставки, USD</span>
+              <input type="text" value="45 000" inputmode="numeric" aria-label="Максимум автоставки">
+            </div>
+
+            <button class="p-btn">Подати ставку</button>
+            <button class="p-btn p-btn--plain">Умови участі в торгах</button>
+
+            <div class="p-legal">
+              Подана ставка є <b>безвідкличною</b>. Мінімальний крок — <b>$250</b>. Ставка в останні три хвилини продовжує торги на три хвилини. На вашому балансі заблоковано <b>8 000 ₴</b> до закриття лота.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brief">
+      <div class="wrap brief__grid">
+        <div>
+          <span class="brief__eyebrow">Напрямок 6</span>
+          <h3>Техпаспорт</h3>
+          <div class="swatches">
+            <i style="background:#ECEFF2"></i><i style="background:#16202B"></i><i style="background:#1D4E89"></i><i style="background:#6B2F73"></i>
+          </div>
+        </div>
+        <ul>
+          <li><b>Метафора — офіційний документ на авто.</b> Кожна купівля машини в Україні і так проходить через папери, тож мова знайома.</li>
+          <li><b>Дві гарнітури з різними ролями:</b> дрібні друковані підписи полів і моноширинні «вписані» значення. Так виглядають заповнені бланки.</li>
+          <li><b>Захисна сітка на тлі й печатка</b> під кутом працюють на головне відчуття цього ринку — «чи не обманюють мене».</li>
+          <li><b>Ставки — це реєстр із номерами записів</b>, а не стрічка. Виглядає як документ, який неможливо тихо переписати.</li>
+          <li><b>Кому підходить:</b> недовірливій аудиторії. Прямо відповідає на страх шахрайства, а не обіцяє зручність.</li>
+          <li><b>Ризик:</b> прийом чудовий на сторінці лота й недоречний на головній. Скоріше мотив для однієї сторінки, ніж стиль усього сайту.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  (function () {
+    "use strict";
+
+    var tabs = Array.prototype.slice.call(document.querySelectorAll(".dtab"));
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        tabs.forEach(function (t) {
+          var on = t === tab;
+          t.setAttribute("aria-selected", String(on));
+          document.getElementById("dir-" + t.dataset.dir).hidden = !on;
+        });
+        window.scrollTo({ top: 0, behavior: "instant" });
+      });
+    });
+
+    var clocks = Array.prototype.slice.call(document.querySelectorAll("[data-ends]")).map(function (el) {
+      return { el: el, left: Number(el.dataset.ends), extended: false };
+    });
+
+    function pad(n) { return n < 10 ? "0" + n : String(n); }
+
+    function paint(clock) {
+      var s = Math.max(0, Math.floor(clock.left));
+      var d = Math.floor(s / 86400);
+      var h = Math.floor((s % 86400) / 3600);
+      var m = Math.floor((s % 3600) / 60);
+      var sec = s % 60;
+
+      if (s === 0) clock.el.textContent = "Завершено";
+      else if (d) clock.el.textContent = d + " д " + pad(h) + ":" + pad(m);
+      else if (h) clock.el.textContent = pad(h) + ":" + pad(m) + ":" + pad(sec);
+      else clock.el.textContent = pad(m) + ":" + pad(sec);
+
+      clock.el.classList.toggle("is-urgent", s > 0 && s < 300);
+    }
+
+    clocks.forEach(paint);
+
+    setInterval(function () {
+      clocks.forEach(function (clock) {
+        if (clock.left <= 0) return;
+        clock.left -= 1;
+
+        if (clock.left <= 0 && clock.el.dataset.extend && !clock.extended) {
+          clock.extended = true;
+          clock.left = 180;
+        }
+
+        paint(clock);
+      });
+    }, 1000);
+
+    /* у «Швидкості» суперник обходить лідера */
+
+    setTimeout(function () {
+      var board = document.getElementById("board");
+      if (!board) return;
+
+      var rows = board.children;
+      rows[0].firstElementChild.textContent = "P2";
+      rows[0].firstElementChild.classList.remove("r-num--p1");
+      rows[0].children[2].textContent = "−$250";
+
+      var row = document.createElement("div");
+      row.innerHTML =
+        '<span class="r-num r-num--p1">P1</span>' +
+        '<span class="r-who">Andrii_K</span>' +
+        '<span class="r-gap">лідер</span>' +
+        '<span class="r-amt">$41 500</span>';
+      board.insertBefore(row, rows[0]);
+    }, 12000);
+
+    document.getElementById("themeToggle").addEventListener("click", function () {
+      var root = document.documentElement;
+      var dark = root.dataset.theme
+        ? root.dataset.theme === "dark"
+        : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      root.dataset.theme = dark ? "light" : "dark";
+    });
+  })();
+</script>

@@ -1,0 +1,1043 @@
+<title>Ефір, Базар і Асистент</title>
+
+<style>
+  /* ================= сторінка-дека ================= */
+
+  :root {
+    --deck: #131A23;
+    --deck-ink: #DCE4EC;
+    --page: #E7EAEE;
+    --page-ink: #101720;
+    --page-ink-2: #586574;
+    --page-ink-3: #8794A3;
+    --page-accent: #0E6B74;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --deck: #06090D; --deck-ink: #C3CFDB; --page: #0B0F15;
+      --page-ink: #E9EEF4; --page-ink-2: #97A5B4; --page-ink-3: #6B7A8A; --page-accent: #35A8B2;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --deck: #06090D; --deck-ink: #C3CFDB; --page: #0B0F15;
+    --page-ink: #E9EEF4; --page-ink-2: #97A5B4; --page-ink-3: #6B7A8A; --page-accent: #35A8B2;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  body {
+    margin: 0; background: var(--page); color: var(--page-ink);
+    font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible { outline: 2px solid var(--page-accent); outline-offset: 2px; }
+
+  .wrap { width: min(1160px, 100% - 40px); margin-inline: auto; }
+
+  .deck { position: sticky; top: 0; z-index: 50; background: var(--deck); color: var(--deck-ink); border-bottom: 1px solid rgba(255,255,255,.1); }
+  .deck__inner { display: flex; align-items: center; gap: 18px; min-height: 54px; padding-block: 8px; flex-wrap: wrap; }
+  .deck__label { font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: #7C8C9C; white-space: nowrap; }
+  .deck__tabs { display: flex; gap: 3px; margin-inline-end: auto; overflow-x: auto; }
+
+  .dtab { appearance: none; background: none; border: 0; border-radius: 6px; padding: 7px 13px; font-size: 14px; font-weight: 600; color: #93A2B2; cursor: pointer; white-space: nowrap; }
+  .dtab:hover { color: #E4ECF3; background: rgba(255,255,255,.07); }
+  .dtab[aria-selected="true"] { color: #0B0F15; background: #E9EEF4; }
+
+  .icon-btn { appearance: none; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.13); color: var(--deck-ink); border-radius: 6px; width: 32px; height: 30px; display: grid; place-items: center; cursor: pointer; }
+  .icon-btn:hover { background: rgba(255,255,255,.15); }
+  .icon-btn svg { width: 15px; height: 15px; fill: currentColor; }
+
+  .brief { background: var(--page); padding-block: 26px 34px; }
+  .brief__grid { display: grid; grid-template-columns: 190px minmax(0,1fr); gap: 28px; align-items: start; }
+  .brief__eyebrow { font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--page-ink-3); }
+  .brief h3 { margin: 6px 0 0; font-size: 19px; }
+  .brief ul { margin: 0; padding-left: 18px; columns: 2; column-gap: 32px; }
+  .brief li { margin-bottom: 8px; font-size: 13.5px; color: var(--page-ink-2); break-inside: avoid; }
+  .brief li b { color: var(--page-ink); }
+  .swatches { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+  .swatches i { width: 26px; height: 26px; border-radius: 5px; border: 1px solid rgba(128,128,128,.35); display: block; }
+  .worldnote { text-align: center; font-size: 12px; color: var(--page-ink-3); padding-block: 14px 0; }
+
+  /* ================= 10. ЕФІР ================= */
+
+  .e {
+    --stage: #08090C;
+    --panel: #111419;
+    --up: #191D25;
+    --line: #232935;
+    --txt: #E7EAF0;
+    --dim: #838C9B;
+    --live: #F0342B;
+    --glow: #FFCE93;
+    background: var(--stage);
+    color: var(--txt);
+  }
+
+  .e-caps { text-transform: uppercase; letter-spacing: .16em; font-weight: 700; }
+
+  .e-bar { border-bottom: 1px solid var(--line); background: #0B0D11; }
+  .e-bar__in { display: flex; align-items: center; gap: 20px; min-height: 52px; flex-wrap: wrap; padding-block: 8px; }
+  .e-word { font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
+  .e-word em { font-style: normal; color: var(--live); }
+
+  .e-live { display: inline-flex; align-items: center; gap: 7px; background: var(--live); color: #FFF; border-radius: 3px; padding: 4px 10px; font-size: 11px; }
+  .e-live i { width: 7px; height: 7px; border-radius: 50%; background: #FFF; display: block; animation: epulse 1.5s ease-in-out infinite; }
+  @keyframes epulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+
+  .e-viewers { margin-inline-start: auto; font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; }
+
+  .e-main { display: grid; grid-template-columns: minmax(0,1fr) 316px; gap: 18px; padding-block: 22px 16px; align-items: start; }
+
+  .e-stage {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background:
+      radial-gradient(70% 90% at 50% 4%, rgba(255,206,147,.20), transparent 62%),
+      radial-gradient(120% 120% at 50% 120%, #0E1116, #08090C);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+
+  .e-stage svg.e-car { width: 46%; color: #3A4250; }
+
+  .e-badges { position: absolute; top: 14px; left: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .e-lotchip { background: rgba(8,9,12,.72); border: 1px solid var(--line); border-radius: 3px; padding: 4px 10px; font-size: 11px; color: var(--dim); letter-spacing: .12em; text-transform: uppercase; }
+
+  .e-clock {
+    position: absolute; top: 14px; right: 14px;
+    background: rgba(8,9,12,.78); border: 1px solid var(--line); border-radius: 3px;
+    padding: 7px 12px; text-align: right;
+  }
+
+  .e-clock small { display: block; font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--dim); }
+  .e-clock b { font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-size: 23px; font-weight: 400; font-variant-numeric: tabular-nums; }
+  .e-clock b.is-urgent { color: var(--live); }
+
+  @keyframes lower3 { from { transform: translateX(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  .e-l3 {
+    position: absolute; left: 0; bottom: 22px;
+    display: flex; align-items: stretch;
+    animation: lower3 .45s cubic-bezier(.2,.7,.3,1);
+    max-width: 92%;
+  }
+
+  .e-l3__bar { width: 5px; background: var(--live); }
+  .e-l3__body { background: rgba(9,11,15,.9); border: 1px solid var(--line); border-left: 0; padding: 10px 18px 11px; min-width: 0; }
+  .e-l3__body h2 { margin: 0; font-size: clamp(17px, 2.2vw, 24px); font-weight: 700; letter-spacing: -.012em; }
+  .e-l3__body p { margin: 2px 0 0; font-size: 12px; color: var(--dim); }
+
+  .e-l3__price {
+    background: #FFF; color: #08090C;
+    padding: 10px 18px; display: grid; align-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .e-l3__price small { display: block; font-size: 9px; letter-spacing: .18em; text-transform: uppercase; opacity: .6; }
+  .e-l3__price b { font-size: clamp(19px, 2.4vw, 27px); letter-spacing: -.02em; }
+
+  .e-strip { display: flex; gap: 10px; overflow-x: auto; padding-block: 4px 2px; }
+
+  .e-next { flex: none; width: 178px; border: 1px solid var(--line); background: var(--panel); border-radius: 4px; overflow: hidden; }
+  .e-next__ph { aspect-ratio: 16/9; background: #0E1116; display: grid; place-items: center; }
+  .e-next__ph svg { width: 52%; color: #333B48; }
+  .e-next__b { padding: 8px 10px; display: grid; gap: 3px; }
+  .e-next__b b { font-size: 12.5px; }
+  .e-next__b span { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .e-next__b .e-t { color: var(--glow); }
+  .e-next__b .e-t.is-urgent { color: var(--live); }
+
+  .e-rail { border: 1px solid var(--line); background: var(--panel); border-radius: 4px; display: grid; grid-template-rows: auto 1fr auto; height: 100%; }
+  .e-rail__h { padding: 10px 13px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 10px; font-size: 10px; color: var(--dim); }
+  .e-chat { padding: 10px 13px; display: grid; gap: 9px; align-content: start; max-height: 330px; overflow: hidden; }
+
+  .e-msg { display: grid; grid-template-columns: 24px minmax(0,1fr); gap: 9px; font-size: 12.5px; }
+  .e-msg .e-av { width: 24px; height: 24px; border-radius: 50%; background: var(--up); display: grid; place-items: center; font-size: 9.5px; font-weight: 700; color: var(--dim); }
+  .e-msg b { color: #FFF; font-weight: 600; }
+  .e-msg span { color: var(--dim); }
+  .e-msg--bid b { color: var(--glow); }
+  @keyframes emsg { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
+  .e-msg--new { animation: emsg .3s ease-out; }
+
+  .e-rail__f { padding: 12px 13px; border-top: 1px solid var(--line); display: grid; gap: 9px; }
+
+  .e-min { display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
+
+  .e-input { width: 100%; background: #07080B; border: 1px solid var(--line); color: #FFF; padding: 10px; font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-size: 17px; text-align: center; font-variant-numeric: tabular-nums; }
+  .e-input:focus { border-color: var(--dim); outline: none; }
+
+  .e-go { width: 100%; background: #FFF; color: #08090C; border: 0; padding: 13px; font-family: inherit; font-size: 13px; cursor: pointer; text-transform: uppercase; letter-spacing: .14em; font-weight: 700; }
+  .e-go:hover { background: #DDE1E8; }
+  .e-ghost { width: 100%; background: none; color: var(--txt); border: 1px solid var(--line); padding: 9px; font-family: inherit; font-size: 12px; cursor: pointer; }
+  .e-ghost:hover { background: var(--up); }
+
+  .e-warn { background: rgba(240,52,43,.12); border-left: 3px solid var(--live); padding: 8px 11px; font-size: 11px; color: #FFC0BB; line-height: 1.5; }
+
+  /* ================= 11. БАЗАР ================= */
+
+  .z {
+    --paper: #E6E2D8;
+    --card: #C8A87C;
+    --sheet: #F6F3EA;
+    --ink: #1C1A17;
+    --ink-2: #57524A;
+    --marker: #C8352A;
+    --pen: #2A47A0;
+    background: var(--paper);
+    color: var(--ink);
+    background-image: repeating-linear-gradient(0deg, rgba(28,26,23,.028) 0 1px, transparent 1px 5px);
+  }
+
+  .z-mark {
+    font-family: Haettenschweiler, Impact, "Arial Narrow", sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: .012em;
+    line-height: .94;
+    margin: 0;
+  }
+
+  .z-card {
+    background-color: var(--card);
+    background-image:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 1px, transparent 1px 4px),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.06) 0 1px, transparent 1px 3px);
+  }
+
+  .z-tape {
+    position: absolute;
+    width: 84px; height: 24px;
+    background: rgba(216,201,163,.75);
+    border-left: 1px dashed rgba(0,0,0,.14);
+    border-right: 1px dashed rgba(0,0,0,.14);
+    box-shadow: 0 1px 2px rgba(0,0,0,.14);
+  }
+
+  .z-bar { background: var(--ink); color: var(--paper); }
+  .z-bar__in { display: flex; align-items: center; gap: 22px; min-height: 56px; flex-wrap: wrap; padding-block: 8px; }
+  .z-word { font-size: 27px; }
+  .z-word em { font-style: normal; color: #F2C23E; }
+  .z-nav { display: flex; gap: 20px; margin-inline-start: auto; flex-wrap: wrap; }
+  .z-nav a { color: #CFC9BC; text-decoration: none; font-size: 13px; font-weight: 600; }
+  .z-nav a:hover { color: #F2C23E; }
+
+  .z-hero { padding-block: 34px 26px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,.9fr); gap: 30px; align-items: center; }
+
+  .z-sign {
+    position: relative;
+    padding: 26px 28px 30px;
+    transform: rotate(-1.2deg);
+    box-shadow: 0 3px 0 rgba(28,26,23,.18);
+  }
+
+  .z-sign h1 { font-size: clamp(38px, 6vw, 68px); }
+  .z-sign p { margin: 14px 0 0; font-size: 15px; max-width: 34ch; color: #3B342A; font-weight: 600; }
+
+  .z-photo {
+    position: relative;
+    background: var(--sheet);
+    padding: 12px 12px 46px;
+    box-shadow: 0 3px 0 rgba(28,26,23,.15);
+    transform: rotate(1deg);
+  }
+
+  .z-photo__in { aspect-ratio: 4/3; background: linear-gradient(160deg, #DEDAD0, #CFCABE); display: grid; place-items: center; }
+  .z-photo__in svg { width: 54%; color: #A29B8D; }
+  .z-photo__cap { position: absolute; left: 14px; right: 14px; bottom: 12px; font-size: 13px; font-weight: 700; }
+  .z-photo__cap span { display: block; font-weight: 400; font-size: 12px; color: var(--ink-2); }
+
+  .z-tag {
+    position: relative;
+    display: inline-grid;
+    gap: 2px;
+    padding: 10px 16px 11px 30px;
+    background: var(--sheet);
+    border: 2px solid var(--ink);
+    box-shadow: 2px 2px 0 rgba(28,26,23,.28);
+  }
+
+  .z-tag::before {
+    content: "";
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    width: 9px; height: 9px; border-radius: 50%;
+    border: 2px solid var(--ink); background: var(--paper);
+  }
+
+  .z-tag b { font-family: Haettenschweiler, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: 30px; line-height: .92; font-variant-numeric: tabular-nums; }
+  .z-tag i { font-style: normal; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--marker); }
+
+  .z-tag--big b { font-size: 44px; }
+  .z-tag--rot { transform: rotate(-2.5deg); }
+
+  .z-sec { padding-block: 30px; }
+  .z-sec__h { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+  .z-sec__h h2 { font-size: 30px; }
+
+  .z-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 20px; }
+
+  .z-item { position: relative; background: var(--sheet); padding: 10px 10px 14px; box-shadow: 0 3px 0 rgba(28,26,23,.14); }
+  .z-item:nth-child(2) { transform: rotate(-.7deg); }
+  .z-item:nth-child(3) { transform: rotate(.6deg); }
+  .z-item__ph { aspect-ratio: 4/3; background: linear-gradient(160deg, #DEDAD0, #CFCABE); display: grid; place-items: center; }
+  .z-item__ph svg { width: 58%; color: #A29B8D; }
+  .z-item h3 { margin: 12px 0 2px; font-size: 19px; }
+  .z-item .z-meta { font-size: 12.5px; color: var(--ink-2); font-weight: 600; }
+  .z-item__f { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-top: 12px; }
+
+  .z-time { font-family: Haettenschweiler, Impact, "Arial Narrow", sans-serif; font-size: 22px; color: var(--marker); font-variant-numeric: tabular-nums; }
+  .z-time.is-urgent { background: var(--marker); color: var(--sheet); padding: 0 6px; }
+
+  .z-detail { display: grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr); gap: 26px; padding-block: 26px 44px; align-items: start; }
+
+  .z-note {
+    position: relative;
+    background: var(--sheet);
+    border: 3px solid var(--ink);
+    padding: 20px 18px 18px;
+    box-shadow: 4px 4px 0 rgba(28,26,23,.24);
+  }
+
+  .z-note h3 { font-size: 22px; margin: 0 0 4px; }
+
+  .z-stamp {
+    position: absolute; right: -10px; top: -14px;
+    transform: rotate(9deg);
+    border: 3px double var(--marker);
+    color: var(--marker);
+    padding: 5px 11px;
+    font-family: Haettenschweiler, Impact, "Arial Narrow", sans-serif;
+    font-size: 16px;
+    background: rgba(246,243,234,.92);
+  }
+
+  .z-input {
+    width: 100%;
+    border: 3px solid var(--ink);
+    background: #FFF;
+    padding: 9px;
+    font-family: Haettenschweiler, Impact, "Arial Narrow", sans-serif;
+    font-size: 28px;
+    text-align: center;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .z-btn {
+    width: 100%;
+    border: 3px solid var(--ink);
+    background: var(--marker);
+    color: var(--sheet);
+    padding: 12px;
+    font-family: Haettenschweiler, Impact, "Arial Narrow", sans-serif;
+    font-size: 21px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 rgba(28,26,23,.3);
+  }
+
+  .z-btn:hover { background: #A82A21; }
+  .z-btn--plain { background: var(--sheet); color: var(--ink); }
+  .z-btn--plain:hover { background: #E9E4D6; }
+
+  .z-list { background: var(--sheet); border: 3px solid var(--ink); }
+  .z-list__h { background: var(--ink); color: var(--paper); padding: 8px 14px; font-family: Haettenschweiler, Impact, "Arial Narrow", sans-serif; font-size: 17px; text-transform: uppercase; display: flex; justify-content: space-between; gap: 10px; }
+  .z-list div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; border-bottom: 1px dashed rgba(28,26,23,.3); font-size: 14px; font-weight: 600; }
+  .z-list div:last-child { border-bottom: 0; }
+  .z-list div:first-of-type { background: #FBF3D9; }
+  .z-list span { font-weight: 400; color: var(--ink-2); font-size: 12.5px; }
+  .z-list b { font-variant-numeric: tabular-nums; }
+
+  .z-hand { color: var(--pen); font-size: 13px; font-weight: 600; transform: rotate(-1deg); display: inline-block; }
+
+  /* ================= 12. АСИСТЕНТ ================= */
+
+  .a {
+    --ground: #F2F3F5;
+    --surface: #FFFFFF;
+    --tint: #E9EEF6;
+    --ink: #22242A;
+    --ink-2: #5C6270;
+    --ink-3: #8A909C;
+    --line: #E1E4E9;
+    --accent: #3C5A99;
+    --good: #1C7350;
+    --signal: #B96100;
+    background: var(--ground);
+    color: var(--ink);
+  }
+
+  .a-bar { background: var(--surface); border-bottom: 1px solid var(--line); }
+  .a-bar__in { display: flex; align-items: center; gap: 22px; min-height: 56px; flex-wrap: wrap; padding-block: 8px; }
+  .a-word { font-size: 19px; font-weight: 800; letter-spacing: -.015em; }
+  .a-word em { font-style: normal; color: var(--accent); }
+  .a-nav { display: flex; gap: 20px; margin-inline-start: auto; flex-wrap: wrap; }
+  .a-nav a { font-size: 13.5px; color: var(--ink-2); text-decoration: none; }
+  .a-nav a:hover { color: var(--ink); }
+
+  .a-main { display: grid; grid-template-columns: minmax(0,1fr) 290px; gap: 26px; padding-block: 26px 40px; align-items: start; }
+
+  .a-thread { display: grid; gap: 16px; max-width: 690px; }
+
+  .a-turn { display: grid; grid-template-columns: 30px minmax(0,1fr); gap: 12px; }
+  .a-turn--me { grid-template-columns: minmax(0,1fr); justify-items: end; }
+
+  .a-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); display: grid; place-items: center; color: #FFF; font-size: 12px; font-weight: 800; }
+
+  .a-me {
+    background: var(--ink); color: #FFF;
+    border-radius: 14px 14px 4px 14px;
+    padding: 10px 15px; max-width: 76%; font-size: 14.5px;
+  }
+
+  .a-said { display: grid; gap: 12px; min-width: 0; }
+  .a-said > p { margin: 0; font-size: 15px; line-height: 1.6; }
+  .a-said > p b { font-weight: 600; }
+
+  .a-chips { display: flex; gap: 7px; flex-wrap: wrap; }
+
+  .a-chip {
+    border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
+    padding: 5px 13px; font-size: 13px; cursor: pointer; font-family: inherit; color: var(--ink);
+  }
+
+  .a-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .a-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #FFF; }
+
+  .a-cards { display: grid; gap: 10px; }
+
+  .a-card {
+    display: grid; grid-template-columns: 96px minmax(0,1fr) auto; gap: 13px; align-items: center;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px;
+  }
+
+  .a-card__ph { aspect-ratio: 4/3; border-radius: 8px; background: radial-gradient(110% 85% at 50% 10%, #F3F5F8, #E3E8EE); display: grid; place-items: center; }
+  .a-card__ph svg { width: 64%; color: var(--ink-3); opacity: .45; }
+  .a-card h4 { margin: 0 0 2px; font-size: 15px; }
+  .a-card .a-meta { font-size: 12.5px; color: var(--ink-2); }
+  .a-card__r { text-align: right; display: grid; gap: 3px; }
+  .a-card__r b { font-size: 17px; font-variant-numeric: tabular-nums; }
+  .a-card__r .a-cd { font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-size: 12px; color: var(--signal); font-variant-numeric: tabular-nums; }
+  .a-card__r .a-cd.is-urgent { color: #AF2F26; font-weight: 700; }
+
+  .a-pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 2px 9px; font-size: 11px; font-weight: 600; background: #E4F0E9; color: var(--good); }
+  .a-pill--live { background: #FBEBD8; color: var(--signal); }
+
+  .a-ask { background: var(--tint); border-radius: 12px; padding: 13px 15px; display: grid; gap: 10px; }
+  .a-ask p { margin: 0; font-size: 14.5px; }
+
+  .a-compose { display: flex; gap: 9px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 9px 9px 9px 15px; align-items: center; margin-top: 4px; }
+  .a-compose input { flex: 1; border: 0; background: none; font-family: inherit; font-size: 14.5px; color: var(--ink); min-width: 0; }
+  .a-compose input:focus { outline: none; }
+  .a-compose button { border: 0; background: var(--accent); color: #FFF; border-radius: 9px; width: 38px; height: 34px; cursor: pointer; font-size: 15px; }
+
+  .a-side { position: sticky; top: 70px; display: grid; gap: 14px; }
+  .a-box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 11px; }
+  .a-box h4 { margin: 0; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+
+  .a-q { display: grid; gap: 7px; }
+  .a-q > div { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; padding-bottom: 7px; border-bottom: 1px dotted var(--line); }
+  .a-q > div:last-child { border-bottom: 0; }
+  .a-q dt { color: var(--ink-2); }
+  .a-q dd { margin: 0; font-weight: 600; text-align: right; }
+  .a-q dd button { border: 0; background: none; color: var(--accent); cursor: pointer; font-size: 12px; font-family: inherit; padding: 0 0 0 6px; }
+
+  .a-count { font-size: 13px; color: var(--ink-2); }
+  .a-count b { color: var(--ink); font-size: 22px; display: block; font-variant-numeric: tabular-nums; }
+
+  .a-btn { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 9px; font-family: inherit; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+  .a-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .a-btn--primary { background: var(--accent); border-color: var(--accent); color: #FFF; }
+  .a-btn--primary:hover { filter: brightness(1.08); color: #FFF; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+  @media (max-width: 1000px) {
+    .brief__grid, .e-main, .z-hero, .z-detail, .a-main { grid-template-columns: minmax(0,1fr); }
+    .z-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .a-side { position: static; }
+    .brief ul { columns: 1; }
+    .e-chat { max-height: 240px; }
+  }
+
+  @media (max-width: 660px) {
+    .z-grid { grid-template-columns: minmax(0,1fr); }
+    .z-nav, .a-nav { display: none; }
+    .a-card { grid-template-columns: 72px minmax(0,1fr); }
+    .a-card__r { grid-column: 1 / -1; text-align: left; display: flex; gap: 12px; align-items: baseline; }
+  }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="car" viewBox="0 0 120 48">
+    <path d="M10 34c0-5 3-7 8-8l16-3 13-10c3-2 6-3 10-3h18c5 0 8 1 11 4l9 10 9 2c5 1 7 3 7 8v3c0 1-1 2-2 2H12c-1 0-2-1-2-2z"/>
+    <circle cx="36" cy="38" r="8"/>
+    <circle cx="90" cy="38" r="8"/>
+  </symbol>
+  <symbol id="sun" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10m0-13a1 1 0 0 1-1-1V1a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1m0 20a1 1 0 0 1-1-1v-2a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1M4 13H2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2m18 0h-2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2M5.6 6.99 4.2 5.58a1 1 0 1 1 1.4-1.4l1.4 1.4a1 1 0 0 1-1.4 1.41m12.8 12.8-1.4-1.4a1 1 0 0 1 1.4-1.42l1.4 1.41a1 1 0 0 1-1.4 1.41m-12.8 0a1 1 0 0 1 0-1.41l1.4-1.41a1 1 0 1 1 1.4 1.41l-1.4 1.41a1 1 0 0 1-1.4 0m12.8-12.8a1 1 0 0 1 0-1.41l1.4-1.4a1 1 0 1 1 1.4 1.4l-1.4 1.41a1 1 0 0 1-1.4 0"/></symbol>
+</svg>
+
+<div class="deck">
+  <div class="wrap deck__inner">
+    <span class="deck__label">AutoLot · напрямки 10—12</span>
+    <div class="deck__tabs" role="tablist" aria-label="Напрямки">
+      <button class="dtab" role="tab" aria-selected="true" data-dir="air">Ефір</button>
+      <button class="dtab" role="tab" aria-selected="false" data-dir="bazaar">Базар</button>
+      <button class="dtab" role="tab" aria-selected="false" data-dir="assist">Асистент</button>
+    </div>
+    <button class="icon-btn" id="themeToggle" title="Світла / темна тема" aria-label="Перемкнути тему">
+      <svg><use href="#sun"/></svg>
+    </button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ============================ 10. ЕФІР ============================ -->
+  <section id="dir-air">
+    <div class="e">
+      <div class="e-bar">
+        <div class="wrap e-bar__in">
+          <span class="e-word">AUTO<em>LOT</em></span>
+          <span class="e-live"><i></i>В ЕФІРІ</span>
+          <span class="e-caps" style="font-size:11px;color:var(--dim)">Сесія 16 серпня · лот 17 з 24</span>
+          <span class="e-viewers">1 284 дивляться · 9 у торгах</span>
+        </div>
+      </div>
+
+      <div class="wrap e-main">
+        <div style="display:grid;gap:14px">
+          <div class="e-stage">
+            <svg class="e-car" aria-hidden="true"><use href="#car"/></svg>
+
+            <div class="e-badges">
+              <span class="e-lotchip">Лот A-4417</span>
+              <span class="e-lotchip">Київ, Оболонь</span>
+            </div>
+
+            <div class="e-clock">
+              <small>До удару молотка</small>
+              <b data-ends="8073">02:14:33</b>
+            </div>
+
+            <div class="e-l3" id="l3">
+              <div class="e-l3__bar"></div>
+              <div class="e-l3__body">
+                <h2>BMW X5 xDrive30d G05</h2>
+                <p>2019 · 128 000 км · 3.0 дизель · автомат · повний привід</p>
+              </div>
+              <div class="e-l3__price">
+                <small>Ставка · 23</small>
+                <b id="l3price">$41 250</b>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="e-caps" style="font-size:10px;color:var(--dim);margin-bottom:9px">Далі в програмі</div>
+            <div class="e-strip">
+              <article class="e-next">
+                <div class="e-next__ph"><svg aria-hidden="true"><use href="#car"/></svg></div>
+                <div class="e-next__b">
+                  <b>Toyota Prado 150</b>
+                  <span>$27 800 · 14 ставок</span>
+                  <span class="e-t" data-ends="68" data-extend="1">01:08</span>
+                </div>
+              </article>
+              <article class="e-next">
+                <div class="e-next__ph"><svg aria-hidden="true"><use href="#car"/></svg></div>
+                <div class="e-next__b">
+                  <b>VW Golf VII GTI</b>
+                  <span>$16 450 · 31 ставка</span>
+                  <span class="e-t" data-ends="1080">18:00</span>
+                </div>
+              </article>
+              <article class="e-next">
+                <div class="e-next__ph"><svg aria-hidden="true"><use href="#car"/></svg></div>
+                <div class="e-next__b">
+                  <b>Mazda CX-5 Touring</b>
+                  <span>$19 100 · 8 ставок</span>
+                  <span class="e-t" data-ends="19320">05:22:00</span>
+                </div>
+              </article>
+              <article class="e-next">
+                <div class="e-next__ph"><svg aria-hidden="true"><use href="#car"/></svg></div>
+                <div class="e-next__b">
+                  <b>Tesla Model 3 LR</b>
+                  <span>$24 900 · резерв ✗</span>
+                  <span class="e-t" data-ends="100800">1 д 04:00</span>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+
+        <div class="e-rail">
+          <div class="e-rail__h">
+            <span class="e-caps">Хід торгів</span>
+            <span>наживо</span>
+          </div>
+          <div class="e-chat" id="echat">
+            <div class="e-msg e-msg--bid"><span class="e-av">ОК</span><div><b>o***v_87</b> підняв до <b>$41 250</b><br><span>автоставка · щойно</span></div></div>
+            <div class="e-msg e-msg--bid"><span class="e-av">АК</span><div><b>Andrii_K</b> підняв до <b>$41 000</b><br><span>2 хв тому</span></div></div>
+            <div class="e-msg"><span class="e-av">СИ</span><div><b>Система</b><br><span>Резерв досягнуто. Лот буде продано.</span></div></div>
+            <div class="e-msg e-msg--bid"><span class="e-av">МЗ</span><div><b>m***a_zt</b> підняв до <b>$40 500</b><br><span>7 хв тому</span></div></div>
+            <div class="e-msg e-msg--bid"><span class="e-av">АХ</span><div><b>AutoHub Kyiv</b> підняв до <b>$38 500</b><br><span>салон · 24 хв тому</span></div></div>
+            <div class="e-msg"><span class="e-av">СИ</span><div><b>Система</b><br><span>Торги відкрито зі стартової ціни $34 000.</span></div></div>
+          </div>
+          <div class="e-rail__f">
+            <div class="e-min"><span>Мінімальна ставка</span><span style="color:#FFF">$41 500</span></div>
+            <input class="e-input" type="text" value="41 500" inputmode="numeric" aria-label="Сума ставки">
+            <button class="e-go">Підняти ставку</button>
+            <button class="e-ghost">Автоставка до $45 000</button>
+            <div class="e-warn">Останні 3 хвилини перезапускають відлік. Молоток падає, коли ніхто не перебив.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brief">
+      <div class="wrap brief__grid">
+        <div>
+          <span class="brief__eyebrow">Напрямок 10</span>
+          <h3>Ефір</h3>
+          <div class="swatches">
+            <i style="background:#08090C"></i><i style="background:#E7EAF0"></i><i style="background:#F0342B"></i><i style="background:#FFCE93"></i>
+          </div>
+        </div>
+        <ul>
+          <li><b>Метафора — пряма трансляція.</b> Аукціон це подія, а не сторінка товару; так його і показуємо.</li>
+          <li><b>Нижня третина</b> — телевізійна плашка з назвою й ціною — заїжджає збоку при кожній новій ставці. Подивись через десяток секунд.</li>
+          <li><b>Історія ставок стає чатом трансляції</b>, разом із системними репліками: «резерв досягнуто», «торги відкрито».</li>
+          <li><b>Сцена підсвічена теплим світлом згори</b> — авто стоїть у промені, як на подіумі, а не лежить у сітці карток.</li>
+          <li><b>Лічильник глядачів</b> робить те, чого не робить жоден інший напрямок: показує, що на лот дивляться зараз.</li>
+          <li><b>Ризик:</b> формат тягне за собою обіцянку живих сесій із ведучим. Без них це декорація.</li>
+        </ul>
+      </div>
+      <div class="wrap worldnote">Напрямок навмисно існує лише в темній версії — сцена не буває світлою.</div>
+    </div>
+  </section>
+
+  <!-- ============================ 11. БАЗАР ============================ -->
+  <section id="dir-bazaar" hidden>
+    <div class="z">
+      <div class="z-bar">
+        <div class="wrap z-bar__in">
+          <span class="z-word z-mark">AUTO<em>LOT</em></span>
+          <nav class="z-nav">
+            <a href="#">Купити</a>
+            <a href="#">Торги</a>
+            <a href="#">Продати</a>
+            <a href="#">Салони</a>
+          </nav>
+        </div>
+      </div>
+
+      <div class="wrap z-hero">
+        <div class="z-sign z-card">
+          <span class="z-tape" style="left:24px;top:-11px;transform:rotate(-4deg)"></span>
+          <span class="z-tape" style="right:30px;bottom:-11px;transform:rotate(3deg)"></span>
+          <h1 class="z-mark">Ціну ставить не продавець</h1>
+          <p>214 машин на торгах просто зараз. Приходьте, дивіться, перебивайте.</p>
+        </div>
+
+        <div class="z-photo">
+          <span class="z-tape" style="left:-16px;top:26px;transform:rotate(-38deg)"></span>
+          <div class="z-photo__in"><svg aria-hidden="true"><use href="#car"/></svg></div>
+          <div class="z-photo__cap">BMW X5 xDrive30d, 2019<span>128 000 км · дизель · Київ</span></div>
+          <div style="position:absolute;right:-14px;bottom:-18px">
+            <div class="z-tag z-tag--big z-tag--rot">
+              <b>$41 250</b>
+              <i>23 ставки · 2 год 14 хв</i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wrap z-sec">
+        <div class="z-sec__h">
+          <h2 class="z-mark">Сьогодні з молотка</h2>
+          <span class="z-hand">→ гортайте, тут щохвилини щось міняється</span>
+        </div>
+
+        <div class="z-grid">
+          <article class="z-item">
+            <span class="z-tape" style="left:50%;top:-12px;margin-left:-42px;transform:rotate(-2deg)"></span>
+            <div class="z-item__ph"><svg aria-hidden="true"><use href="#car"/></svg></div>
+            <h3 class="z-mark">Toyota Prado 150</h3>
+            <div class="z-meta">2016 · 194 000 км · Одеса</div>
+            <div class="z-item__f">
+              <div class="z-tag"><b>$27 800</b><i>14 ставок</i></div>
+              <span class="z-time" data-ends="68" data-extend="1">01:08</span>
+            </div>
+          </article>
+
+          <article class="z-item">
+            <span class="z-tape" style="left:50%;top:-12px;margin-left:-42px;transform:rotate(2.5deg)"></span>
+            <div class="z-item__ph"><svg aria-hidden="true"><use href="#car"/></svg></div>
+            <h3 class="z-mark">VW Golf VII GTI</h3>
+            <div class="z-meta">2017 · 121 000 км · Львів</div>
+            <div class="z-item__f">
+              <div class="z-tag"><b>$16 450</b><i>31 ставка</i></div>
+              <span class="z-time" data-ends="1080">18:00</span>
+            </div>
+          </article>
+
+          <article class="z-item">
+            <span class="z-tape" style="left:50%;top:-12px;margin-left:-42px;transform:rotate(-1.5deg)"></span>
+            <div class="z-item__ph"><svg aria-hidden="true"><use href="#car"/></svg></div>
+            <h3 class="z-mark">Tesla Model 3 LR</h3>
+            <div class="z-meta">2021 · 64 000 км · Київ</div>
+            <div class="z-item__f">
+              <div class="z-tag"><b>$24 900</b><i>резерв не взято</i></div>
+              <span class="z-time" data-ends="100800">1 д 04:00</span>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="wrap z-detail">
+        <div style="display:grid;gap:20px">
+          <div class="z-photo" style="transform:none">
+            <span class="z-tape" style="right:-16px;top:34px;transform:rotate(40deg)"></span>
+            <div class="z-photo__in" style="aspect-ratio:16/9"><svg aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="z-photo__cap">Лот A-4417 · фото 1 з 18<span>дивитись на Оболоні, будь-який день до 20:00</span></div>
+          </div>
+
+          <div class="z-list">
+            <div class="z-list__h"><span>Хто скільки давав</span><span>23 ставки</span></div>
+            <div><span>o***v_87 · автоставка · щойно</span><b>$41 250</b></div>
+            <div><span>Andrii_K · 2 хв тому</span><b>$41 000</b></div>
+            <div><span>o***v_87 · автоставка · 2 хв тому</span><b>$40 750</b></div>
+            <div><span>m***a_zt · 7 хв тому</span><b>$40 500</b></div>
+            <div><span>AutoHub Kyiv · салон · 24 хв тому</span><b>$38 500</b></div>
+          </div>
+        </div>
+
+        <div class="z-note">
+          <div class="z-stamp">Торг іде</div>
+          <h3 class="z-mark">BMW X5 xDrive30d</h3>
+          <div class="z-meta" style="margin-bottom:16px">2019 · 128 000 км · автомат · Київ</div>
+
+          <div style="display:grid;gap:14px">
+            <div>
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2)">Зараз дають</div>
+              <div class="z-mark" style="font-size:46px;font-variant-numeric:tabular-nums">$41 250</div>
+              <div class="z-hand">1 724 250 ₴ по курсу НБУ</div>
+            </div>
+
+            <div>
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2)">Лишилось</div>
+              <div class="z-mark" style="font-size:31px;color:var(--marker);font-variant-numeric:tabular-nums" data-ends="8073">02:14:33</div>
+            </div>
+
+            <div>
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-bottom:5px">Ваша ставка · не менше $41 500</div>
+              <input class="z-input" type="text" value="41 500" inputmode="numeric" aria-label="Сума ставки">
+            </div>
+
+            <button class="z-btn">Перебити</button>
+            <button class="z-btn z-btn--plain">Хай робот тримає до $45 000</button>
+
+            <div style="font-size:12.5px;color:var(--ink-2);border-top:2px dashed rgba(28,26,23,.3);padding-top:10px">
+              Крок $250. Хто дасть більше в останні три хвилини — той відсуне кінець торгів. Застава 8 000 ₴ вже заблокована.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brief">
+      <div class="wrap brief__grid">
+        <div>
+          <span class="brief__eyebrow">Напрямок 11</span>
+          <h3>Базар</h3>
+          <div class="swatches">
+            <i style="background:#E6E2D8"></i><i style="background:#C8A87C"></i><i style="background:#1C1A17"></i><i style="background:#C8352A"></i><i style="background:#2A47A0"></i>
+          </div>
+        </div>
+        <ul>
+          <li><b>Метафора — справжній авторинок.</b> Картонні цінники, скотч, фото під гумкою. Мова теж базарна: «зараз дають», «перебити», «хто скільки давав».</li>
+          <li><b>Ціна на ціннику з дірочкою</b> — та сама форма, яку бачиш на лобовому склі кожної машини на майданчику.</li>
+          <li><b>Ультравузький важкий шрифт</b> — не стилізація, а буквально та гарнітура, якою друкують саморобні оголошення.</li>
+          <li><b>Нахили дрібні й однакові</b>, 1–2 градуси. Більше — і це виглядатиме як помилка верстки, а не як задум.</li>
+          <li><b>Кому підходить:</b> масовому сегменту до $10 000, де довіра будується на «свій хлопець», а не на корпоративності.</li>
+          <li><b>Ризик, і найбільший з усіх:</b> дорогі лоти й салони тут виглядають несерйозно. Це стиль, який обмежує, кого ти зможеш залучити.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 12. АСИСТЕНТ ============================ -->
+  <section id="dir-assist" hidden>
+    <div class="a">
+      <div class="a-bar">
+        <div class="wrap a-bar__in">
+          <span class="a-word">Auto<em>Lot</em></span>
+          <nav class="a-nav">
+            <a href="#">Підбір</a>
+            <a href="#">Торги</a>
+            <a href="#">Салони</a>
+            <a href="#">Кабінет</a>
+          </nav>
+        </div>
+      </div>
+
+      <div class="wrap a-main">
+        <div class="a-thread">
+
+          <div class="a-turn a-turn--me">
+            <div class="a-me">Потрібен сімейний дизель до 20 тисяч, щоб не гнилий і не з Америки</div>
+          </div>
+
+          <div class="a-turn">
+            <span class="a-mark">AL</span>
+            <div class="a-said">
+              <p>Зрозумів. Відібрав <b>34 автомобілі</b>: універсали й кросовери 2015–2021 років, дизель, не пригнані зі США, без зафіксованих ДТП.</p>
+              <div class="a-chips">
+                <button class="a-chip" aria-pressed="true">дизель</button>
+                <button class="a-chip" aria-pressed="true">до $20 000</button>
+                <button class="a-chip" aria-pressed="true">без ДТП</button>
+                <button class="a-chip" aria-pressed="true">не зі США</button>
+                <button class="a-chip" aria-pressed="false">+ автомат</button>
+                <button class="a-chip" aria-pressed="false">+ до 150 000 км</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="a-turn">
+            <span class="a-mark">AL</span>
+            <div class="a-said">
+              <p>Троє з них зараз на торгах — там ціна ще може піти вниз відносно ринку:</p>
+              <div class="a-cards">
+
+                <article class="a-card">
+                  <div class="a-card__ph"><svg aria-hidden="true"><use href="#car"/></svg></div>
+                  <div>
+                    <h4>Škoda Octavia A7 Combi 2.0 TDI</h4>
+                    <div class="a-meta">2018 · 164 000 км · автомат · Львів</div>
+                    <span class="a-pill" style="margin-top:5px">на 11% нижче ринку</span>
+                  </div>
+                  <div class="a-card__r">
+                    <b>$15 400</b>
+                    <span class="a-cd" data-ends="1080">18:00</span>
+                  </div>
+                </article>
+
+                <article class="a-card">
+                  <div class="a-card__ph"><svg aria-hidden="true"><use href="#car"/></svg></div>
+                  <div>
+                    <h4>Volkswagen Passat B8 Variant 2.0 TDI</h4>
+                    <div class="a-meta">2017 · 189 000 км · робот · Київ</div>
+                    <span class="a-pill a-pill--live" style="margin-top:5px">резерв не досягнуто</span>
+                  </div>
+                  <div class="a-card__r">
+                    <b>$14 900</b>
+                    <span class="a-cd" data-ends="72" data-extend="1">01:12</span>
+                  </div>
+                </article>
+
+                <article class="a-card">
+                  <div class="a-card__ph"><svg aria-hidden="true"><use href="#car"/></svg></div>
+                  <div>
+                    <h4>Renault Duster 1.5 dCi 4x4</h4>
+                    <div class="a-meta">2019 · 96 000 км · механіка · Харків</div>
+                    <span class="a-pill" style="margin-top:5px">один власник</span>
+                  </div>
+                  <div class="a-card__r">
+                    <b>$14 300</b>
+                    <span class="a-cd" data-ends="19320">05:22:00</span>
+                  </div>
+                </article>
+
+              </div>
+            </div>
+          </div>
+
+          <div class="a-turn">
+            <span class="a-mark">AL</span>
+            <div class="a-said">
+              <div class="a-ask">
+                <p>Щоб відсіяти половину — скільки людей возите щодня?</p>
+                <div class="a-chips">
+                  <button class="a-chip">двоє</button>
+                  <button class="a-chip">троє-четверо</button>
+                  <button class="a-chip" aria-pressed="true">п'ятеро й більше</button>
+                  <button class="a-chip">возжу вантаж</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="a-turn a-turn--me">
+            <div class="a-me">П'ятеро, плюс собака й коляска</div>
+          </div>
+
+          <div class="a-turn">
+            <span class="a-mark">AL</span>
+            <div class="a-said">
+              <p>Тоді викидаю седани — лишаються універсали й кросовери з багажником від 550 літрів. <b>Залишилось 12 варіантів</b>, з них 2 на торгах. Octavia Combi зі списку вище підходить: 610 літрів, 1 740 зі складеними сидіннями.</p>
+              <div class="a-chips">
+                <button class="a-chip">показати всі 12</button>
+                <button class="a-chip">тільки торги</button>
+                <button class="a-chip">зберегти пошук і сповіщати</button>
+              </div>
+            </div>
+          </div>
+
+          <form class="a-compose" onsubmit="return false">
+            <input type="text" placeholder="А що з витратою пального в Octavia?" aria-label="Повідомлення">
+            <button type="submit" aria-label="Надіслати">↑</button>
+          </form>
+        </div>
+
+        <aside class="a-side">
+          <div class="a-box">
+            <h4>Що я шукаю</h4>
+            <dl class="a-q">
+              <div><dt>Тип кузова</dt><dd>універсал, кросовер <button>×</button></dd></div>
+              <div><dt>Паливо</dt><dd>дизель <button>×</button></dd></div>
+              <div><dt>Ціна</dt><dd>до $20 000 <button>×</button></dd></div>
+              <div><dt>Рік</dt><dd>2015—2021 <button>×</button></dd></div>
+              <div><dt>Багажник</dt><dd>від 550 л <button>×</button></dd></div>
+              <div><dt>Історія</dt><dd>без ДТП, не США <button>×</button></dd></div>
+            </dl>
+            <button class="a-btn">Редагувати вручну</button>
+          </div>
+
+          <div class="a-box">
+            <h4>Знайдено</h4>
+            <div class="a-count"><b>12</b>автомобілів · 2 на торгах</div>
+            <button class="a-btn a-btn--primary">Показати списком</button>
+            <button class="a-btn">Сповіщати про нові</button>
+          </div>
+
+          <div class="a-box">
+            <h4>Найближче закриття</h4>
+            <div class="a-count" style="font-size:13.5px">
+              <b class="a-cd" style="font-family:'Cascadia Mono',ui-monospace,Consolas,monospace;font-size:19px" data-ends="72" data-extend="1">01:12</b>
+              Passat B8 Variant · $14 900
+            </div>
+            <button class="a-btn">До торгів</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div class="brief">
+      <div class="wrap brief__grid">
+        <div>
+          <span class="brief__eyebrow">Напрямок 12</span>
+          <h3>Асистент</h3>
+          <div class="swatches">
+            <i style="background:#F2F3F5"></i><i style="background:#22242A"></i><i style="background:#3C5A99"></i><i style="background:#E9EEF6"></i>
+          </div>
+        </div>
+        <ul>
+          <li><b>Фільтрів немає — є розмова.</b> Людина описує потребу словами, а не перекладає її в чекбокси, як робить це на кожному конкуренті.</li>
+          <li><b>Головне рішення — панель праворуч.</b> Розмова будує справжній структурований фільтр, і його видно й можна виправити. Без цього чат перетворюється на чорну скриньку.</li>
+          <li><b>Асистент ставить зустрічні питання</b> з готовими відповідями — «скільки людей возите» відсіює більше, ніж десять повзунків.</li>
+          <li><b>Оформлення навмисно тихе.</b> Коли головний елемент інтерфейсу це текст, будь-який характер шрифту заважає його читати.</li>
+          <li><b>Аукціони входять у відповідь природно:</b> «троє з них на торгах, найближчий закривається за хвилину».</li>
+          <li><b>Ризик:</b> без реальної моделі під капотом це декорація, а з нею — окремий великий шматок роботи й витрати на кожен запит.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  (function () {
+    "use strict";
+
+    var tabs = Array.prototype.slice.call(document.querySelectorAll(".dtab"));
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        tabs.forEach(function (t) {
+          var on = t === tab;
+          t.setAttribute("aria-selected", String(on));
+          document.getElementById("dir-" + t.dataset.dir).hidden = !on;
+        });
+        window.scrollTo({ top: 0, behavior: "instant" });
+      });
+    });
+
+    function pad(n) { return n < 10 ? "0" + n : String(n); }
+
+    var clocks = Array.prototype.slice.call(document.querySelectorAll("[data-ends]")).map(function (el) {
+      return { el: el, left: Number(el.dataset.ends), extended: false };
+    });
+
+    function paint(clock) {
+      var s = Math.max(0, Math.floor(clock.left));
+      var d = Math.floor(s / 86400);
+      var h = Math.floor((s % 86400) / 3600);
+      var m = Math.floor((s % 3600) / 60);
+      var sec = s % 60;
+
+      if (s === 0) clock.el.textContent = "Завершено";
+      else if (d) clock.el.textContent = d + " д " + pad(h) + ":" + pad(m);
+      else if (h) clock.el.textContent = pad(h) + ":" + pad(m) + ":" + pad(sec);
+      else clock.el.textContent = pad(m) + ":" + pad(sec);
+
+      clock.el.classList.toggle("is-urgent", s > 0 && s < 300);
+    }
+
+    clocks.forEach(paint);
+
+    setInterval(function () {
+      clocks.forEach(function (clock) {
+        if (clock.left <= 0) return;
+        clock.left -= 1;
+        if (clock.left <= 0 && clock.el.dataset.extend && !clock.extended) {
+          clock.extended = true;
+          clock.left = 180;
+        }
+        paint(clock);
+      });
+    }, 1000);
+
+    /* нова ставка в ефірі: чат + нижня третина */
+
+    setTimeout(function () {
+      var chat = document.getElementById("echat");
+      var l3 = document.getElementById("l3");
+      var price = document.getElementById("l3price");
+      if (!chat || !l3 || !price) return;
+
+      var msg = document.createElement("div");
+      msg.className = "e-msg e-msg--bid e-msg--new";
+      msg.innerHTML = '<span class="e-av">АК</span><div><b>Andrii_K</b> підняв до <b>$41 500</b><br><span>щойно</span></div>';
+      chat.insertBefore(msg, chat.firstElementChild);
+
+      price.textContent = "$41 500";
+      l3.style.animation = "none";
+      void l3.offsetWidth;
+      l3.style.animation = "";
+    }, 11000);
+
+    /* чипи асистента */
+
+    document.querySelectorAll(".a-chip").forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        chip.setAttribute("aria-pressed", chip.getAttribute("aria-pressed") === "true" ? "false" : "true");
+      });
+    });
+
+    document.getElementById("themeToggle").addEventListener("click", function () {
+      var root = document.documentElement;
+      var dark = root.dataset.theme
+        ? root.dataset.theme === "dark"
+        : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      root.dataset.theme = dark ? "light" : "dark";
+    });
+  })();
+</script>

@@ -1,0 +1,1151 @@
+<title>Табло, Креслення і Стрічка</title>
+
+<style>
+  /* ================= сторінка-дека ================= */
+
+  :root {
+    --deck: #131A23;
+    --deck-ink: #DCE4EC;
+    --page: #E7EAEE;
+    --page-ink: #101720;
+    --page-ink-2: #586574;
+    --page-ink-3: #8794A3;
+    --page-accent: #0E6B74;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --deck: #06090D;
+      --deck-ink: #C3CFDB;
+      --page: #0B0F15;
+      --page-ink: #E9EEF4;
+      --page-ink-2: #97A5B4;
+      --page-ink-3: #6B7A8A;
+      --page-accent: #35A8B2;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --deck: #06090D;
+    --deck-ink: #C3CFDB;
+    --page: #0B0F15;
+    --page-ink: #E9EEF4;
+    --page-ink-2: #97A5B4;
+    --page-ink-3: #6B7A8A;
+    --page-accent: #35A8B2;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--page-ink);
+    font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible { outline: 2px solid var(--page-accent); outline-offset: 2px; }
+
+  .wrap { width: min(1160px, 100% - 40px); margin-inline: auto; }
+
+  .deck { position: sticky; top: 0; z-index: 50; background: var(--deck); color: var(--deck-ink); border-bottom: 1px solid rgba(255,255,255,.1); }
+  .deck__inner { display: flex; align-items: center; gap: 18px; min-height: 54px; padding-block: 8px; flex-wrap: wrap; }
+
+  .deck__label {
+    font-family: "Cascadia Mono", ui-monospace, Consolas, monospace;
+    font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: #7C8C9C; white-space: nowrap;
+  }
+
+  .deck__tabs { display: flex; gap: 3px; margin-inline-end: auto; overflow-x: auto; }
+
+  .dtab {
+    appearance: none; background: none; border: 0; border-radius: 6px; padding: 7px 13px;
+    font-size: 14px; font-weight: 600; color: #93A2B2; cursor: pointer; white-space: nowrap;
+  }
+
+  .dtab:hover { color: #E4ECF3; background: rgba(255,255,255,.07); }
+  .dtab[aria-selected="true"] { color: #0B0F15; background: #E9EEF4; }
+
+  .icon-btn {
+    appearance: none; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.13);
+    color: var(--deck-ink); border-radius: 6px; width: 32px; height: 30px; display: grid; place-items: center; cursor: pointer;
+  }
+
+  .icon-btn:hover { background: rgba(255,255,255,.15); }
+  .icon-btn svg { width: 15px; height: 15px; fill: currentColor; }
+
+  .brief { background: var(--page); padding-block: 26px 34px; }
+  .brief__grid { display: grid; grid-template-columns: 190px minmax(0,1fr); gap: 28px; align-items: start; }
+
+  .brief__eyebrow {
+    font-family: "Cascadia Mono", ui-monospace, Consolas, monospace;
+    font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--page-ink-3);
+  }
+
+  .brief h3 { margin: 6px 0 0; font-size: 19px; }
+  .brief ul { margin: 0; padding-left: 18px; columns: 2; column-gap: 32px; }
+  .brief li { margin-bottom: 8px; font-size: 13.5px; color: var(--page-ink-2); break-inside: avoid; }
+  .brief li b { color: var(--page-ink); }
+
+  .swatches { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+  .swatches i { width: 26px; height: 26px; border-radius: 5px; border: 1px solid rgba(128,128,128,.35); display: block; }
+
+  .worldnote { text-align: center; font-size: 12px; color: var(--page-ink-3); padding-block: 14px 0; }
+
+  /* ================= 7. ТАБЛО ================= */
+
+  .f {
+    --bg: #0C0C0E;
+    --board: #141416;
+    --cell: #1C1C1F;
+    --seam: #08080A;
+    --amber: #FFB000;
+    --amber-2: #8A6410;
+    --white: #E8E6E1;
+    --dim: #6E6C68;
+    --red: #E8443A;
+    --green: #4FB980;
+    background: var(--bg);
+    color: var(--white);
+    font-family: "Cascadia Mono", "SF Mono", ui-monospace, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .f-bar { border-bottom: 2px solid #222226; background: var(--board); }
+  .f-bar__in { display: flex; align-items: center; gap: 22px; min-height: 52px; flex-wrap: wrap; padding-block: 8px; }
+  .f-word { font-size: 16px; letter-spacing: .3em; color: var(--amber); }
+  .f-bar__meta { margin-inline-start: auto; font-size: 11px; letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+
+  .f-hero { padding-block: 34px 26px; display: flex; align-items: flex-end; gap: 30px; flex-wrap: wrap; justify-content: space-between; }
+  .f-hero h1 { margin: 0; font-size: clamp(22px, 3vw, 30px); letter-spacing: .1em; text-transform: uppercase; color: var(--white); font-weight: 400; }
+  .f-hero p { margin: 10px 0 0; color: var(--dim); font-size: 13px; max-width: 46ch; line-height: 1.6; letter-spacing: .02em; }
+
+  .f-flap { display: flex; gap: 4px; perspective: 260px; }
+
+  .f-cell {
+    position: relative;
+    background: var(--cell);
+    color: var(--amber);
+    width: 34px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    font-size: 27px;
+    border-radius: 3px;
+    box-shadow: inset 0 0 0 1px #26262A;
+  }
+
+  .f-cell::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--seam); }
+  .f-cell--sep { width: 14px; background: none; box-shadow: none; color: var(--amber-2); }
+  .f-cell--sep::after { display: none; }
+
+  @keyframes flap { 0% { transform: rotateX(0); } 45% { transform: rotateX(-88deg); } 100% { transform: rotateX(0); } }
+  .f-cell.is-flip { animation: flap .3s ease-in-out; }
+
+  .f-caption { font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; }
+
+  .f-boardwrap { border: 2px solid #222226; background: var(--board); overflow-x: auto; }
+  .f-table { width: 100%; border-collapse: collapse; min-width: 800px; }
+
+  .f-table th {
+    text-align: left; font-weight: 400; font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--dim); padding: 11px 14px; border-bottom: 2px solid #222226; background: #0F0F11; white-space: nowrap;
+  }
+
+  .f-table td { padding: 13px 14px; border-bottom: 1px solid #1E1E22; white-space: nowrap; font-size: 14px; }
+  .f-table tbody tr:last-child td { border-bottom: 0; }
+  .f-table tbody tr:hover { background: #17171A; }
+
+  .f-time { color: var(--amber); font-size: 17px; letter-spacing: .06em; }
+  .f-time.is-urgent { color: var(--red); }
+  .f-veh { color: var(--white); }
+  .f-sub { color: var(--dim); font-size: 11px; letter-spacing: .04em; }
+  .f-amt { color: var(--white); font-size: 15px; }
+
+  .f-state { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; }
+  .f-state--go { color: var(--green); }
+  .f-state--end { color: var(--red); }
+  .f-state--wait { color: var(--dim); }
+  .f-state--res { color: var(--amber-2); }
+
+  .f-gate { display: grid; grid-template-columns: minmax(0,1fr) 320px; gap: 20px; padding-block: 30px 44px; align-items: start; }
+  .f-panel { border: 2px solid #222226; background: var(--board); }
+  .f-panel__h { padding: 10px 14px; border-bottom: 2px solid #222226; background: #0F0F11; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--dim); display: flex; justify-content: space-between; gap: 10px; }
+  .f-panel__b { padding: 16px 14px; display: grid; gap: 14px; }
+
+  .f-shot { aspect-ratio: 16/8; background: #101012; display: grid; place-items: center; border-bottom: 2px solid #222226; }
+  .f-shot svg { width: 40%; color: #2E2E33; }
+
+  .f-kv { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 1px; background: #222226; }
+  .f-kv div { background: var(--board); padding: 11px 14px; }
+  .f-kv dt { font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+  .f-kv dd { margin: 4px 0 0; font-size: 15px; color: var(--white); }
+
+  .f-lab { font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--dim); }
+  .f-price { font-size: 30px; color: var(--white); margin-top: 4px; }
+
+  .f-input {
+    width: 100%; background: #0A0A0C; border: 1px solid #26262A; color: var(--amber);
+    padding: 11px 13px; font-family: inherit; font-size: 19px; text-align: center; font-variant-numeric: tabular-nums;
+  }
+
+  .f-input:focus { border-color: var(--amber-2); outline: none; }
+
+  .f-btn {
+    width: 100%; border: 0; background: var(--amber); color: #221600; padding: 13px;
+    font-family: inherit; font-size: 13px; letter-spacing: .18em; text-transform: uppercase; cursor: pointer;
+  }
+
+  .f-btn:hover { background: #FFC22E; }
+  .f-btn--plain { background: none; color: var(--white); border: 1px solid #26262A; }
+  .f-btn--plain:hover { background: #17171A; }
+
+  .f-note { border: 1px dashed #2A2A2E; padding: 10px 12px; color: var(--dim); font-size: 11px; line-height: 1.6; }
+  .f-note b { color: var(--amber); font-weight: 400; }
+
+  .f-log div { display: grid; grid-template-columns: 74px minmax(0,1fr) auto; gap: 10px; padding: 9px 14px; border-bottom: 1px solid #1E1E22; font-size: 12.5px; }
+  .f-log div:last-child { border-bottom: 0; }
+  .f-log .f-ts { color: var(--dim); }
+  .f-log .f-amt { font-size: 13px; }
+
+  /* ================= 8. КРЕСЛЕННЯ ================= */
+
+  .g {
+    --paper: #E9EDEF;
+    --sheet: #F4F7F8;
+    --ink: #1F3A47;
+    --mid: #5C8496;
+    --faint: #9DB2BC;
+    --grid: rgba(31, 58, 71, .07);
+    --rev: #B23A2E;
+    background: var(--paper);
+    color: var(--ink);
+    background-image:
+      repeating-linear-gradient(0deg, var(--grid) 0 1px, transparent 1px 22px),
+      repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 22px);
+  }
+
+  .g-type { font-family: "Segoe UI", -apple-system, system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; font-weight: 400; }
+  .g-mono { font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  .g-bar { border-bottom: 1px solid var(--ink); }
+  .g-bar__in { display: flex; align-items: center; gap: 26px; min-height: 52px; flex-wrap: wrap; padding-block: 8px; }
+  .g-word { font-size: 15px; letter-spacing: .34em; text-transform: uppercase; }
+  .g-nav { display: flex; gap: 22px; margin-inline-start: auto; flex-wrap: wrap; }
+  .g-nav a { font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--mid); text-decoration: none; }
+  .g-nav a:hover { color: var(--ink); }
+
+  .g-sheet { background: var(--sheet); border: 1px solid var(--ink); margin-block: 26px; position: relative; }
+
+  .g-sheet::before, .g-sheet::after {
+    content: ""; position: absolute; width: 14px; height: 14px; border: 1px solid var(--mid);
+  }
+
+  .g-sheet::before { left: 9px; top: 9px; border-right: 0; border-bottom: 0; }
+  .g-sheet::after { right: 9px; bottom: 9px; border-left: 0; border-top: 0; }
+
+  .g-draw { padding: 22px 26px 6px; }
+  .g-draw svg { width: 100%; height: auto; display: block; }
+
+  .g-title { display: flex; justify-content: space-between; gap: 18px; align-items: baseline; padding: 16px 26px 0; flex-wrap: wrap; }
+  .g-title h1 { margin: 0; font-size: 19px; letter-spacing: .18em; text-transform: uppercase; font-weight: 600; }
+  .g-title span { font-size: 11px; letter-spacing: .12em; color: var(--mid); }
+
+  .g-block { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); border-top: 1px solid var(--ink); }
+  .g-block div { padding: 9px 12px; border-right: 1px solid var(--mid); }
+  .g-block div:last-child { border-right: 0; }
+  .g-block dt { font-size: 8.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); }
+  .g-block dd { margin: 4px 0 0; font-size: 13px; font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; }
+
+  .g-two { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(0,1fr); gap: 22px; padding-bottom: 42px; align-items: start; }
+
+  .g-spec { border: 1px solid var(--ink); background: var(--sheet); }
+  .g-spec__h { border-bottom: 1px solid var(--ink); padding: 10px 14px; font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--mid); display: flex; justify-content: space-between; gap: 10px; }
+  .g-spec table { width: 100%; border-collapse: collapse; }
+  .g-spec td { padding: 9px 14px; border-bottom: 1px dotted var(--faint); font-size: 13.5px; }
+  .g-spec tr:last-child td { border-bottom: 0; }
+  .g-spec td:first-child { color: var(--mid); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; width: 46%; }
+  .g-spec td:last-child { text-align: right; font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  .g-rev {
+    border: 1px solid var(--rev);
+    color: var(--rev);
+    padding: 9px 13px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    font-size: 10.5px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+  }
+
+  .g-rev b { font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-size: 15px; letter-spacing: .02em; font-weight: 400; }
+  .g-rev b.is-urgent { color: var(--rev); }
+
+  .g-act { padding: 15px 14px; display: grid; gap: 13px; }
+  .g-big { font-size: 33px; font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  .g-input {
+    width: 100%; border: 1px solid var(--ink); background: #FFF; padding: 10px 12px;
+    font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-size: 19px; text-align: center;
+    color: var(--ink); font-variant-numeric: tabular-nums;
+  }
+
+  .g-btn {
+    width: 100%; border: 1px solid var(--ink); background: var(--ink); color: var(--sheet); padding: 12px;
+    font-family: "Segoe UI", system-ui, sans-serif; font-size: 11px; letter-spacing: .22em; text-transform: uppercase; cursor: pointer;
+  }
+
+  .g-btn:hover { background: #162C36; }
+  .g-btn--plain { background: none; color: var(--ink); }
+  .g-btn--plain:hover { background: #E3EAED; }
+
+  .g-log td { padding: 8px 14px; border-bottom: 1px dotted var(--faint); font-size: 12.5px; font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; }
+  .g-log tr:first-child td { color: var(--rev); }
+  .g-log tr:last-child td { border-bottom: 0; }
+
+  /* ================= 9. СТРІЧКА ================= */
+
+  .m {
+    --ground: #E9ECEF;
+    --surface: #FFFFFF;
+    --surface-2: #F3F6F8;
+    --surface-3: #E2E8ED;
+    --ink: #101720;
+    --ink-2: #586574;
+    --ink-3: #8794A3;
+    --line: #DBE1E9;
+    --accent: #0E6B74;
+    --signal: #B96100;
+    --danger: #AF2F26;
+    --good: #1C7350;
+    background: var(--ground);
+    color: var(--ink);
+  }
+
+  .m-head { padding-block: 34px 8px; max-width: 54ch; }
+  .m-head h1 { margin: 0; font-size: clamp(24px, 3.2vw, 32px); letter-spacing: -.015em; }
+  .m-head p { margin: 12px 0 0; color: var(--ink-2); }
+
+  .m-row { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; padding-block: 30px 44px; }
+  .m-col { display: grid; gap: 12px; justify-items: center; }
+  .m-cap { font-size: 12px; color: var(--ink-2); text-align: center; max-width: 296px; }
+  .m-cap b { display: block; color: var(--ink); font-size: 13px; margin-bottom: 2px; }
+
+  .m-phone {
+    width: 296px;
+    border: 9px solid #14181D;
+    border-radius: 40px;
+    background: var(--surface);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 18px 40px -18px rgba(16,23,32,.5);
+  }
+
+  .m-island { position: absolute; top: 9px; left: 50%; transform: translateX(-50%); width: 78px; height: 20px; border-radius: 12px; background: #14181D; z-index: 5; }
+
+  .m-status { height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .m-screen { height: 552px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+
+  .m-appbar { display: flex; align-items: center; gap: 10px; padding: 4px 14px 10px; border-bottom: 1px solid var(--line); }
+  .m-logo { font-weight: 800; font-size: 15px; letter-spacing: -.01em; }
+  .m-logo em { font-style: normal; color: var(--accent); }
+  .m-chip { margin-left: auto; font-size: 10.5px; font-weight: 700; background: var(--surface-3); border-radius: 999px; padding: 3px 9px; color: var(--ink-2); }
+
+  .m-feed { flex: 1; overflow: hidden; }
+
+  .m-slide { position: relative; height: 404px; background: radial-gradient(115% 80% at 50% 10%, var(--surface-2), var(--surface-3)); display: grid; place-items: center; border-bottom: 1px solid var(--line); }
+  .m-slide svg { width: 62%; color: var(--ink-3); opacity: .4; }
+
+  .m-over { position: absolute; inset: auto 0 0; padding: 14px; background: linear-gradient(to top, rgba(16,23,32,.9), rgba(16,23,32,.66) 55%, transparent); color: #FFF; }
+  .m-over h3 { margin: 0; font-size: 18px; letter-spacing: -.01em; }
+  .m-over p { margin: 3px 0 0; font-size: 12px; opacity: .82; }
+
+  .m-live {
+    position: absolute; top: 12px; right: 12px;
+    background: rgba(16,23,32,.82); color: #FFC46B;
+    border-radius: 999px; padding: 4px 11px;
+    font-family: "Cascadia Mono", ui-monospace, Consolas, monospace;
+    font-size: 12.5px; font-variant-numeric: tabular-nums;
+  }
+
+  .m-live.is-urgent { color: #FF9187; }
+
+  .m-priceline { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-top: 10px; }
+  .m-priceline b { font-size: 25px; font-variant-numeric: tabular-nums; letter-spacing: -.015em; }
+  .m-priceline span { font-size: 11px; opacity: .8; }
+
+  .m-dock { display: flex; gap: 8px; padding: 11px 13px; border-top: 1px solid var(--line); background: var(--surface); }
+
+  .m-btn {
+    flex: 1; border: 0; border-radius: 10px; background: var(--signal); color: #FFF;
+    padding: 12px; font-size: 14.5px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+
+  .m-btn--ghost { flex: none; width: 46px; background: var(--surface-2); color: var(--ink-2); font-size: 17px; }
+  .m-btn--accent { background: var(--accent); }
+
+  .m-peek { height: 78px; background: var(--surface-2); border-top: 1px solid var(--line); padding: 10px 14px; display: flex; gap: 10px; align-items: center; }
+  .m-peek__ph { width: 62px; height: 46px; border-radius: 6px; background: var(--surface-3); display: grid; place-items: center; flex: none; }
+  .m-peek__ph svg { width: 70%; color: var(--ink-3); opacity: .45; }
+  .m-peek b { font-size: 13px; display: block; }
+  .m-peek span { font-size: 11px; color: var(--ink-2); }
+
+  .m-scroll { flex: 1; overflow: hidden; padding: 12px 14px; display: grid; gap: 12px; align-content: start; }
+
+  .m-hero { height: 158px; border-radius: 10px; background: radial-gradient(110% 80% at 50% 12%, var(--surface-2), var(--surface-3)); display: grid; place-items: center; position: relative; }
+  .m-hero svg { width: 58%; color: var(--ink-3); opacity: .4; }
+
+  .m-h2 { font-size: 18px; letter-spacing: -.012em; margin: 0; }
+  .m-meta { font-size: 12px; color: var(--ink-2); }
+
+  .m-cdbig {
+    display: flex; gap: 6px; justify-content: center;
+    font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums;
+  }
+
+  .m-cdbig div { background: var(--surface-3); border-radius: 8px; padding: 6px 8px 4px; text-align: center; min-width: 48px; }
+  .m-cdbig b { display: block; font-size: 20px; font-weight: 500; }
+  .m-cdbig span { font-size: 8.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+
+  .m-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .m-quick button { border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 9px 4px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; color: var(--ink); }
+  .m-quick button:hover { border-color: var(--signal); color: var(--signal); }
+
+  .m-bidbox { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 3px; }
+  .m-bidbox .m-lab { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+  .m-bidbox b { font-size: 26px; font-variant-numeric: tabular-nums; letter-spacing: -.015em; }
+
+  .m-list { display: grid; }
+  .m-list > div { display: flex; gap: 9px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .m-list > div:last-child { border-bottom: 0; }
+  .m-list b { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+  .m-av { width: 26px; height: 26px; border-radius: 50%; background: var(--surface-3); display: grid; place-items: center; font-size: 10px; font-weight: 700; color: var(--ink-2); flex: none; }
+
+  .m-push { border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); padding: 11px 13px; display: grid; gap: 3px; }
+  .m-push .m-lab { display: flex; gap: 7px; align-items: center; font-size: 10.5px; color: var(--ink-3); }
+  .m-push .m-lab i { width: 16px; height: 16px; border-radius: 4px; background: var(--accent); display: block; }
+  .m-push b { font-size: 14px; }
+  .m-push span { font-size: 12.5px; color: var(--ink-2); }
+
+  .m-pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 2px 8px; font-size: 10.5px; font-weight: 700; }
+  .m-pill--good { background: #E0F1E8; color: var(--good); }
+  .m-pill--warn { background: #FAE4E1; color: var(--danger); }
+  .m-pill--live { background: #FBEBD8; color: var(--signal); }
+
+  .m-stake { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; }
+  .m-stake__t { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+  .m-stake__t b { font-size: 13.5px; }
+  .m-stake__b { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; font-size: 12px; color: var(--ink-2); }
+  .m-stake__b b { font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .m-stake__cd { font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums; font-size: 12.5px; }
+  .m-stake__cd.is-urgent { color: var(--danger); font-weight: 700; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+  @media (max-width: 1000px) {
+    .brief__grid, .f-gate, .g-two { grid-template-columns: minmax(0,1fr); }
+    .brief ul { columns: 1; }
+    .g-block { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .g-block div:nth-child(3n) { border-right: 0; }
+  }
+
+  @media (max-width: 660px) {
+    .f-kv, .g-block { grid-template-columns: minmax(0,1fr); }
+    .g-block div { border-right: 0; border-bottom: 1px solid var(--mid); }
+    .g-nav { display: none; }
+    .f-cell { width: 28px; height: 40px; font-size: 22px; }
+  }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="car" viewBox="0 0 120 48">
+    <path d="M10 34c0-5 3-7 8-8l16-3 13-10c3-2 6-3 10-3h18c5 0 8 1 11 4l9 10 9 2c5 1 7 3 7 8v3c0 1-1 2-2 2H12c-1 0-2-1-2-2z"/>
+    <circle cx="36" cy="38" r="8"/>
+    <circle cx="90" cy="38" r="8"/>
+  </symbol>
+  <symbol id="sun" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10m0-13a1 1 0 0 1-1-1V1a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1m0 20a1 1 0 0 1-1-1v-2a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1M4 13H2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2m18 0h-2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2M5.6 6.99 4.2 5.58a1 1 0 1 1 1.4-1.4l1.4 1.4a1 1 0 0 1-1.4 1.41m12.8 12.8-1.4-1.4a1 1 0 0 1 1.4-1.42l1.4 1.41a1 1 0 0 1-1.4 1.41m-12.8 0a1 1 0 0 1 0-1.41l1.4-1.41a1 1 0 1 1 1.4 1.41l-1.4 1.41a1 1 0 0 1-1.4 0m12.8-12.8a1 1 0 0 1 0-1.41l1.4-1.4a1 1 0 1 1 1.4 1.4l-1.4 1.41a1 1 0 0 1-1.4 0"/></symbol>
+</svg>
+
+<div class="deck">
+  <div class="wrap deck__inner">
+    <span class="deck__label">AutoLot · напрямки 7—9</span>
+    <div class="deck__tabs" role="tablist" aria-label="Напрямки">
+      <button class="dtab" role="tab" aria-selected="true" data-dir="flap">Табло</button>
+      <button class="dtab" role="tab" aria-selected="false" data-dir="draft">Креслення</button>
+      <button class="dtab" role="tab" aria-selected="false" data-dir="mob">Стрічка</button>
+    </div>
+    <button class="icon-btn" id="themeToggle" title="Світла / темна тема" aria-label="Перемкнути тему">
+      <svg><use href="#sun"/></svg>
+    </button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ============================ 7. ТАБЛО ============================ -->
+  <section id="dir-flap">
+    <div class="f">
+      <div class="f-bar">
+        <div class="wrap f-bar__in">
+          <span class="f-word">AUTOLOT</span>
+          <span class="f-bar__meta">Розклад закриттів · 16.08.2026 · Київ</span>
+        </div>
+      </div>
+
+      <div class="wrap f-hero">
+        <div>
+          <h1>Найближче закриття</h1>
+          <p>Лоти впорядковані за часом, а не за маркою. Ставка в останні три хвилини відсуває закриття — рядок повертається вниз таблиці.</p>
+        </div>
+        <div>
+          <div class="f-caption">Лот A-4390 · Prado 150</div>
+          <div class="f-flap" data-flap data-ends="64" data-extend="1"></div>
+        </div>
+      </div>
+
+      <div class="wrap" style="padding-bottom:8px">
+        <div class="f-boardwrap">
+          <table class="f-table">
+            <thead>
+              <tr>
+                <th>Закриття</th>
+                <th>Лот</th>
+                <th>Автомобіль</th>
+                <th>Ставка</th>
+                <th>Ставок</th>
+                <th>Стан</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="f-time" data-ends="64" data-extend="1">01:04</td>
+                <td>A-4390</td>
+                <td><span class="f-veh">TOYOTA LAND CRUISER PRADO 150</span><div class="f-sub">2016 · 194 000 км · Одеса</div></td>
+                <td class="f-amt">$27 800</td>
+                <td>14</td>
+                <td><span class="f-state f-state--end">закривається</span></td>
+              </tr>
+              <tr>
+                <td class="f-time" data-ends="1080">18:00</td>
+                <td>A-4402</td>
+                <td><span class="f-veh">VOLKSWAGEN GOLF VII GTI</span><div class="f-sub">2017 · 121 000 км · Львів</div></td>
+                <td class="f-amt">$16 450</td>
+                <td>31</td>
+                <td><span class="f-state f-state--go">торги йдуть</span></td>
+              </tr>
+              <tr>
+                <td class="f-time" data-ends="3540">59:00</td>
+                <td>A-4411</td>
+                <td><span class="f-veh">BMW 320d F30 XDRIVE</span><div class="f-sub">2016 · 168 000 км · Одеса</div></td>
+                <td class="f-amt">$15 700</td>
+                <td>11</td>
+                <td><span class="f-state f-state--go">торги йдуть</span></td>
+              </tr>
+              <tr>
+                <td class="f-time" data-ends="8073">02:14:33</td>
+                <td>A-4417</td>
+                <td><span class="f-veh">BMW X5 XDRIVE30D G05</span><div class="f-sub">2019 · 128 000 км · Київ</div></td>
+                <td class="f-amt">$41 250</td>
+                <td>23</td>
+                <td><span class="f-state f-state--go">торги йдуть</span></td>
+              </tr>
+              <tr>
+                <td class="f-time" data-ends="19320">05:22:00</td>
+                <td>A-4431</td>
+                <td><span class="f-veh">MAZDA CX-5 TOURING</span><div class="f-sub">2019 · 88 000 км · Дніпро</div></td>
+                <td class="f-amt">$19 100</td>
+                <td>8</td>
+                <td><span class="f-state f-state--go">торги йдуть</span></td>
+              </tr>
+              <tr>
+                <td class="f-time" data-ends="100800">1 д 04:00</td>
+                <td>A-4425</td>
+                <td><span class="f-veh">TESLA MODEL 3 LONG RANGE</span><div class="f-sub">2021 · 64 000 км · Київ</div></td>
+                <td class="f-amt">$24 900</td>
+                <td>6</td>
+                <td><span class="f-state f-state--res">резерв не досягнуто</span></td>
+              </tr>
+              <tr>
+                <td class="f-time">завтра 11:00</td>
+                <td>A-4448</td>
+                <td><span class="f-veh">AUDI Q5 2.0 TDI QUATTRO</span><div class="f-sub">2017 · 156 000 км · Львів</div></td>
+                <td class="f-amt">$22 000</td>
+                <td>—</td>
+                <td><span class="f-state f-state--wait">очікує старту</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="wrap f-gate">
+        <div style="display:grid;gap:18px">
+          <div class="f-panel">
+            <div class="f-panel__h"><span>Лот A-4417</span><span>9 учасників онлайн</span></div>
+            <div class="f-shot"><svg aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="f-panel__b" style="padding-bottom:0">
+              <div>
+                <div class="f-veh" style="font-size:17px;letter-spacing:.06em">BMW X5 XDRIVE30D G05</div>
+                <div class="f-sub" style="margin-top:3px">2019 · 128 000 км · 3.0 дизель · автомат · Київ, Оболонь</div>
+              </div>
+            </div>
+            <dl class="f-kv" style="margin-top:14px">
+              <div><dt>Старт</dt><dd>$34 000</dd></div>
+              <div><dt>Крок</dt><dd>$250</dd></div>
+              <div><dt>Резерв</dt><dd style="color:var(--green)">досягнуто</dd></div>
+              <div><dt>Продовження</dt><dd>3 хв</dd></div>
+            </dl>
+          </div>
+
+          <div class="f-panel">
+            <div class="f-panel__h"><span>Журнал ставок</span><span>23 записи</span></div>
+            <div class="f-log">
+              <div><span class="f-ts">14:02:11</span><span>o***v_87 · авто</span><span class="f-amt" style="color:var(--amber)">$41 250</span></div>
+              <div><span class="f-ts">14:00:48</span><span>Andrii_K</span><span class="f-amt">$41 000</span></div>
+              <div><span class="f-ts">14:00:47</span><span>o***v_87 · авто</span><span class="f-amt">$40 750</span></div>
+              <div><span class="f-ts">13:55:02</span><span>m***a_zt</span><span class="f-amt">$40 500</span></div>
+              <div><span class="f-ts">13:50:19</span><span>Andrii_K</span><span class="f-amt">$39 800</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="f-panel">
+          <div class="f-panel__h"><span>Ставка</span><span style="color:var(--green)">● онлайн</span></div>
+          <div class="f-panel__b">
+            <div>
+              <div class="f-lab">Поточна ставка</div>
+              <div class="f-price">$41 250</div>
+            </div>
+
+            <div>
+              <div class="f-caption" style="margin-bottom:7px">До закриття лота</div>
+              <div class="f-flap" data-flap data-ends="8073"></div>
+            </div>
+
+            <div>
+              <div class="f-lab" style="margin-bottom:6px">Ваша ставка · мінімум $41 500</div>
+              <input class="f-input" type="text" value="41 500" inputmode="numeric" aria-label="Сума ставки">
+            </div>
+
+            <button class="f-btn">Подати ставку</button>
+            <button class="f-btn f-btn--plain">Автоставка до $45 000</button>
+
+            <div class="f-note">Ставка в останні <b>3 хвилини</b> відсуває закриття на 3 хвилини. Депозит <b>8 000 ₴</b> заблоковано.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brief">
+      <div class="wrap brief__grid">
+        <div>
+          <span class="brief__eyebrow">Напрямок 7</span>
+          <h3>Табло</h3>
+          <div class="swatches">
+            <i style="background:#0C0C0E"></i><i style="background:#FFB000"></i><i style="background:#E8E6E1"></i><i style="background:#4FB980"></i><i style="background:#E8443A"></i>
+          </div>
+        </div>
+        <ul>
+          <li><b>Метафора — вокзальне табло.</b> Сайт упорядкований за часом закриття, а не за маркою: головне питання аукціону це «коли», а не «що».</li>
+          <li><b>Механічні клапани справді перевертаються.</b> Кожна цифра в окремій комірці з поперечним швом; змінилась — перекинулась. Подивись на секунди.</li>
+          <li><b>Бурштин на майже чорному</b> — це не стилізація під ретро, а колір, який десятиліттями означає «розклад».</li>
+          <li><b>Продовження торгів отримує фізичний сенс:</b> рядок відсувається вниз таблиці, як затриманий рейс.</li>
+          <li><b>Кому підходить:</b> сайту, де торги йдуть сесіями за розкладом, а не безперервно.</li>
+          <li><b>Ризик:</b> формат розкладу погано вміщає фотографії, а їх на авторинку дивляться першими.</li>
+        </ul>
+      </div>
+      <div class="wrap worldnote">Напрямок навмисно існує лише в темній версії — світле табло не читається як табло.</div>
+    </div>
+  </section>
+
+  <!-- ============================ 8. КРЕСЛЕННЯ ============================ -->
+  <section id="dir-draft" hidden>
+    <div class="g">
+      <div class="g-bar">
+        <div class="wrap g-bar__in">
+          <span class="g-word">Autolot</span>
+          <nav class="g-nav">
+            <a href="#">Каталог</a>
+            <a href="#">Торги</a>
+            <a href="#">Салони</a>
+            <a href="#">Оцінка</a>
+          </nav>
+        </div>
+      </div>
+
+      <div class="wrap">
+        <div class="g-sheet">
+          <div class="g-title">
+            <h1>BMW X5 xDrive30d G05</h1>
+            <span class="g-mono">Лот A-4417 · вид збоку · масштаб 1:20</span>
+          </div>
+
+          <div class="g-draw">
+            <svg viewBox="0 0 720 330" role="img" aria-label="Креслення автомобіля збоку з розмірами">
+              <g fill="none" stroke="#5C8496" stroke-width="1">
+                <line x1="84" y1="252" x2="84" y2="296"/>
+                <line x1="636" y1="252" x2="636" y2="296"/>
+                <line x1="200" y1="252" x2="200" y2="274"/>
+                <line x1="540" y1="252" x2="540" y2="274"/>
+                <line x1="70" y1="62" x2="42" y2="62"/>
+                <line x1="70" y1="246" x2="42" y2="246"/>
+              </g>
+
+              <g stroke="#5C8496" stroke-width="1">
+                <line x1="84" y1="290" x2="636" y2="290"/>
+                <line x1="200" y1="268" x2="540" y2="268"/>
+                <line x1="48" y1="62" x2="48" y2="246"/>
+                <g stroke-width="1.4">
+                  <line x1="79" y1="285" x2="89" y2="295"/>
+                  <line x1="631" y1="285" x2="641" y2="295"/>
+                  <line x1="195" y1="263" x2="205" y2="273"/>
+                  <line x1="535" y1="263" x2="545" y2="273"/>
+                  <line x1="43" y1="67" x2="53" y2="57"/>
+                  <line x1="43" y1="251" x2="53" y2="241"/>
+                </g>
+              </g>
+
+              <g font-family="Cascadia Mono, ui-monospace, Consolas, monospace" font-size="12" fill="#5C8496" letter-spacing="1">
+                <rect x="326" y="279" width="74" height="16" fill="#F4F7F8"/>
+                <text x="333" y="291">4 922 мм</text>
+                <rect x="332" y="257" width="74" height="16" fill="#F4F7F8"/>
+                <text x="339" y="269">2 975 мм</text>
+                <text x="20" y="160" transform="rotate(-90 20 160)">1 745 мм</text>
+              </g>
+
+              <line x1="60" y1="246" x2="664" y2="246" stroke="#1F3A47" stroke-width="1.6"/>
+
+              <path d="M84 206 L84 174 C84 160 92 152 106 148 L206 128 L262 80 C274 68 290 62 308 62 L450 62 C468 62 482 68 492 80 L540 134 L608 148 C626 152 636 160 636 174 L636 206 L584 206 A44 44 0 0 1 496 206 L244 206 A44 44 0 0 1 156 206 Z"
+                    fill="#FFFFFF" stroke="#1F3A47" stroke-width="2"/>
+
+              <path d="M234 122 L276 80 C284 72 294 68 306 68 L446 68 C458 68 468 72 476 82 L516 128 Z"
+                    fill="#E7EEF1" stroke="#5C8496" stroke-width="1.4"/>
+              <line x1="352" y1="68" x2="336" y2="126" stroke="#5C8496" stroke-width="1.4"/>
+              <line x1="430" y1="68" x2="440" y2="128" stroke="#5C8496" stroke-width="1.4"/>
+
+              <g fill="none" stroke="#1F3A47" stroke-width="2">
+                <circle cx="200" cy="206" r="40"/>
+                <circle cx="540" cy="206" r="40"/>
+              </g>
+              <g fill="none" stroke="#5C8496" stroke-width="1.4">
+                <circle cx="200" cy="206" r="18"/>
+                <circle cx="540" cy="206" r="18"/>
+              </g>
+
+              <g stroke="#B23A2E" stroke-width="1" fill="none">
+                <circle cx="380" cy="64" r="3.2" fill="#B23A2E"/>
+                <path d="M380 64 L380 34 L452 34"/>
+                <circle cx="540" cy="166" r="3.2" fill="#B23A2E"/>
+                <path d="M540 166 L604 118 L678 118"/>
+              </g>
+              <g font-family="Cascadia Mono, ui-monospace, Consolas, monospace" font-size="11" fill="#B23A2E" letter-spacing="1">
+                <text x="456" y="31">КУЗОВ · ПОЗАШЛЯХОВИК</text>
+                <text x="600" y="112">ПРИВІД · ПОВНИЙ</text>
+              </g>
+            </svg>
+          </div>
+
+          <dl class="g-block">
+            <div><dt>Лот</dt><dd>A-4417</dd></div>
+            <div><dt>Рік</dt><dd>2019</dd></div>
+            <div><dt>Пробіг</dt><dd>128 000 км</dd></div>
+            <div><dt>Двигун</dt><dd>3.0 дизель</dd></div>
+            <div><dt>Оглянув</dt><dd>СТО «Оболонь»</dd></div>
+            <div><dt>Дата</dt><dd>14.08.2026</dd></div>
+          </dl>
+        </div>
+
+        <div class="g-two">
+          <div style="display:grid;gap:22px">
+            <div class="g-spec">
+              <div class="g-spec__h"><span>Специфікація</span><span>арк. 1 з 3</span></div>
+              <table>
+                <tr><td>Коробка передач</td><td>Автоматична, 8 ст.</td></tr>
+                <tr><td>Потужність</td><td>265 к.с.</td></tr>
+                <tr><td>Споряджена маса</td><td>2 110 кг</td></tr>
+                <tr><td>Кліренс</td><td>214 мм</td></tr>
+                <tr><td>Об'єм багажника</td><td>650 л</td></tr>
+                <tr><td>Кількість власників</td><td>1</td></tr>
+                <tr><td>Участь у ДТП</td><td>Не зафіксовано</td></tr>
+                <tr><td>Ідентифікаційний номер</td><td>WBAJA71050B*****</td></tr>
+              </table>
+            </div>
+
+            <div class="g-spec">
+              <div class="g-spec__h"><span>Аркуш змін · ставки</span><span>23 записи</span></div>
+              <table class="g-log">
+                <tr><td>23</td><td>14:02:11</td><td>o***v_87 · авто</td><td style="text-align:right">$41 250</td></tr>
+                <tr><td>22</td><td>14:00:48</td><td>Andrii_K</td><td style="text-align:right">$41 000</td></tr>
+                <tr><td>21</td><td>14:00:47</td><td>o***v_87 · авто</td><td style="text-align:right">$40 750</td></tr>
+                <tr><td>20</td><td>13:55:02</td><td>m***a_zt</td><td style="text-align:right">$40 500</td></tr>
+                <tr><td>19</td><td>13:50:19</td><td>Andrii_K</td><td style="text-align:right">$39 800</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="g-spec g-act">
+            <div class="g-rev">
+              <span>Торги тривають</span>
+              <b data-ends="8073">02:14:33</b>
+            </div>
+
+            <div>
+              <div style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)">Поточна ставка · 23</div>
+              <div class="g-big">$41 250</div>
+              <div class="g-mono" style="font-size:12px;color:var(--mid);margin-top:3px">1 724 250 ₴ · 38 074 €</div>
+            </div>
+
+            <div>
+              <div style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin-bottom:5px">Ваша ставка · мін. $41 500</div>
+              <input class="g-input" type="text" value="41 500" inputmode="numeric" aria-label="Сума ставки">
+            </div>
+
+            <button class="g-btn">Подати ставку</button>
+            <button class="g-btn g-btn--plain">Автоставка до $45 000</button>
+
+            <table style="width:100%;border-collapse:collapse">
+              <tr><td style="padding:7px 0;border-bottom:1px dotted var(--faint);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)">Крок</td><td class="g-mono" style="padding:7px 0;border-bottom:1px dotted var(--faint);text-align:right;font-size:13px">$250</td></tr>
+              <tr><td style="padding:7px 0;border-bottom:1px dotted var(--faint);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)">Резерв</td><td class="g-mono" style="padding:7px 0;border-bottom:1px dotted var(--faint);text-align:right;font-size:13px">досягнуто</td></tr>
+              <tr><td style="padding:7px 0;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)">Депозит</td><td class="g-mono" style="padding:7px 0;text-align:right;font-size:13px">8 000 ₴</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brief">
+      <div class="wrap brief__grid">
+        <div>
+          <span class="brief__eyebrow">Напрямок 8</span>
+          <h3>Креслення</h3>
+          <div class="swatches">
+            <i style="background:#E9EDEF"></i><i style="background:#1F3A47"></i><i style="background:#5C8496"></i><i style="background:#B23A2E"></i>
+          </div>
+        </div>
+        <ul>
+          <li><b>Метафора — інженерне креслення.</b> Авто показане ортогонально, з винесеними розмірами: довжина, база, висота. Не фото, а схема.</li>
+          <li><b>Характеристики стають виносками</b> з лініями-указниками — так, як їх підписують на кресленні.</li>
+          <li><b>Штамп унизу аркуша</b> природно вміщає те, що зазвичай ніде не вміщається: хто оглянув, коли, який номер лота.</li>
+          <li><b>Історія ставок — це «аркуш змін»</b>, стандартна частина будь-якого креслення. Метафора лягає точно.</li>
+          <li><b>Кому підходить:</b> аудиторії, яка вибирає авто за цифрами, а не за емоцією.</li>
+          <li><b>Ризик:</b> малюнок треба десь брати. На реальному сайті це будуть фото, і половина чарівності зникне.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 9. СТРІЧКА ============================ -->
+  <section id="dir-mob" hidden>
+    <div class="m">
+      <div class="wrap m-head">
+        <h1>Спершу телефон, десктоп — похідне</h1>
+        <p>Це не нова палітра, а перша — «Приладова панель» — перекладена на екран, з якого приходить більшість трафіку авторинку. Змінюється не оформлення, а структура.</p>
+      </div>
+
+      <div class="wrap m-row">
+
+        <!-- телефон 1: стрічка -->
+        <div class="m-col">
+          <div class="m-phone">
+            <div class="m-island"></div>
+            <div class="m-status"><span>14:02</span><span>▮▮▮ 78%</span></div>
+            <div class="m-screen">
+              <div class="m-appbar">
+                <span class="m-logo">AUTO<em>LOT</em></span>
+                <span class="m-chip">214 у торгах</span>
+              </div>
+              <div class="m-feed">
+                <div class="m-slide">
+                  <svg aria-hidden="true"><use href="#car"/></svg>
+                  <span class="m-live" data-ends="8073">02:14:33</span>
+                  <div class="m-over">
+                    <h3>BMW X5 xDrive30d</h3>
+                    <p>2019 · 128 000 км · 3.0 дизель · Київ</p>
+                    <div class="m-priceline">
+                      <b>$41 250</b>
+                      <span>23 ставки · резерв ✓</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="m-peek">
+                  <div class="m-peek__ph"><svg aria-hidden="true"><use href="#car"/></svg></div>
+                  <div>
+                    <b>Toyota Prado 150</b>
+                    <span>$27 800 · закривається</span>
+                  </div>
+                  <span class="m-live is-urgent" style="position:static;margin-left:auto" data-ends="66" data-extend="1">01:06</span>
+                </div>
+              </div>
+              <div class="m-dock">
+                <button class="m-btn--ghost m-btn">♡</button>
+                <button class="m-btn">Ставка $41 500</button>
+              </div>
+            </div>
+          </div>
+          <div class="m-cap"><b>Стрічка торгів</b>Один лот на екран, гортання вгору. Таймер завжди у полі зору, ставка — в один дотик великим пальцем.</div>
+        </div>
+
+        <!-- телефон 2: лот -->
+        <div class="m-col">
+          <div class="m-phone">
+            <div class="m-island"></div>
+            <div class="m-status"><span>14:02</span><span>▮▮▮ 78%</span></div>
+            <div class="m-screen">
+              <div class="m-appbar">
+                <span style="font-size:17px">←</span>
+                <span class="m-logo" style="font-size:13.5px">Лот A-4417</span>
+                <span class="m-chip" style="background:#FBEBD8;color:#B96100">● торги</span>
+              </div>
+              <div class="m-scroll">
+                <div class="m-hero"><svg aria-hidden="true"><use href="#car"/></svg></div>
+                <div>
+                  <h3 class="m-h2">BMW X5 xDrive30d G05</h3>
+                  <div class="m-meta">2019 · 128 000 км · автомат · Київ</div>
+                </div>
+
+                <div class="m-cdbig">
+                  <div><b data-cd="h">02</b><span>год</span></div>
+                  <div><b data-cd="m">14</b><span>хв</span></div>
+                  <div><b data-cd="s">33</b><span>сек</span></div>
+                </div>
+
+                <div class="m-bidbox">
+                  <span class="m-lab">Поточна ставка · 23</span>
+                  <b>$41 250</b>
+                  <span class="m-pill m-pill--good" style="justify-self:start">Резерв досягнуто</span>
+                </div>
+
+                <div class="m-quick">
+                  <button>+$250</button>
+                  <button>+$500</button>
+                  <button>+$1 000</button>
+                </div>
+
+                <div class="m-list">
+                  <div><span class="m-av">ОК</span>o***v_87<b>$41 250</b></div>
+                  <div><span class="m-av">АК</span>Andrii_K<b>$41 000</b></div>
+                  <div><span class="m-av">МЗ</span>m***a_zt<b>$40 500</b></div>
+                </div>
+              </div>
+              <div class="m-dock">
+                <button class="m-btn--ghost m-btn">⚙</button>
+                <button class="m-btn">Зробити ставку</button>
+              </div>
+            </div>
+          </div>
+          <div class="m-cap"><b>Сторінка лота</b>Швидкі кнопки кроку замість клавіатури. Головна дія прибита до низу екрана й не їде при гортанні.</div>
+        </div>
+
+        <!-- телефон 3: мої ставки -->
+        <div class="m-col">
+          <div class="m-phone">
+            <div class="m-island"></div>
+            <div class="m-status"><span>14:03</span><span>▮▮▮ 77%</span></div>
+            <div class="m-screen">
+              <div class="m-appbar">
+                <span class="m-logo" style="font-size:14px">Мої ставки</span>
+                <span class="m-chip">3 активні</span>
+              </div>
+              <div class="m-scroll">
+                <div class="m-push">
+                  <div class="m-lab"><i></i>AutoLot · щойно</div>
+                  <b>Вашу ставку перебито</b>
+                  <span>Volkswagen Golf VII GTI — зараз $16 450. До закриття 18 хвилин.</span>
+                </div>
+
+                <div class="m-stake">
+                  <div class="m-stake__t">
+                    <b>BMW X5 xDrive30d</b>
+                    <span class="m-pill m-pill--good">Лідируєте</span>
+                  </div>
+                  <div class="m-stake__b">
+                    <span>ваш максимум $45 000</span>
+                    <b>$41 250</b>
+                  </div>
+                  <div class="m-stake__b">
+                    <span>до закриття</span>
+                    <span class="m-stake__cd" data-ends="8073">02:14:33</span>
+                  </div>
+                </div>
+
+                <div class="m-stake" style="border-color:#AF2F26">
+                  <div class="m-stake__t">
+                    <b>VW Golf VII GTI</b>
+                    <span class="m-pill m-pill--warn">Перебито</span>
+                  </div>
+                  <div class="m-stake__b">
+                    <span>ваш максимум $16 000</span>
+                    <b>$16 450</b>
+                  </div>
+                  <div class="m-stake__b">
+                    <span>до закриття</span>
+                    <span class="m-stake__cd" data-ends="1080">18:00</span>
+                  </div>
+                  <button class="m-btn" style="margin-top:4px;padding:9px">Підняти максимум</button>
+                </div>
+
+                <div class="m-stake">
+                  <div class="m-stake__t">
+                    <b>Tesla Model 3 LR</b>
+                    <span class="m-pill m-pill--live">Резерв ✗</span>
+                  </div>
+                  <div class="m-stake__b">
+                    <span>ваш максимум $26 000</span>
+                    <b>$24 900</b>
+                  </div>
+                </div>
+              </div>
+              <div class="m-dock">
+                <button class="m-btn m-btn--accent">Гаманець · 4 000 ₴ вільно</button>
+              </div>
+            </div>
+          </div>
+          <div class="m-cap"><b>Мої ставки й сповіщення</b>Push «вас перебили» — головний повторний вхід у застосунок. Кнопка виправлення стоїть просто в картці.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="brief">
+      <div class="wrap brief__grid">
+        <div>
+          <span class="brief__eyebrow">Напрямок 9</span>
+          <h3>Стрічка</h3>
+          <div class="swatches">
+            <i style="background:#E9ECEF"></i><i style="background:#101720"></i><i style="background:#0E6B74"></i><i style="background:#B96100"></i>
+          </div>
+        </div>
+        <ul>
+          <li><b>Це не десятий стиль, а перевірка першого.</b> Палітра «Приладової панелі» без змін — інша тільки структура.</li>
+          <li><b>Один лот на екран замість сітки.</b> На телефоні сітка карток перетворюється на нескінченне гортання дрібниць.</li>
+          <li><b>Ставка в один дотик.</b> Кроки +$250 / +$500 / +$1 000 замість клавіатури — на торгах рахунок іде на секунди.</li>
+          <li><b>Головна дія прибита до низу</b>, у зону великого пальця, і не їде при гортанні.</li>
+          <li><b>Push «вас перебили» — це продукт, а не дрібниця.</b> Саме він повертає користувача, і проєктувати його треба разом з екраном.</li>
+          <li><b>Висновок:</b> обраний напрямок варто перевіряти на телефоні одразу, інакше десктопна сітка потягне за собою рішення, які на мобільному розсипляться.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  (function () {
+    "use strict";
+
+    var tabs = Array.prototype.slice.call(document.querySelectorAll(".dtab"));
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        tabs.forEach(function (t) {
+          var on = t === tab;
+          t.setAttribute("aria-selected", String(on));
+          document.getElementById("dir-" + t.dataset.dir).hidden = !on;
+        });
+        window.scrollTo({ top: 0, behavior: "instant" });
+      });
+    });
+
+    function pad(n) { return n < 10 ? "0" + n : String(n); }
+
+    function textFor(s) {
+      var d = Math.floor(s / 86400);
+      var h = Math.floor((s % 86400) / 3600);
+      var m = Math.floor((s % 3600) / 60);
+      var sec = s % 60;
+      if (s === 0) return "Завершено";
+      if (d) return d + " д " + pad(h) + ":" + pad(m);
+      if (h) return pad(h) + ":" + pad(m) + ":" + pad(sec);
+      return pad(m) + ":" + pad(sec);
+    }
+
+    /* --- механічні клапани --- */
+
+    function flapChars(s) {
+      var h = Math.floor(s / 3600);
+      var m = Math.floor((s % 3600) / 60);
+      var sec = s % 60;
+      return (h ? pad(h) + ":" : "") + pad(m) + ":" + pad(sec);
+    }
+
+    function renderFlap(el, s) {
+      var want = flapChars(s);
+      if (el.children.length !== want.length) {
+        el.textContent = "";
+        for (var i = 0; i < want.length; i++) {
+          var cell = document.createElement("span");
+          cell.className = "f-cell" + (want[i] === ":" ? " f-cell--sep" : "");
+          cell.textContent = want[i];
+          el.appendChild(cell);
+        }
+        return;
+      }
+      for (var j = 0; j < want.length; j++) {
+        var c = el.children[j];
+        if (c.textContent !== want[j]) {
+          c.textContent = want[j];
+          c.classList.remove("is-flip");
+          void c.offsetWidth;
+          c.classList.add("is-flip");
+        }
+      }
+    }
+
+    /* --- збір усіх годинників --- */
+
+    var clocks = [];
+
+    document.querySelectorAll("[data-ends]").forEach(function (el) {
+      clocks.push({ el: el, left: Number(el.dataset.ends), extended: false, flap: el.hasAttribute("data-flap") });
+    });
+
+    var cdBig = document.querySelector(".m-cdbig");
+
+    function paint(clock) {
+      var s = Math.max(0, Math.floor(clock.left));
+      if (clock.flap) renderFlap(clock.el, s);
+      else clock.el.textContent = textFor(s);
+      clock.el.classList.toggle("is-urgent", s > 0 && s < 300);
+    }
+
+    clocks.forEach(paint);
+
+    setInterval(function () {
+      clocks.forEach(function (clock) {
+        if (clock.left <= 0) return;
+        clock.left -= 1;
+        if (clock.left <= 0 && clock.el.dataset.extend && !clock.extended) {
+          clock.extended = true;
+          clock.left = 180;
+        }
+        paint(clock);
+      });
+
+      if (cdBig) {
+        var main = clocks.filter(function (c) { return c.el.dataset.ends === "8073"; })[0];
+        if (main) {
+          var s = Math.max(0, Math.floor(main.left));
+          cdBig.querySelector('[data-cd="h"]').textContent = pad(Math.floor(s / 3600));
+          cdBig.querySelector('[data-cd="m"]').textContent = pad(Math.floor((s % 3600) / 60));
+          cdBig.querySelector('[data-cd="s"]').textContent = pad(s % 60);
+        }
+      }
+    }, 1000);
+
+    document.getElementById("themeToggle").addEventListener("click", function () {
+      var root = document.documentElement;
+      var dark = root.dataset.theme
+        ? root.dataset.theme === "dark"
+        : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      root.dataset.theme = dark ? "light" : "dark";
+    });
+  })();
+</script>

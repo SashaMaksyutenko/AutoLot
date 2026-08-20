@@ -1,0 +1,30 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+artifacts/
+
+# Node
+node_modules/
+dist/
+.vite/
+*.local
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+appsettings.*.Local.json
+
+# Tooling
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+coverage/
+TestResults/
+
+# Local uploads
+uploads/

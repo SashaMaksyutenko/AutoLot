@@ -1,0 +1,2367 @@
+<title>AutoLot</title>
+
+<style>
+  :root {
+    --ground: #EFF2F5;
+    --surface: #FFFFFF;
+    --surface-2: #F6F8FA;
+    --surface-3: #E4EAF0;
+    --ink: #101720;
+    --ink-2: #586574;
+    --ink-3: #8794A3;
+    --line: #DBE1E9;
+    --accent: #0E6B74;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #DFEFF0;
+    --signal: #B96100;
+    --signal-soft: #FBEBD8;
+    --danger: #AF2F26;
+    --danger-soft: #FAE4E1;
+    --good: #1C7350;
+    --good-soft: #E0F1E8;
+    --shadow: 0 1px 2px rgba(16, 23, 32, .05), 0 8px 24px -12px rgba(16, 23, 32, .18);
+    --deck: #131A23;
+    --deck-ink: #DCE4EC;
+
+    --display: "Bahnschrift", "DIN Alternate", "Avenir Next Condensed", "Segoe UI Variable Display", system-ui, sans-serif;
+    --body: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --mono: "Cascadia Mono", "SF Mono", ui-monospace, Consolas, monospace;
+
+    --r: 10px;
+    --r-sm: 6px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0B0F15;
+      --surface: #141A23;
+      --surface-2: #1A212B;
+      --surface-3: #232C39;
+      --ink: #E9EEF4;
+      --ink-2: #97A5B4;
+      --ink-3: #6B7A8A;
+      --line: #263140;
+      --accent: #35A8B2;
+      --accent-ink: #04191C;
+      --accent-soft: #0F3138;
+      --signal: #F0A02B;
+      --signal-soft: #38290F;
+      --danger: #F0685A;
+      --danger-soft: #391C19;
+      --good: #4FC08D;
+      --good-soft: #0F2C21;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .7);
+      --deck: #06090D;
+      --deck-ink: #C3CFDB;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0B0F15;
+    --surface: #141A23;
+    --surface-2: #1A212B;
+    --surface-3: #232C39;
+    --ink: #E9EEF4;
+    --ink-2: #97A5B4;
+    --ink-3: #6B7A8A;
+    --line: #263140;
+    --accent: #35A8B2;
+    --accent-ink: #04191C;
+    --accent-soft: #0F3138;
+    --signal: #F0A02B;
+    --signal-soft: #38290F;
+    --danger: #F0685A;
+    --danger-soft: #391C19;
+    --good: #4FC08D;
+    --good-soft: #0F2C21;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .7);
+    --deck: #06090D;
+    --deck-ink: #C3CFDB;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--display);
+    font-variation-settings: "wdth" 90, "wght" 700;
+    font-weight: 700;
+    text-wrap: balance;
+    margin: 0;
+    line-height: 1.12;
+    letter-spacing: .002em;
+  }
+
+  a { color: inherit; }
+  button, input, select { font: inherit; color: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  .wrap { width: min(1200px, 100% - 40px); margin-inline: auto; }
+
+  /* ---------- deck chrome ---------- */
+
+  .deck {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: var(--deck);
+    color: var(--deck-ink);
+    border-bottom: 1px solid rgba(255, 255, 255, .09);
+  }
+
+  .deck__inner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    min-height: 52px;
+    padding-block: 7px;
+    flex-wrap: wrap;
+  }
+
+  .deck__label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: #7C8C9C;
+    white-space: nowrap;
+  }
+
+  .deck__tabs {
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    margin-inline-end: auto;
+  }
+
+  .tab {
+    appearance: none;
+    background: none;
+    border: 0;
+    border-radius: var(--r-sm);
+    padding: 6px 11px;
+    font-family: var(--display);
+    font-variation-settings: "wdth" 90, "wght" 600;
+    font-size: 14px;
+    color: #93A2B2;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .tab:hover { color: #E4ECF3; background: rgba(255, 255, 255, .06); }
+  .tab[aria-selected="true"] { color: var(--deck); background: #F0A02B; }
+
+  .icon-btn {
+    appearance: none;
+    background: rgba(255, 255, 255, .07);
+    border: 1px solid rgba(255, 255, 255, .12);
+    color: var(--deck-ink);
+    border-radius: var(--r-sm);
+    width: 32px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  .icon-btn:hover { background: rgba(255, 255, 255, .14); }
+  .icon-btn svg { width: 15px; height: 15px; fill: currentColor; }
+
+  /* ---------- app bar ---------- */
+
+  .appbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .appbar__inner {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    min-height: 62px;
+    flex-wrap: wrap;
+    padding-block: 9px;
+  }
+
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+
+  .brand__mark {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--r-sm);
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: var(--display);
+    font-variation-settings: "wdth" 82, "wght" 700;
+    font-size: 14px;
+    letter-spacing: .04em;
+  }
+
+  .brand__word {
+    font-family: var(--display);
+    font-variation-settings: "wdth" 85, "wght" 700;
+    font-size: 21px;
+    letter-spacing: .01em;
+  }
+
+  .brand__word em {
+    font-style: normal;
+    color: var(--accent);
+    border-bottom: 3px solid var(--signal);
+    padding-bottom: 1px;
+  }
+
+  .appnav { display: flex; gap: 20px; margin-inline-end: auto; flex-wrap: wrap; }
+
+  .appnav a {
+    text-decoration: none;
+    font-size: 14.5px;
+    color: var(--ink-2);
+    padding-block: 4px;
+    border-bottom: 2px solid transparent;
+  }
+
+  .appnav a:hover { color: var(--ink); }
+  .appnav a[aria-current] { color: var(--ink); border-bottom-color: var(--accent); }
+
+  .appbar__tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .seg {
+    display: flex;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    padding: 2px;
+    gap: 2px;
+  }
+
+  .seg button {
+    appearance: none;
+    border: 0;
+    background: none;
+    border-radius: 4px;
+    padding: 3px 9px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+
+  .seg button:hover { color: var(--ink); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+
+  .avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--surface-3);
+    color: var(--ink-2);
+    display: grid;
+    place-items: center;
+    font-family: var(--display);
+    font-size: 12.5px;
+    font-variation-settings: "wdth" 88, "wght" 700;
+    flex: none;
+  }
+
+  /* ---------- primitives ---------- */
+
+  .btn {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: var(--r-sm);
+    padding: 8px 15px;
+    font-family: var(--display);
+    font-variation-settings: "wdth" 92, "wght" 600;
+    font-size: 14.5px;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .btn:hover { border-color: var(--ink-3); }
+
+  .btn--primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .btn--primary:hover { filter: brightness(1.08); border-color: var(--accent); }
+
+  .btn--bid {
+    background: var(--signal);
+    border-color: var(--signal);
+    color: #FFF;
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 16px;
+  }
+
+  :root[data-theme="dark"] .btn--bid { color: #2A1B04; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn--bid { color: #2A1B04; } }
+
+  .btn--bid:hover { filter: brightness(1.06); border-color: var(--signal); }
+  .btn--block { width: 100%; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 999px;
+    padding: 2px 9px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    background: var(--surface-3);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  .pill--live { background: var(--signal-soft); color: var(--signal); }
+  .pill--good { background: var(--good-soft); color: var(--good); }
+  .pill--warn { background: var(--danger-soft); color: var(--danger); }
+  .pill--accent { background: var(--accent-soft); color: var(--accent); }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+  }
+
+  .pill--live .dot { animation: blip 1.6s ease-in-out infinite; }
+
+  @keyframes blip { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .muted { color: var(--ink-2); }
+  .faint { color: var(--ink-3); }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .field > span {
+    font-size: 11.5px;
+    color: var(--ink-2);
+    font-weight: 600;
+  }
+
+  .field input, .field select {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    padding: 8px 10px;
+    font-size: 14px;
+    width: 100%;
+  }
+
+  /* ---------- photo placeholder ---------- */
+
+  .photo {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--line);
+    background: radial-gradient(115% 85% at 50% 12%, var(--surface-2), var(--surface-3));
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .photo__glyph { width: 58%; color: var(--ink-3); opacity: .38; }
+  .photo--hero { aspect-ratio: 16 / 10; }
+  .photo--thumb { aspect-ratio: 4 / 3; border-radius: 5px; }
+  .photo--thumb .photo__glyph { width: 66%; opacity: .3; }
+
+  .photo__tag {
+    position: absolute;
+    left: 8px;
+    bottom: 7px;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .photo__badges {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  .photo__count {
+    position: absolute;
+    right: 8px;
+    bottom: 7px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    background: rgba(16, 23, 32, .68);
+    color: #E9EEF4;
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+
+  /* ---------- screens ---------- */
+
+  .screen { padding-block: 0 8px; }
+
+  .section { padding-block: 34px; }
+  .section--tight { padding-block: 24px; }
+
+  .section__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .section__head h2 { font-size: 22px; }
+
+  /* hero */
+
+  .hero {
+    position: relative;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(114deg, transparent 0 58px, var(--ink) 58px 60px);
+    opacity: .035;
+    pointer-events: none;
+  }
+
+  .hero__grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+    gap: 44px;
+    padding-block: 46px 40px;
+    align-items: start;
+  }
+
+  .hero h1 { font-size: clamp(30px, 4vw, 44px); max-width: 15ch; }
+  .hero__sub { color: var(--ink-2); max-width: 46ch; margin-top: 14px; }
+
+  .searchbar {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+    gap: 10px;
+    align-items: end;
+    margin-top: 26px;
+    padding: 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+  }
+
+  .stats {
+    display: flex;
+    gap: 30px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+
+  .stats b {
+    display: block;
+    font-family: var(--display);
+    font-variation-settings: "wdth" 88, "wght" 700;
+    font-size: 24px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stats span { font-size: 12.5px; color: var(--ink-2); }
+
+  /* spotlight lot */
+
+  .spot { padding: 16px; display: grid; gap: 14px; }
+
+  .spot__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .spot__price {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .price-lg {
+    font-family: var(--display);
+    font-variation-settings: "wdth" 88, "wght" 700;
+    font-size: 32px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em;
+  }
+
+  /* countdown */
+
+  .cd {
+    display: flex;
+    gap: 6px;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cd__cell {
+    background: var(--surface-3);
+    border-radius: var(--r-sm);
+    padding: 7px 9px 5px;
+    text-align: center;
+    min-width: 50px;
+  }
+
+  .cd__cell b { display: block; font-size: 22px; font-weight: 500; line-height: 1.1; }
+  .cd__cell span { font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+
+  .cd.is-urgent .cd__cell { background: var(--danger-soft); color: var(--danger); }
+  .cd.is-urgent .cd__cell span { color: var(--danger); opacity: .75; }
+
+  .cd-inline {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 13.5px;
+  }
+
+  .cd-inline.is-urgent { color: var(--danger); font-weight: 600; }
+
+  /* card grids */
+
+  .grid { display: grid; gap: 16px; }
+  .grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .lot { padding: 10px; display: grid; gap: 10px; align-content: start; }
+  .lot__body { display: grid; gap: 7px; padding-inline: 2px; }
+
+  .lot__title {
+    font-family: var(--display);
+    font-variation-settings: "wdth" 92, "wght" 600;
+    font-size: 15.5px;
+    line-height: 1.25;
+  }
+
+  .lot__meta { font-size: 12.5px; color: var(--ink-2); }
+
+  .lot__foot {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+  }
+
+  .price-md {
+    font-family: var(--display);
+    font-variation-settings: "wdth" 88, "wght" 700;
+    font-size: 19px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .brand-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .chip {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 999px;
+    padding: 6px 13px;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip b { font-variant-numeric: tabular-nums; color: var(--ink-3); font-weight: 500; font-size: 12px; }
+
+  /* catalog */
+
+  .catalog { display: grid; grid-template-columns: 258px minmax(0, 1fr); gap: 22px; align-items: start; padding-block: 26px; }
+
+  .filters { padding: 4px 16px 16px; position: sticky; top: 70px; }
+
+  .fgroup { padding-block: 14px; border-bottom: 1px solid var(--line); display: grid; gap: 9px; }
+  .fgroup:last-child { border-bottom: 0; }
+
+  .fgroup > h4 { font-size: 12px; font-variation-settings: "wdth" 95, "wght" 700; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); }
+
+  .check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; }
+  .check input { accent-color: var(--accent); width: 15px; height: 15px; }
+  .check span.faint { margin-left: auto; font-family: var(--mono); font-size: 11.5px; }
+
+  .radio-row { display: flex; gap: 0; border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; }
+  .radio-row button { flex: 1; appearance: none; border: 0; background: var(--surface); padding: 7px 4px; font-size: 13px; cursor: pointer; color: var(--ink-2); }
+  .radio-row button + button { border-left: 1px solid var(--line); }
+  .radio-row button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .toolbar h1 { font-size: 25px; }
+
+  /* listing detail */
+
+  .detail { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 26px; padding-block: 26px; align-items: start; }
+  .gallery { display: grid; gap: 8px; }
+  .gallery__thumbs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .gallery__thumbs .photo--thumb:first-child { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .side { display: grid; gap: 16px; position: sticky; top: 70px; }
+  .side__box { padding: 16px; display: grid; gap: 13px; }
+
+  .alt-prices { display: flex; gap: 14px; font-family: var(--mono); font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+  .market {
+    display: grid;
+    gap: 7px;
+    padding: 11px 12px;
+    background: var(--good-soft);
+    border-radius: var(--r-sm);
+  }
+
+  .market__row { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12.5px; color: var(--good); font-weight: 600; }
+
+  .market__bar { position: relative; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--good) 22%, transparent); }
+  .market__bar i { position: absolute; top: -3px; width: 3px; height: 11px; border-radius: 2px; background: var(--good); }
+  .market__bar u { position: absolute; top: -3px; width: 3px; height: 11px; border-radius: 2px; background: var(--ink-3); }
+
+  .specs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; }
+  .specs div { background: var(--surface); padding: 11px 13px; display: grid; gap: 2px; }
+  .specs dt { font-size: 11.5px; color: var(--ink-3); }
+  .specs dd { margin: 0; font-size: 14.5px; font-weight: 600; }
+
+  .seller { display: flex; gap: 12px; align-items: flex-start; }
+  .seller .avatar { width: 42px; height: 42px; font-size: 15px; }
+
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* auction panel */
+
+  .bidpanel { padding: 16px; display: grid; gap: 14px; border-color: var(--signal); }
+
+  .bidpanel__hdr { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+  .snipe {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    background: var(--signal-soft);
+    color: var(--signal);
+    border-radius: var(--r-sm);
+    padding: 9px 11px;
+    font-size: 12.5px;
+    line-height: 1.4;
+  }
+
+  .snipe svg { width: 15px; height: 15px; fill: currentColor; flex: none; margin-top: 1px; }
+
+  .bidrow { display: grid; grid-template-columns: 38px minmax(0, 1fr) 38px; gap: 6px; }
+
+  .bidrow button {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  .bidrow input {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    padding: 9px;
+  }
+
+  .auto-bid { border: 1px dashed var(--line); border-radius: var(--r-sm); padding: 11px 12px; display: grid; gap: 9px; }
+  .auto-bid__top { display: flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 600; }
+  .auto-bid input { accent-color: var(--accent); }
+
+  .terms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; }
+  .terms div { background: var(--surface-2); padding: 11px 13px; display: grid; gap: 3px; }
+  .terms dt { font-size: 11.5px; color: var(--ink-3); }
+  .terms dd { margin: 0; font-size: 14px; font-weight: 600; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* bid feed */
+
+  .feed { display: grid; }
+
+  .feed__row {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 4px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .feed__row:last-child { border-bottom: 0; }
+  .feed__row .avatar { width: 28px; height: 28px; font-size: 11px; }
+  .feed__who { font-size: 13.5px; font-weight: 600; }
+  .feed__when { font-size: 11.5px; color: var(--ink-3); }
+  .feed__amt { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 15px; font-weight: 600; }
+
+  .feed__row--lead { background: var(--signal-soft); border-radius: var(--r-sm); border-bottom-color: transparent; padding-inline: 8px; }
+  .feed__row--lead .feed__amt { color: var(--signal); }
+
+  @keyframes slidein { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .feed__row--new { animation: slidein .35s ease-out; }
+
+  /* dealer */
+
+  .dealer-hd {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dealer-hd::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 84px;
+    background: linear-gradient(100deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--signal)));
+    opacity: .18;
+  }
+
+  .dealer-hd__inner { position: relative; display: flex; gap: 20px; align-items: flex-end; padding-block: 44px 20px; flex-wrap: wrap; }
+
+  .dealer-hd__logo {
+    width: 84px;
+    height: 84px;
+    border-radius: 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    font-family: var(--display);
+    font-variation-settings: "wdth" 84, "wght" 700;
+    font-size: 26px;
+    color: var(--accent);
+    box-shadow: var(--shadow);
+    flex: none;
+  }
+
+  .dealer-hd h1 { font-size: 28px; }
+  .dealer-meta { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); margin-top: 6px; }
+
+  .subtabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+
+  .subtabs button {
+    appearance: none;
+    border: 0;
+    background: none;
+    padding: 10px 14px;
+    font-family: var(--display);
+    font-variation-settings: "wdth" 92, "wght" 600;
+    font-size: 14.5px;
+    color: var(--ink-2);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+
+  .subtabs button[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+  /* account */
+
+  .account { display: grid; grid-template-columns: 218px minmax(0, 1fr); gap: 22px; padding-block: 26px; align-items: start; }
+  .sidenav { padding: 8px; display: grid; gap: 1px; position: sticky; top: 70px; }
+
+  .sidenav a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    text-decoration: none;
+    padding: 8px 11px;
+    border-radius: var(--r-sm);
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+
+  .sidenav a:hover { background: var(--surface-2); color: var(--ink); }
+  .sidenav a[aria-current] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .sidenav a b { font-family: var(--mono); font-size: 11.5px; font-weight: 500; }
+
+  .wallet { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .wallet__box { padding: 14px 16px; display: grid; gap: 3px; }
+  .wallet__box b { font-family: var(--display); font-variation-settings: "wdth" 88, "wght" 700; font-size: 25px; font-variant-numeric: tabular-nums; }
+
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+
+  table { border-collapse: collapse; width: 100%; min-width: 640px; }
+
+  th {
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 600;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-2);
+    white-space: nowrap;
+  }
+
+  td { padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 14px; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num { font-size: 14.5px; font-weight: 600; }
+
+  .tcar { display: flex; align-items: center; gap: 10px; }
+  .tcar .photo { width: 54px; aspect-ratio: 4/3; flex: none; }
+  .tcar .photo__glyph { width: 70%; }
+
+  /* moderation */
+
+  .queue { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 22px; padding-block: 26px; align-items: start; }
+  .counters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .counters__box { padding: 12px 14px; display: grid; gap: 2px; border-left: 3px solid var(--line); }
+  .counters__box b { font-family: var(--display); font-variation-settings: "wdth" 88, "wght" 700; font-size: 23px; font-variant-numeric: tabular-nums; }
+  .counters__box:nth-child(1) { border-left-color: var(--signal); }
+  .counters__box:nth-child(2) { border-left-color: var(--accent); }
+  .counters__box:nth-child(3) { border-left-color: var(--danger); }
+  .counters__box:nth-child(4) { border-left-color: var(--good); }
+
+  .review { padding: 16px; display: grid; gap: 14px; position: sticky; top: 70px; }
+  .reasons { display: grid; gap: 8px; }
+
+  .rowbtns { display: flex; gap: 6px; }
+  .rowbtns .btn { padding: 5px 10px; font-size: 13px; }
+
+  /* notes */
+
+  .notes {
+    border-top: 2px solid var(--ink);
+    background: var(--surface-2);
+    padding-block: 22px 30px;
+    margin-top: 26px;
+  }
+
+  .notes__grid { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 26px; align-items: start; }
+  .notes ul { margin: 0; padding-left: 18px; columns: 2; column-gap: 34px; }
+  .notes li { margin-bottom: 8px; font-size: 13.5px; color: var(--ink-2); break-inside: avoid; }
+  .notes li b { color: var(--ink); font-weight: 600; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  @media (max-width: 1020px) {
+    .hero__grid, .detail, .catalog, .account, .queue { grid-template-columns: minmax(0, 1fr); }
+    .filters, .side, .sidenav, .review { position: static; }
+    .grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .searchbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .notes__grid { grid-template-columns: minmax(0, 1fr); }
+    .notes ul { columns: 1; }
+  }
+
+  @media (max-width: 680px) {
+    .grid--4, .grid--3, .grid--2, .wallet, .counters, .terms, .specs { grid-template-columns: minmax(0, 1fr); }
+    .searchbar { grid-template-columns: minmax(0, 1fr); }
+    .appnav { display: none; }
+  }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="car" viewBox="0 0 120 48">
+    <path d="M10 34c0-5 3-7 8-8l16-3 13-10c3-2 6-3 10-3h18c5 0 8 1 11 4l9 10 9 2c5 1 7 3 7 8v3c0 1-1 2-2 2H12c-1 0-2-1-2-2z"/>
+    <circle cx="36" cy="38" r="8"/>
+    <circle cx="90" cy="38" r="8"/>
+  </symbol>
+  <symbol id="bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></symbol>
+  <symbol id="sun" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10m0-13a1 1 0 0 1-1-1V1a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1m0 20a1 1 0 0 1-1-1v-2a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1M4 13H2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2m18 0h-2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2M5.6 6.99 4.2 5.58a1 1 0 1 1 1.4-1.4l1.4 1.4a1 1 0 0 1-1.4 1.41m12.8 12.8-1.4-1.4a1 1 0 0 1 1.4-1.42l1.4 1.41a1 1 0 0 1-1.4 1.41m-12.8 0a1 1 0 0 1 0-1.41l1.4-1.41a1 1 0 1 1 1.4 1.41l-1.4 1.41a1 1 0 0 1-1.4 0m12.8-12.8a1 1 0 0 1 0-1.41l1.4-1.4a1 1 0 1 1 1.4 1.4l-1.4 1.41a1 1 0 0 1-1.4 0"/></symbol>
+</svg>
+
+<div class="deck">
+  <div class="wrap deck__inner">
+    <span class="deck__label">AutoLot · макет</span>
+    <div class="deck__tabs" role="tablist" aria-label="Екрани">
+      <button class="tab" role="tab" aria-selected="true" data-screen="home">Головна</button>
+      <button class="tab" role="tab" aria-selected="false" data-screen="catalog">Каталог</button>
+      <button class="tab" role="tab" aria-selected="false" data-screen="listing">Оголошення</button>
+      <button class="tab" role="tab" aria-selected="false" data-screen="auction">Аукціон</button>
+      <button class="tab" role="tab" aria-selected="false" data-screen="dealer">Автосалон</button>
+      <button class="tab" role="tab" aria-selected="false" data-screen="account">Кабінет</button>
+      <button class="tab" role="tab" aria-selected="false" data-screen="moderation">Модерація</button>
+    </div>
+    <button class="icon-btn" id="themeToggle" title="Світла / темна тема" aria-label="Перемкнути тему">
+      <svg><use href="#sun"/></svg>
+    </button>
+  </div>
+</div>
+
+<header class="appbar">
+  <div class="wrap appbar__inner">
+    <a class="brand" href="#">
+      <span class="brand__mark">AL</span>
+      <span class="brand__word">AUTO<em>LOT</em></span>
+    </a>
+    <nav class="appnav">
+      <a href="#" aria-current="page">Купити авто</a>
+      <a href="#">Аукціони</a>
+      <a href="#">Автосалони</a>
+      <a href="#">Оцінка авто</a>
+    </nav>
+    <div class="appbar__tools">
+      <div class="seg" role="group" aria-label="Валюта">
+        <button data-cur="UAH" aria-pressed="false">₴</button>
+        <button data-cur="USD" aria-pressed="true">$</button>
+        <button data-cur="EUR" aria-pressed="false">€</button>
+      </div>
+      <div class="seg" role="group" aria-label="Мова">
+        <button aria-pressed="true">UA</button>
+        <button aria-pressed="false">EN</button>
+      </div>
+      <a class="btn btn--primary" href="#">Продати авто</a>
+      <span class="avatar">ОМ</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ ГОЛОВНА ============ -->
+  <section class="screen" id="screen-home">
+    <div class="hero">
+      <div class="wrap hero__grid">
+        <div>
+          <h1>Торгуйтеся за авто, а не листуйтеся про ціну</h1>
+          <p class="hero__sub">Класичні оголошення й живі аукціони на одному майданчику. Ставки бачать усі, ціну визначає ринок, а не наполегливість продавця.</p>
+
+          <form class="searchbar" onsubmit="return false">
+            <label class="field"><span>Марка</span>
+              <select><option>Будь-яка</option><option selected>BMW</option><option>Toyota</option><option>Volkswagen</option></select>
+            </label>
+            <label class="field"><span>Модель</span>
+              <select><option>Будь-яка</option><option selected>X5</option><option>X3</option></select>
+            </label>
+            <label class="field"><span>Регіон</span>
+              <select><option selected>Уся Україна</option><option>Київська</option><option>Львівська</option></select>
+            </label>
+            <label class="field"><span>Ціна до, $</span>
+              <input type="text" value="50 000" inputmode="numeric">
+            </label>
+            <button class="btn btn--primary" style="height:37px">Знайти 1 284</button>
+          </form>
+
+          <div class="stats">
+            <div><b class="num">12 480</b><span>авто в продажу</span></div>
+            <div><b class="num">214</b><span>торгів іде зараз</span></div>
+            <div><b class="num">1 908</b><span>перевірених салонів</span></div>
+          </div>
+        </div>
+
+        <div class="card spot">
+          <div class="spot__top">
+            <span class="pill pill--live"><i class="dot"></i>Лот дня · торги йдуть</span>
+            <span class="eyebrow">№&nbsp;A-4417</span>
+          </div>
+          <div class="photo photo--hero">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <span class="photo__tag">BMW X5 xDrive30d</span>
+            <span class="photo__count">1 / 18</span>
+          </div>
+          <div>
+            <div class="lot__title" style="font-size:17px">BMW X5 xDrive30d G05 · 2019</div>
+            <div class="lot__meta">128 000 км · 3.0 дизель · автомат · Київ</div>
+          </div>
+          <div class="spot__price">
+            <div>
+              <div class="eyebrow">Поточна ставка</div>
+              <div class="price-lg" data-usd="41250">$41 250</div>
+            </div>
+            <div style="text-align:right">
+              <div class="eyebrow">До завершення</div>
+              <div class="cd-inline" data-ends="8073">02:14:33</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="pill pill--good">Резерв досягнуто</span>
+            <span class="pill">23 ставки</span>
+            <span class="pill">9 учасників</span>
+          </div>
+          <a class="btn btn--bid" href="#">Перейти до торгів</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap section">
+      <div class="section__head">
+        <h2>Живі торги</h2>
+        <a href="#" class="btn">Усі 214 аукціонів</a>
+      </div>
+      <div class="grid grid--4">
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <div class="photo__badges"><span class="pill pill--live"><i class="dot"></i>Торги</span></div>
+            <span class="photo__tag">Land Cruiser Prado</span>
+            <span class="photo__count">1 / 24</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Toyota Land Cruiser Prado 150</div>
+            <div class="lot__meta">2016 · 194 000 км · Одеса</div>
+            <div class="lot__foot">
+              <div>
+                <div class="eyebrow">Ставка</div>
+                <div class="price-md" data-usd="27800">$27 800</div>
+              </div>
+              <div style="text-align:right">
+                <div class="cd-inline" data-ends="52" data-extend="1">00:52</div>
+                <div class="faint" style="font-size:11.5px">14 ставок</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <div class="photo__badges"><span class="pill pill--live"><i class="dot"></i>Торги</span></div>
+            <span class="photo__tag">VW Golf GTI</span>
+            <span class="photo__count">1 / 16</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Volkswagen Golf VII GTI</div>
+            <div class="lot__meta">2017 · 121 000 км · Львів</div>
+            <div class="lot__foot">
+              <div>
+                <div class="eyebrow">Ставка</div>
+                <div class="price-md" data-usd="16450">$16 450</div>
+              </div>
+              <div style="text-align:right">
+                <div class="cd-inline" data-ends="1080">18:00</div>
+                <div class="faint" style="font-size:11.5px">31 ставка</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <div class="photo__badges"><span class="pill pill--live"><i class="dot"></i>Торги</span></div>
+            <span class="photo__tag">Mazda CX-5</span>
+            <span class="photo__count">1 / 21</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Mazda CX-5 Touring</div>
+            <div class="lot__meta">2019 · 88 000 км · Дніпро</div>
+            <div class="lot__foot">
+              <div>
+                <div class="eyebrow">Ставка</div>
+                <div class="price-md" data-usd="19100">$19 100</div>
+              </div>
+              <div style="text-align:right">
+                <div class="cd-inline" data-ends="19320">05:22:00</div>
+                <div class="faint" style="font-size:11.5px">8 ставок</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <div class="photo__badges"><span class="pill pill--live"><i class="dot"></i>Торги</span></div>
+            <span class="photo__tag">Tesla Model 3</span>
+            <span class="photo__count">1 / 12</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Tesla Model 3 Long Range</div>
+            <div class="lot__meta">2021 · 64 000 км · Київ</div>
+            <div class="lot__foot">
+              <div>
+                <div class="eyebrow">Ставка</div>
+                <div class="price-md" data-usd="24900">$24 900</div>
+              </div>
+              <div style="text-align:right">
+                <div class="cd-inline" data-ends="100800">1 д 04:00</div>
+                <div class="faint" style="font-size:11.5px">резерв не досягнуто</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+
+    <div class="wrap section section--tight">
+      <div class="section__head"><h2>Популярні марки</h2></div>
+      <div class="brand-chips">
+        <button class="chip">Volkswagen <b>1 842</b></button>
+        <button class="chip">Toyota <b>1 517</b></button>
+        <button class="chip">Škoda <b>1 208</b></button>
+        <button class="chip">BMW <b>1 094</b></button>
+        <button class="chip">Renault <b>986</b></button>
+        <button class="chip">Mercedes-Benz <b>903</b></button>
+        <button class="chip">Audi <b>871</b></button>
+        <button class="chip">Hyundai <b>764</b></button>
+        <button class="chip">Nissan <b>702</b></button>
+        <button class="chip">Ford <b>688</b></button>
+        <button class="chip">Kia <b>645</b></button>
+        <button class="chip">Mazda <b>531</b></button>
+      </div>
+    </div>
+
+    <div class="wrap section">
+      <div class="section__head">
+        <h2>Свіжі оголошення</h2>
+        <a href="#" class="btn">Дивитися каталог</a>
+      </div>
+      <div class="grid grid--4">
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <div class="photo__badges"><span class="pill pill--accent">Салон</span></div>
+            <span class="photo__tag">Toyota RAV4</span>
+            <span class="photo__count">1 / 27</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Toyota RAV4 2.5 Hybrid</div>
+            <div class="lot__meta">2020 · 74 000 км · Львів</div>
+            <div class="lot__foot">
+              <div class="price-md" data-usd="28400">$28 400</div>
+              <span class="pill pill--good">−9% до ринку</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <div class="photo__badges"><span class="pill">Торг</span></div>
+            <span class="photo__tag">VW Passat B8</span>
+            <span class="photo__count">1 / 19</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Volkswagen Passat B8 2.0 TDI</div>
+            <div class="lot__meta">2018 · 187 000 км · Київ</div>
+            <div class="lot__foot">
+              <div class="price-md" data-usd="18900">$18 900</div>
+              <span class="pill">Обмін</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <div class="photo__badges"><span class="pill pill--warn">Терміново</span></div>
+            <span class="photo__tag">Škoda Octavia A7</span>
+            <span class="photo__count">1 / 14</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Škoda Octavia A7 1.6 TDI</div>
+            <div class="lot__meta">2017 · 210 000 км · Дніпро</div>
+            <div class="lot__foot">
+              <div class="price-md" data-usd="13200">$13 200</div>
+              <span class="pill">Торг</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <div class="photo__badges"><span class="pill pill--accent">Салон</span></div>
+            <span class="photo__tag">Nissan Leaf</span>
+            <span class="photo__count">1 / 11</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Nissan Leaf 62 kWh</div>
+            <div class="lot__meta">2019 · 62 000 км · Харків</div>
+            <div class="lot__foot">
+              <div class="price-md" data-usd="13900">$13 900</div>
+              <span class="pill">Електро</span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+
+    <aside class="notes">
+      <div class="wrap notes__grid">
+        <div>
+          <span class="eyebrow">Екран 1</span>
+          <h3 style="font-size:19px;margin-top:6px">Головна</h3>
+        </div>
+        <ul>
+          <li><b>Аукціон — головний герой.</b> Лот дня займає праву частину першого екрана з живим таймером: це те, чим майданчик відрізняється від конкурентів.</li>
+          <li><b>Пошук працює одразу.</b> Чотири поля покривають 80% запитів; решта фільтрів — у каталозі.</li>
+          <li><b>Смуги на тлі</b> — натяк на дорожню розмітку, єдина декоративна деталь на сторінці.</li>
+          <li><b>Валюта перемикається</b> у шапці й одразу перераховує всі ціни за курсом НБУ.</li>
+        </ul>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ============ КАТАЛОГ ============ -->
+  <section class="screen" id="screen-catalog" hidden>
+    <div class="wrap catalog">
+
+      <aside class="card filters">
+        <div class="fgroup">
+          <h4>Тип продажу</h4>
+          <div class="radio-row">
+            <button aria-pressed="false">Усі</button>
+            <button aria-pressed="true">Аукціон</button>
+            <button aria-pressed="false">Ціна</button>
+          </div>
+        </div>
+
+        <div class="fgroup">
+          <h4>Марка й модель</h4>
+          <select style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface)"><option>BMW</option></select>
+          <select style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface)"><option>Усі моделі</option></select>
+        </div>
+
+        <div class="fgroup">
+          <h4>Рік випуску</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input type="text" value="2015" style="padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface)">
+            <input type="text" value="2024" style="padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface)">
+          </div>
+        </div>
+
+        <div class="fgroup">
+          <h4>Ціна, $</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input type="text" value="10 000" style="padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface)">
+            <input type="text" value="45 000" style="padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface)">
+          </div>
+        </div>
+
+        <div class="fgroup">
+          <h4>Пальне</h4>
+          <label class="check"><input type="checkbox" checked>Дизель <span class="faint">412</span></label>
+          <label class="check"><input type="checkbox" checked>Бензин <span class="faint">688</span></label>
+          <label class="check"><input type="checkbox">Гібрид <span class="faint">129</span></label>
+          <label class="check"><input type="checkbox">Електро <span class="faint">55</span></label>
+        </div>
+
+        <div class="fgroup">
+          <h4>Продавець</h4>
+          <label class="check"><input type="checkbox">Приватна особа <span class="faint">742</span></label>
+          <label class="check"><input type="checkbox" checked>Автосалон <span class="faint">542</span></label>
+        </div>
+
+        <div class="fgroup">
+          <h4>Позначки</h4>
+          <label class="check"><input type="checkbox">Торг доречний</label>
+          <label class="check"><input type="checkbox">Розглядаю обмін</label>
+          <label class="check"><input type="checkbox">Терміновий продаж</label>
+          <label class="check"><input type="checkbox">Не був у ДТП</label>
+        </div>
+
+        <div class="fgroup">
+          <button class="btn btn--primary btn--block">Показати 1 284</button>
+          <button class="btn btn--block">Скинути фільтри</button>
+        </div>
+      </aside>
+
+      <div>
+        <div class="toolbar">
+          <div>
+            <div class="eyebrow">Головна · Легкові · BMW</div>
+            <h1 style="margin-top:4px">BMW на торгах</h1>
+            <div class="muted" style="font-size:13.5px">1 284 автомобілі · 37 активних аукціонів</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn"><svg style="width:14px;height:14px;fill:currentColor"><use href="#bolt"/></svg>Зберегти пошук</button>
+            <select style="padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface)">
+              <option>Спочатку ті, що завершуються</option>
+              <option>Дешевші</option>
+              <option>Дорожчі</option>
+              <option>Найновіші</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid--3">
+
+          <article class="card lot">
+            <div class="photo">
+              <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+              <div class="photo__badges"><span class="pill pill--live"><i class="dot"></i>Торги</span><span class="pill pill--good">Резерв ✓</span></div>
+              <span class="photo__tag">BMW X5 xDrive30d</span>
+              <span class="photo__count">1 / 18</span>
+            </div>
+            <div class="lot__body">
+              <div class="lot__title">BMW X5 xDrive30d G05</div>
+              <div class="lot__meta">2019 · 128 000 км · 3.0 дизель · Київ</div>
+              <div class="lot__foot">
+                <div>
+                  <div class="eyebrow">Ставка · 23</div>
+                  <div class="price-md" data-usd="41250">$41 250</div>
+                </div>
+                <div class="cd-inline" data-ends="8073">02:14:33</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card lot">
+            <div class="photo">
+              <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+              <div class="photo__badges"><span class="pill pill--live"><i class="dot"></i>Торги</span></div>
+              <span class="photo__tag">BMW 320d F30</span>
+              <span class="photo__count">1 / 15</span>
+            </div>
+            <div class="lot__body">
+              <div class="lot__title">BMW 320d F30 xDrive</div>
+              <div class="lot__meta">2016 · 168 000 км · 2.0 дизель · Одеса</div>
+              <div class="lot__foot">
+                <div>
+                  <div class="eyebrow">Ставка · 11</div>
+                  <div class="price-md" data-usd="15700">$15 700</div>
+                </div>
+                <div class="cd-inline" data-ends="3540">59:00</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card lot">
+            <div class="photo">
+              <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+              <div class="photo__badges"><span class="pill pill--accent">Салон</span></div>
+              <span class="photo__tag">BMW 520d G30</span>
+              <span class="photo__count">1 / 32</span>
+            </div>
+            <div class="lot__body">
+              <div class="lot__title">BMW 520d G30 M Sport</div>
+              <div class="lot__meta">2020 · 96 000 км · 2.0 дизель · Львів</div>
+              <div class="lot__foot">
+                <div class="price-md" data-usd="34900">$34 900</div>
+                <span class="pill">Купити зараз</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="card lot">
+            <div class="photo">
+              <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+              <div class="photo__badges"><span class="pill pill--live"><i class="dot"></i>Торги</span><span class="pill pill--warn">Резерв ✗</span></div>
+              <span class="photo__tag">BMW X3 G01</span>
+              <span class="photo__count">1 / 22</span>
+            </div>
+            <div class="lot__body">
+              <div class="lot__title">BMW X3 xDrive20d G01</div>
+              <div class="lot__meta">2018 · 142 000 км · 2.0 дизель · Харків</div>
+              <div class="lot__foot">
+                <div>
+                  <div class="eyebrow">Ставка · 6</div>
+                  <div class="price-md" data-usd="24300">$24 300</div>
+                </div>
+                <div class="cd-inline" data-ends="43200">12:00:00</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card lot">
+            <div class="photo">
+              <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+              <div class="photo__badges"><span class="pill">Торг</span></div>
+              <span class="photo__tag">BMW 116i F20</span>
+              <span class="photo__count">1 / 13</span>
+            </div>
+            <div class="lot__body">
+              <div class="lot__title">BMW 116i F20</div>
+              <div class="lot__meta">2015 · 178 000 км · 1.6 бензин · Вінниця</div>
+              <div class="lot__foot">
+                <div class="price-md" data-usd="11800">$11 800</div>
+                <span class="pill pill--good">−12% до ринку</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="card lot">
+            <div class="photo">
+              <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+              <div class="photo__badges"><span class="pill pill--accent">Салон</span></div>
+              <span class="photo__tag">BMW i4 eDrive40</span>
+              <span class="photo__count">1 / 28</span>
+            </div>
+            <div class="lot__body">
+              <div class="lot__title">BMW i4 eDrive40</div>
+              <div class="lot__meta">2022 · 41 000 км · електро · Київ</div>
+              <div class="lot__foot">
+                <div class="price-md" data-usd="42600">$42 600</div>
+                <span class="pill">Електро</span>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </div>
+
+    <aside class="notes">
+      <div class="wrap notes__grid">
+        <div>
+          <span class="eyebrow">Екран 2</span>
+          <h3 style="font-size:19px;margin-top:6px">Каталог</h3>
+        </div>
+        <ul>
+          <li><b>Аукціони й фіксована ціна в одній видачі.</b> Тип продажу — перший фільтр, а не окремий розділ сайту.</li>
+          <li><b>Лічильники біля фільтрів</b> показують, скільки авто лишиться, ще до кліку.</li>
+          <li><b>Сортування «спочатку ті, що завершуються»</b> стоїть за замовчуванням для аукціонного режиму.</li>
+          <li><b>Бейдж резерву</b> прямо на картці: покупець одразу бачить, чи має торг сенс.</li>
+        </ul>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ============ ОГОЛОШЕННЯ ============ -->
+  <section class="screen" id="screen-listing" hidden>
+    <div class="wrap detail">
+      <div>
+        <div class="eyebrow" style="margin-bottom:8px">Головна · Легкові · Toyota · RAV4</div>
+        <h1 style="font-size:28px">Toyota RAV4 2.5 Hybrid AWD</h1>
+        <div class="muted" style="margin:6px 0 18px">2020 рік · 74 000 км · Львів, Сихів · опубліковано 14 серпня</div>
+
+        <div class="gallery">
+          <div class="photo photo--hero">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <span class="photo__tag">Toyota RAV4 · екстер'єр</span>
+            <span class="photo__count">1 / 27</span>
+          </div>
+          <div class="gallery__thumbs">
+            <div class="photo photo--thumb"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="photo photo--thumb"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="photo photo--thumb"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="photo photo--thumb"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="photo photo--thumb"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg></div>
+          </div>
+        </div>
+
+        <div class="section section--tight">
+          <div class="section__head"><h2 style="font-size:19px">Характеристики</h2></div>
+          <dl class="specs">
+            <div><dt>Двигун</dt><dd>2.5 л · гібрид</dd></div>
+            <div><dt>Коробка</dt><dd>Варіатор</dd></div>
+            <div><dt>Привід</dt><dd>Повний</dd></div>
+            <div><dt>Кузов</dt><dd>Позашляховик</dd></div>
+            <div><dt>Пробіг</dt><dd class="num">74 000 км</dd></div>
+            <div><dt>Колір</dt><dd>Сірий металік</dd></div>
+            <div><dt>Власників</dt><dd>1</dd></div>
+            <div><dt>Розмитнення</dt><dd>Розмитнений</dd></div>
+            <div><dt>Участь у ДТП</dt><dd>Не був</dd></div>
+            <div><dt>VIN</dt><dd class="num" style="font-size:13px">JTMB*****LD012947</dd></div>
+            <div><dt>Держномер</dt><dd class="num" style="font-size:13px">BC ** 47 CH</dd></div>
+            <div><dt>Технічний огляд</dt><dd>До 03.2027</dd></div>
+          </dl>
+        </div>
+
+        <div class="section section--tight">
+          <div class="section__head"><h2 style="font-size:19px">Опис від продавця</h2></div>
+          <p class="muted" style="max-width:65ch;margin:0">Один власник, обслуговування виключно в офіційного дилера — уся історія в сервісній книжці. Гібридна батарея перевірена в березні, ємність 96%. Зимова гума в комплекті на оригінальних дисках. Салон некурящий, тварин не возили. Не фарбувалась, товщиномір покаже. Реальний пробіг, готовий до будь-якої перевірки на СТО покупця.</p>
+          <div class="badges" style="margin-top:14px">
+            <span class="pill">Торг доречний</span>
+            <span class="pill">Розглядаю обмін</span>
+            <span class="pill pill--good">Перевірений VIN</span>
+            <span class="pill pill--accent">Сервісна книжка</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="side">
+        <div class="card side__box">
+          <div>
+            <div class="eyebrow">Ціна</div>
+            <div class="price-lg" data-usd="28400">$28 400</div>
+            <div class="alt-prices">
+              <span data-usd="28400" data-cur="UAH">1 187 120 ₴</span>
+              <span data-usd="28400" data-cur="EUR">26 213 €</span>
+            </div>
+          </div>
+
+          <div class="market">
+            <div class="market__row"><span>На 9% дешевше за ринок</span><span class="num">$31 200 медіана</span></div>
+            <div class="market__bar"><u style="left:64%"></u><i style="left:41%"></i></div>
+            <div style="font-size:11.5px;color:var(--good);opacity:.85">Порівняно з 47 оголошеннями RAV4 2019–2021 за останні 90 днів</div>
+          </div>
+
+          <button class="btn btn--primary btn--block">Показати телефон</button>
+          <button class="btn btn--block">Написати продавцю</button>
+          <button class="btn btn--block">Зберегти в обране</button>
+        </div>
+
+        <div class="card side__box">
+          <div class="eyebrow">Продавець</div>
+          <div class="seller">
+            <span class="avatar">АЛ</span>
+            <div>
+              <div style="font-weight:600">АвтоЦентр Львів</div>
+              <div class="muted" style="font-size:12.5px">Автосалон · на майданчику з 2019</div>
+              <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap">
+                <span class="pill pill--good">Верифікований</span>
+                <span class="pill">★ 4.8 · 126 відгуків</span>
+              </div>
+            </div>
+          </div>
+          <a href="#" style="font-size:13.5px;color:var(--accent)">Усі 47 авто цього салону →</a>
+        </div>
+
+        <div class="card side__box">
+          <div class="eyebrow">Безпека угоди</div>
+          <div class="muted" style="font-size:13px;line-height:1.5">Не переказуйте передоплату до огляду авто. Перевірте VIN у сервісі та звірте документи з даними власника.</div>
+          <a href="#" style="font-size:13.5px;color:var(--danger)">Поскаржитися на оголошення</a>
+        </div>
+      </div>
+    </div>
+
+    <aside class="notes">
+      <div class="wrap notes__grid">
+        <div>
+          <span class="eyebrow">Екран 3</span>
+          <h3 style="font-size:19px;margin-top:6px">Оголошення</h3>
+        </div>
+        <ul>
+          <li><b>Три валюти одночасно.</b> Основна — велика, дві інші дрібним моноширинним під нею, без зайвого кліку.</li>
+          <li><b>Оцінка ринку — головна фіча екрана.</b> Шкала показує позицію авто відносно медіани по 47 схожих оголошеннях.</li>
+          <li><b>VIN і номер частково приховані</b> — повністю видно після входу, це стандартна практика проти скрапінгу.</li>
+          <li><b>Права колонка липка</b>: ціна й контакт продавця не зникають при гортанні характеристик.</li>
+        </ul>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ============ АУКЦІОН ============ -->
+  <section class="screen" id="screen-auction" hidden>
+    <div class="wrap detail">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <span class="pill pill--live"><i class="dot"></i>Торги йдуть</span>
+          <span class="eyebrow">Лот №&nbsp;A-4417</span>
+          <span class="eyebrow">·</span>
+          <span class="eyebrow">9 учасників онлайн</span>
+        </div>
+        <h1 style="font-size:28px">BMW X5 xDrive30d G05</h1>
+        <div class="muted" style="margin:6px 0 18px">2019 рік · 128 000 км · 3.0 дизель · автомат · Київ, Оболонь</div>
+
+        <div class="gallery">
+          <div class="photo photo--hero">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <span class="photo__tag">BMW X5 · екстер'єр</span>
+            <span class="photo__count">1 / 18</span>
+          </div>
+          <div class="gallery__thumbs">
+            <div class="photo photo--thumb"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="photo photo--thumb"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="photo photo--thumb"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="photo photo--thumb"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg></div>
+            <div class="photo photo--thumb"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg></div>
+          </div>
+        </div>
+
+        <div class="section section--tight">
+          <div class="section__head"><h2 style="font-size:19px">Умови торгів</h2></div>
+          <dl class="terms">
+            <div><dt>Стартова ціна</dt><dd data-usd="34000">$34 000</dd></div>
+            <div><dt>Крок ставки</dt><dd data-usd="250">$250</dd></div>
+            <div><dt>Антиснайпінг</dt><dd>3 хв</dd></div>
+            <div><dt>Комісія покупця</dt><dd>0%</dd></div>
+          </dl>
+        </div>
+
+        <div class="section section--tight">
+          <div class="section__head">
+            <h2 style="font-size:19px">Історія ставок</h2>
+            <span class="muted" style="font-size:13px">23 ставки · оновлюється в реальному часі</span>
+          </div>
+          <div class="card" style="padding:6px 12px">
+            <div class="feed" id="bidFeed">
+              <div class="feed__row feed__row--lead">
+                <span class="avatar">ОК</span>
+                <div>
+                  <div class="feed__who">o***v_87 <span class="pill" style="margin-left:4px">авто</span></div>
+                  <div class="feed__when">щойно · лідирує</div>
+                </div>
+                <span class="feed__amt" data-usd="41250">$41 250</span>
+              </div>
+              <div class="feed__row">
+                <span class="avatar">АК</span>
+                <div>
+                  <div class="feed__who">Andrii_K</div>
+                  <div class="feed__when">2 хв тому</div>
+                </div>
+                <span class="feed__amt" data-usd="41000">$41 000</span>
+              </div>
+              <div class="feed__row">
+                <span class="avatar">ОК</span>
+                <div>
+                  <div class="feed__who">o***v_87 <span class="pill" style="margin-left:4px">авто</span></div>
+                  <div class="feed__when">2 хв тому</div>
+                </div>
+                <span class="feed__amt" data-usd="40750">$40 750</span>
+              </div>
+              <div class="feed__row">
+                <span class="avatar">МЗ</span>
+                <div>
+                  <div class="feed__who">m***a_zt</div>
+                  <div class="feed__when">7 хв тому</div>
+                </div>
+                <span class="feed__amt" data-usd="40500">$40 500</span>
+              </div>
+              <div class="feed__row">
+                <span class="avatar">АК</span>
+                <div>
+                  <div class="feed__who">Andrii_K</div>
+                  <div class="feed__when">12 хв тому</div>
+                </div>
+                <span class="feed__amt" data-usd="39800">$39 800</span>
+              </div>
+              <div class="feed__row">
+                <span class="avatar">АХ</span>
+                <div>
+                  <div class="feed__who">AutoHub Kyiv <span class="pill pill--accent" style="margin-left:4px">салон</span></div>
+                  <div class="feed__when">24 хв тому</div>
+                </div>
+                <span class="feed__amt" data-usd="38500">$38 500</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side">
+        <div class="card bidpanel">
+          <div class="bidpanel__hdr">
+            <span class="eyebrow">До завершення торгів</span>
+            <span class="pill pill--good">Резерв досягнуто</span>
+          </div>
+
+          <div class="cd" data-ends="8073" data-big="1">
+            <div class="cd__cell"><b>02</b><span>год</span></div>
+            <div class="cd__cell"><b>14</b><span>хв</span></div>
+            <div class="cd__cell"><b>33</b><span>сек</span></div>
+          </div>
+
+          <div class="snipe">
+            <svg aria-hidden="true"><use href="#bolt"/></svg>
+            <span>Ставка в останні <b>3 хвилини</b> продовжує торги ще на 3 хвилини. Виграти в останню секунду не вийде.</span>
+          </div>
+
+          <div>
+            <div class="eyebrow">Поточна ставка · 23</div>
+            <div class="price-lg" id="curPrice" data-usd="41250">$41 250</div>
+            <div class="alt-prices">
+              <span data-usd="41250" data-cur="UAH">1 724 250 ₴</span>
+              <span data-usd="41250" data-cur="EUR">38 074 €</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="eyebrow" style="margin-bottom:6px">Ваша ставка · мінімум <span class="num" data-usd="41500">$41 500</span></div>
+            <div class="bidrow">
+              <button type="button" aria-label="Зменшити на крок">−</button>
+              <input type="text" value="41 500" inputmode="numeric" aria-label="Сума ставки">
+              <button type="button" aria-label="Збільшити на крок">+</button>
+            </div>
+          </div>
+
+          <button class="btn btn--bid">Зробити ставку</button>
+
+          <div class="auto-bid">
+            <label class="auto-bid__top"><input type="checkbox" checked>Автоставка</label>
+            <div class="muted" style="font-size:12.5px;line-height:1.45">Вкажіть максимум — система підніматиме вашу ставку на крок, доки не переб'є конкурентів або не дійде до межі.</div>
+            <label class="field"><span>Ваш максимум</span><input type="text" value="45 000" inputmode="numeric"></label>
+          </div>
+
+          <div style="border-top:1px solid var(--line);padding-top:11px;display:flex;justify-content:space-between;font-size:12.5px" class="muted">
+            <span>Депозит заблоковано</span>
+            <span class="num">8 000 ₴</span>
+          </div>
+        </div>
+
+        <div class="card side__box">
+          <div class="eyebrow">Продавець лота</div>
+          <div class="seller">
+            <span class="avatar">ДБ</span>
+            <div>
+              <div style="font-weight:600">d***o_kyiv</div>
+              <div class="muted" style="font-size:12.5px">Приватна особа · 4 продажі</div>
+              <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap">
+                <span class="pill pill--good">Телефон верифіковано</span>
+                <span class="pill">★ 5.0</span>
+              </div>
+            </div>
+          </div>
+          <div class="muted" style="font-size:12.5px;line-height:1.45">Контакти відкриються переможцю одразу після завершення торгів.</div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="notes">
+      <div class="wrap notes__grid">
+        <div>
+          <span class="eyebrow">Екран 4</span>
+          <h3 style="font-size:19px;margin-top:6px">Аукціон</h3>
+        </div>
+        <ul>
+          <li><b>Таймер — найбільший елемент праворуч</b>, у моноширинному з <span class="num">tabular-nums</span>, щоб цифри не стрибали при кожній секунді.</li>
+          <li><b>Правило антиснайпінгу написане просто там</b>, де користувач вагається. Не в довідці, не в умовах.</li>
+          <li><b>Автоставка вбудована у форму</b>, а не схована в модалці: це основний спосіб торгуватися, коли не сидиш на сторінці.</li>
+          <li><b>Панель ставки виділена бурштиновою рамкою</b> — єдиний елемент такого кольору на екрані.</li>
+          <li><b>Стрічка ставок оновлюється через SignalR.</b> Нова ставка з'їжджає згори з анімацією; лідер підсвічений.</li>
+          <li><b>Заблокований депозит показано тут же</b> — користувач бачить, чим ризикує, до кліку.</li>
+        </ul>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ============ АВТОСАЛОН ============ -->
+  <section class="screen" id="screen-dealer" hidden>
+    <div class="dealer-hd">
+      <div class="wrap dealer-hd__inner">
+        <div class="dealer-hd__logo">АЛ</div>
+        <div style="flex:1;min-width:260px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <h1>АвтоЦентр Львів</h1>
+            <span class="pill pill--good">Верифікований салон</span>
+          </div>
+          <div class="dealer-meta">
+            <span>★ 4.8 · 126 відгуків</span>
+            <span>47 авто в наявності</span>
+            <span>На AutoLot з 2019 року</span>
+            <span>Львів, вул. Городоцька 302</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn">Написати</button>
+          <button class="btn btn--primary">Показати телефон</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap" style="padding-block:22px">
+      <div class="subtabs">
+        <button aria-pressed="true">Авто в наявності <span class="faint num">47</span></button>
+        <button aria-pressed="false">Аукціони салону <span class="faint num">6</span></button>
+        <button aria-pressed="false">Відгуки <span class="faint num">126</span></button>
+        <button aria-pressed="false">Про салон</button>
+      </div>
+
+      <div class="grid grid--3" style="margin-top:20px">
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <span class="photo__tag">Toyota RAV4</span>
+            <span class="photo__count">1 / 27</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Toyota RAV4 2.5 Hybrid AWD</div>
+            <div class="lot__meta">2020 · 74 000 км · варіатор</div>
+            <div class="lot__foot">
+              <div class="price-md" data-usd="28400">$28 400</div>
+              <span class="pill pill--good">−9% до ринку</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <div class="photo__badges"><span class="pill pill--live"><i class="dot"></i>Торги</span></div>
+            <span class="photo__tag">Audi Q5</span>
+            <span class="photo__count">1 / 24</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Audi Q5 2.0 TDI quattro</div>
+            <div class="lot__meta">2017 · 156 000 км · автомат</div>
+            <div class="lot__foot">
+              <div>
+                <div class="eyebrow">Ставка · 5</div>
+                <div class="price-md" data-usd="24800">$24 800</div>
+              </div>
+              <div class="cd-inline" data-ends="27000">07:30:00</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <span class="photo__tag">Hyundai Tucson</span>
+            <span class="photo__count">1 / 19</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Hyundai Tucson 1.6 T-GDI</div>
+            <div class="lot__meta">2021 · 52 000 км · автомат</div>
+            <div class="lot__foot">
+              <div class="price-md" data-usd="23600">$23 600</div>
+              <span class="pill">Гарантія 6 міс</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <span class="photo__tag">Mercedes E220d</span>
+            <span class="photo__count">1 / 31</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Mercedes-Benz E220d W213</div>
+            <div class="lot__meta">2019 · 118 000 км · автомат</div>
+            <div class="lot__foot">
+              <div class="price-md" data-usd="32500">$32 500</div>
+              <span class="pill">Торг</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <span class="photo__tag">Renault Duster</span>
+            <span class="photo__count">1 / 15</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Renault Duster 1.5 dCi</div>
+            <div class="lot__meta">2019 · 96 000 км · механіка</div>
+            <div class="lot__foot">
+              <div class="price-md" data-usd="14300">$14 300</div>
+              <span class="pill">Обмін</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card lot">
+          <div class="photo">
+            <svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg>
+            <span class="photo__tag">Ford Focus</span>
+            <span class="photo__count">1 / 17</span>
+          </div>
+          <div class="lot__body">
+            <div class="lot__title">Ford Focus 1.5 EcoBoost</div>
+            <div class="lot__meta">2018 · 134 000 км · автомат</div>
+            <div class="lot__foot">
+              <div class="price-md" data-usd="11400">$11 400</div>
+              <span class="pill pill--good">−7% до ринку</span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+
+    <aside class="notes">
+      <div class="wrap notes__grid">
+        <div>
+          <span class="eyebrow">Екран 5</span>
+          <h3 style="font-size:19px;margin-top:6px">Автосалон</h3>
+        </div>
+        <ul>
+          <li><b>Вітрина — головна перевага дилерського акаунта.</b> Власна сторінка з лого, рейтингом і повним каталогом.</li>
+          <li><b>Верифікація видима.</b> Бейдж ставить модератор після перевірки документів, підробити його неможливо.</li>
+          <li><b>Аукціони салону — окрема вкладка</b>: дилери часто здають на торги те, що довго стоїть за фіксованою ціною.</li>
+          <li><b>Шапка з градієнтом акценту</b> — єдине місце на сайті, де фірмовий колір використано площею.</li>
+        </ul>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ============ КАБІНЕТ ============ -->
+  <section class="screen" id="screen-account" hidden>
+    <div class="wrap account">
+      <aside class="card sidenav">
+        <a href="#">Мої оголошення <b>7</b></a>
+        <a href="#" aria-current="page">Мої ставки <b>3</b></a>
+        <a href="#">Обране <b>24</b></a>
+        <a href="#">Збережені пошуки <b>5</b></a>
+        <a href="#">Гаманець</a>
+        <a href="#">Повідомлення <b>2</b></a>
+        <a href="#">Відгуки</a>
+        <a href="#">Налаштування</a>
+      </aside>
+
+      <div style="display:grid;gap:22px">
+        <div>
+          <h1 style="font-size:25px;margin-bottom:14px">Мої ставки</h1>
+          <div class="wallet">
+            <div class="card wallet__box">
+              <span class="eyebrow">Баланс</span>
+              <b class="num">12 000 ₴</b>
+              <span class="muted" style="font-size:12.5px">віртуальний, для участі в торгах</span>
+            </div>
+            <div class="card wallet__box">
+              <span class="eyebrow">Заблоковано</span>
+              <b class="num" style="color:var(--signal)">8 000 ₴</b>
+              <span class="muted" style="font-size:12.5px">депозити по 3 активних лотах</span>
+            </div>
+            <div class="card wallet__box">
+              <span class="eyebrow">Доступно</span>
+              <b class="num" style="color:var(--good)">4 000 ₴</b>
+              <span class="muted" style="font-size:12.5px">вистачить ще на 1 лот</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Лот</th>
+                <th>Ваш максимум</th>
+                <th>Поточна ставка</th>
+                <th>Статус</th>
+                <th>До кінця</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="tcar">
+                    <div class="photo"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg></div>
+                    <div>
+                      <div style="font-weight:600">BMW X5 xDrive30d G05</div>
+                      <div class="faint" style="font-size:12px">2019 · Київ · №A-4417</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="num" data-usd="45000">$45 000</td>
+                <td class="num" data-usd="41250">$41 250</td>
+                <td><span class="pill pill--good">Ви лідируєте</span></td>
+                <td><span class="cd-inline" data-ends="8073">02:14:33</span></td>
+                <td><div class="rowbtns"><button class="btn">Відкрити</button></div></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="tcar">
+                    <div class="photo"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg></div>
+                    <div>
+                      <div style="font-weight:600">Volkswagen Golf VII GTI</div>
+                      <div class="faint" style="font-size:12px">2017 · Львів · №A-4390</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="num" data-usd="16000">$16 000</td>
+                <td class="num" data-usd="16450">$16 450</td>
+                <td><span class="pill pill--warn">Вашу ставку перебито</span></td>
+                <td><span class="cd-inline" data-ends="1080">18:00</span></td>
+                <td><div class="rowbtns"><button class="btn btn--primary">Підняти</button></div></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="tcar">
+                    <div class="photo"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg></div>
+                    <div>
+                      <div style="font-weight:600">Tesla Model 3 Long Range</div>
+                      <div class="faint" style="font-size:12px">2021 · Київ · №A-4402</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="num" data-usd="26000">$26 000</td>
+                <td class="num" data-usd="24900">$24 900</td>
+                <td><span class="pill">Лідируєте · резерв не досягнуто</span></td>
+                <td><span class="cd-inline" data-ends="100800">1 д 04:00</span></td>
+                <td><div class="rowbtns"><button class="btn">Відкрити</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <h2 style="font-size:19px;margin-bottom:12px">Мої оголошення</h2>
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr><th>Авто</th><th>Тип</th><th>Ціна</th><th>Перегляди</th><th>Статус</th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div style="font-weight:600">Škoda Octavia A7 1.6 TDI</div><div class="faint" style="font-size:12px">2017 · 210 000 км</div></td>
+                  <td>Фіксована ціна</td>
+                  <td class="num" data-usd="13200">$13 200</td>
+                  <td class="num">1 842</td>
+                  <td><span class="pill pill--good">Активне</span></td>
+                  <td><div class="rowbtns"><button class="btn">Редагувати</button><button class="btn">Зняти</button></div></td>
+                </tr>
+                <tr>
+                  <td><div style="font-weight:600">Nissan Leaf 62 kWh</div><div class="faint" style="font-size:12px">2019 · 62 000 км</div></td>
+                  <td>Аукціон</td>
+                  <td class="num" data-usd="11000">$11 000</td>
+                  <td class="num">—</td>
+                  <td><span class="pill pill--live"><i class="dot"></i>На перевірці</span></td>
+                  <td><div class="rowbtns"><button class="btn">Переглянути</button></div></td>
+                </tr>
+                <tr>
+                  <td><div style="font-weight:600">Ford Focus 1.5 EcoBoost</div><div class="faint" style="font-size:12px">2018 · 134 000 км</div></td>
+                  <td>Фіксована ціна</td>
+                  <td class="num" data-usd="11400">$11 400</td>
+                  <td class="num">—</td>
+                  <td><span class="pill pill--warn">Відхилено · мало фото</span></td>
+                  <td><div class="rowbtns"><button class="btn btn--primary">Виправити</button></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="notes">
+      <div class="wrap notes__grid">
+        <div>
+          <span class="eyebrow">Екран 6</span>
+          <h3 style="font-size:19px;margin-top:6px">Кабінет</h3>
+        </div>
+        <ul>
+          <li><b>«Мої ставки» — головна вкладка</b>, а не «Мої оголошення»: користувач заходить сюди перевірити, чи його не перебили.</li>
+          <li><b>Гаманець показує три числа</b>: баланс, заблоковано, доступно. Третє — найважливіше, воно відповідає на питання «чи можу я взяти ще один лот».</li>
+          <li><b>Статус — це дія.</b> Перебито → кнопка «Підняти». Відхилено → «Виправити». Ніяких тупикових станів.</li>
+          <li><b>Причина відхилення в самому статусі</b>, без переходу на окрему сторінку.</li>
+        </ul>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ============ МОДЕРАЦІЯ ============ -->
+  <section class="screen" id="screen-moderation" hidden>
+    <div class="wrap queue">
+      <div>
+        <h1 style="font-size:25px;margin-bottom:4px">Черга модерації</h1>
+        <div class="muted" style="font-size:13.5px;margin-bottom:16px">Найдовше очікування — 3 год 12 хв</div>
+
+        <div class="counters">
+          <div class="card counters__box"><b class="num">12</b><span class="muted" style="font-size:12px">оголошень</span></div>
+          <div class="card counters__box"><b class="num">4</b><span class="muted" style="font-size:12px">аукціонних лоти</span></div>
+          <div class="card counters__box"><b class="num">3</b><span class="muted" style="font-size:12px">скарги</span></div>
+          <div class="card counters__box"><b class="num">2</b><span class="muted" style="font-size:12px">заявки салонів</span></div>
+        </div>
+
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr><th>Об'єкт</th><th>Тип</th><th>Автор</th><th>Очікує</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr style="background:var(--accent-soft)">
+                <td><div style="font-weight:600">Nissan Leaf 62 kWh</div><div class="faint" style="font-size:12px">2019 · старт $11 000</div></td>
+                <td><span class="pill pill--live"><i class="dot"></i>Аукціон</span></td>
+                <td>o***v_87</td>
+                <td class="num">3:12</td>
+                <td><div class="rowbtns"><button class="btn btn--primary">Схвалити</button><button class="btn">Відхилити</button></div></td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600">Mercedes-Benz E220d W213</div><div class="faint" style="font-size:12px">2019 · $32 500</div></td>
+                <td><span class="pill">Оголошення</span></td>
+                <td>АвтоЦентр Львів</td>
+                <td class="num">1:48</td>
+                <td><div class="rowbtns"><button class="btn btn--primary">Схвалити</button><button class="btn">Відхилити</button></div></td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600">Скарга: «Ціна не відповідає»</div><div class="faint" style="font-size:12px">на оголошення №L-9127</div></td>
+                <td><span class="pill pill--warn">Скарга</span></td>
+                <td>m***a_zt</td>
+                <td class="num">0:54</td>
+                <td><div class="rowbtns"><button class="btn">Розглянути</button></div></td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600">ТОВ «Драйв Моторс»</div><div class="faint" style="font-size:12px">ЄДРПОУ 4412****, Одеса</div></td>
+                <td><span class="pill pill--accent">Салон</span></td>
+                <td>drive-motors</td>
+                <td class="num">0:31</td>
+                <td><div class="rowbtns"><button class="btn">Перевірити</button></div></td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600">BMW X3 xDrive20d G01</div><div class="faint" style="font-size:12px">2018 · старт $22 000</div></td>
+                <td><span class="pill pill--live"><i class="dot"></i>Аукціон</span></td>
+                <td>k***n_kh</td>
+                <td class="num">0:17</td>
+                <td><div class="rowbtns"><button class="btn btn--primary">Схвалити</button><button class="btn">Відхилити</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <aside class="card review">
+        <div class="eyebrow">Перевірка · Nissan Leaf 62 kWh</div>
+        <div class="photo"><svg class="photo__glyph" aria-hidden="true"><use href="#car"/></svg><span class="photo__count">1 / 11</span></div>
+
+        <dl class="specs" style="grid-template-columns:1fr 1fr">
+          <div><dt>Старт</dt><dd class="num" data-usd="11000">$11 000</dd></div>
+          <div><dt>Резерв</dt><dd class="num" data-usd="13500">$13 500</dd></div>
+          <div><dt>VIN</dt><dd class="num" style="font-size:12.5px">SJNFAAZE0U60***</dd></div>
+          <div><dt>Фото</dt><dd>11 шт</dd></div>
+        </dl>
+
+        <div>
+          <div class="eyebrow" style="margin-bottom:8px">Причина відхилення</div>
+          <div class="reasons">
+            <label class="check"><input type="checkbox">Менше 5 фотографій</label>
+            <label class="check"><input type="checkbox">Фото не відповідають авто</label>
+            <label class="check"><input type="checkbox">Контакти в описі</label>
+            <label class="check"><input type="checkbox">Некоректний VIN</label>
+            <label class="check"><input type="checkbox">Ціна явно нереалістична</label>
+            <label class="check"><input type="checkbox">Підозра на дубль</label>
+          </div>
+        </div>
+
+        <div style="display:grid;gap:8px">
+          <button class="btn btn--primary btn--block">Схвалити й запустити торги</button>
+          <button class="btn btn--block">Відхилити з коментарем</button>
+        </div>
+
+        <div class="muted" style="font-size:12px;border-top:1px solid var(--line);padding-top:10px">Рішення потрапить в аудит-лог із вашим ім'ям і часом.</div>
+      </aside>
+    </div>
+
+    <aside class="notes">
+      <div class="wrap notes__grid">
+        <div>
+          <span class="eyebrow">Екран 7</span>
+          <h3 style="font-size:19px;margin-top:6px">Модерація</h3>
+        </div>
+        <ul>
+          <li><b>Черга й перевірка на одному екрані.</b> Модератор не бігає туди-сюди: обрав рядок — праворуч уже все для рішення.</li>
+          <li><b>Причини відхилення — чекбокси, не вільний текст.</b> Швидше для модератора, зрозуміліше для автора, придатне для статистики.</li>
+          <li><b>Аукціонні лоти йдуть першими</b>: у них є час старту, і затримка модерації зриває торги.</li>
+          <li><b>Аудит-лог згадано прямо в інтерфейсі</b> — це і чесно перед модератором, і стримує зловживання.</li>
+        </ul>
+      </div>
+    </aside>
+  </section>
+
+</main>
+
+<script>
+  (function () {
+    "use strict";
+
+    /* ---------- перемикання екранів ---------- */
+
+    var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        tabs.forEach(function (t) {
+          var on = t === tab;
+          t.setAttribute("aria-selected", String(on));
+          document.getElementById("screen-" + t.dataset.screen).hidden = !on;
+        });
+        window.scrollTo({ top: 0, behavior: "instant" });
+      });
+    });
+
+    /* ---------- валюта ---------- */
+
+    var rates = { USD: 1, UAH: 41.8, EUR: 0.9227 };
+    var symbols = { USD: "$", UAH: "₴", EUR: "€" };
+    var current = "USD";
+    var fmt = new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 0 });
+
+    function money(usd, cur) {
+      var value = fmt.format(Math.round(usd * rates[cur]));
+      return cur === "USD" ? symbols[cur] + value : value + " " + symbols[cur];
+    }
+
+    function renderPrices() {
+      document.querySelectorAll("[data-usd]").forEach(function (el) {
+        var cur = el.dataset.cur || current;
+        el.textContent = money(Number(el.dataset.usd), cur);
+      });
+    }
+
+    document.querySelectorAll("[data-cur]").forEach(function (btn) {
+      if (btn.tagName !== "BUTTON") return;
+      btn.addEventListener("click", function () {
+        current = btn.dataset.cur;
+        document.querySelectorAll(".seg button[data-cur]").forEach(function (b) {
+          b.setAttribute("aria-pressed", String(b === btn));
+        });
+        renderPrices();
+      });
+    });
+
+    renderPrices();
+
+    /* ---------- таймери ---------- */
+
+    var clocks = Array.prototype.slice.call(document.querySelectorAll("[data-ends]")).map(function (el) {
+      return { el: el, left: Number(el.dataset.ends), extended: false };
+    });
+
+    function pad(n) { return n < 10 ? "0" + n : String(n); }
+
+    function paint(clock) {
+      var s = Math.max(0, Math.floor(clock.left));
+      var d = Math.floor(s / 86400);
+      var h = Math.floor((s % 86400) / 3600);
+      var m = Math.floor((s % 3600) / 60);
+      var sec = s % 60;
+      var urgent = s > 0 && s < 300;
+
+      if (clock.el.dataset.big) {
+        var cells = clock.el.children;
+        cells[0].firstElementChild.textContent = d ? String(d) : pad(h);
+        cells[0].lastElementChild.textContent = d ? "дні" : "год";
+        cells[1].firstElementChild.textContent = d ? pad(h) : pad(m);
+        cells[1].lastElementChild.textContent = d ? "год" : "хв";
+        cells[2].firstElementChild.textContent = d ? pad(m) : pad(sec);
+        cells[2].lastElementChild.textContent = d ? "хв" : "сек";
+      } else if (s === 0) {
+        clock.el.textContent = "Завершено";
+      } else if (d) {
+        clock.el.textContent = d + " д " + pad(h) + ":" + pad(m);
+      } else if (h) {
+        clock.el.textContent = pad(h) + ":" + pad(m) + ":" + pad(sec);
+      } else {
+        clock.el.textContent = pad(m) + ":" + pad(sec);
+      }
+
+      clock.el.classList.toggle("is-urgent", urgent);
+    }
+
+    clocks.forEach(paint);
+
+    setInterval(function () {
+      clocks.forEach(function (clock) {
+        if (clock.left <= 0) return;
+        clock.left -= 1;
+
+        /* демонстрація антиснайпінгу: лот продовжується один раз */
+        if (clock.left <= 0 && clock.el.dataset.extend && !clock.extended) {
+          clock.extended = true;
+          clock.left = 180;
+          var note = document.createElement("div");
+          note.className = "pill pill--live";
+          note.style.marginTop = "4px";
+          note.textContent = "+3 хв · антиснайпінг";
+          clock.el.parentNode.appendChild(note);
+        }
+
+        paint(clock);
+      });
+    }, 1000);
+
+    /* ---------- імітація нової ставки через SignalR ---------- */
+
+    setTimeout(function () {
+      var feed = document.getElementById("bidFeed");
+      if (!feed) return;
+
+      var lead = feed.querySelector(".feed__row--lead");
+      if (lead) {
+        lead.classList.remove("feed__row--lead");
+        lead.querySelector(".feed__when").textContent = "1 хв тому";
+      }
+
+      var row = document.createElement("div");
+      row.className = "feed__row feed__row--lead feed__row--new";
+      row.innerHTML =
+        '<span class="avatar">АК</span>' +
+        '<div><div class="feed__who">Andrii_K</div>' +
+        '<div class="feed__when">щойно · лідирує</div></div>' +
+        '<span class="feed__amt" data-usd="41500"></span>';
+      feed.insertBefore(row, feed.firstElementChild);
+
+      document.querySelectorAll('#curPrice, [data-usd="41250"]').forEach(function (el) {
+        if (el.id === "curPrice" || el.closest(".bidpanel")) el.dataset.usd = "41500";
+      });
+
+      renderPrices();
+    }, 14000);
+
+    /* ---------- тема ---------- */
+
+    document.getElementById("themeToggle").addEventListener("click", function () {
+      var root = document.documentElement;
+      var dark = root.dataset.theme
+        ? root.dataset.theme === "dark"
+        : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      root.dataset.theme = dark ? "light" : "dark";
+    });
+
+    /* ---------- дрібні перемикачі в макеті ---------- */
+
+    document.querySelectorAll(".radio-row, .subtabs").forEach(function (group) {
+      group.addEventListener("click", function (e) {
+        var btn = e.target.closest("button");
+        if (!btn) return;
+        group.querySelectorAll("button").forEach(function (b) {
+          b.setAttribute("aria-pressed", String(b === btn));
+        });
+      });
+    });
+  })();
+</script>

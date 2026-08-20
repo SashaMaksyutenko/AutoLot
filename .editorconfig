@@ -1,0 +1,30 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{js,jsx,ts,tsx,json,jsonc,css,html,yml,yaml,md}]
+indent_size = 2
+
+[*.cs]
+csharp_using_directive_placement = outside_namespace:warning
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_prefer_primary_constructors = true:suggestion
+dotnet_sort_system_directives_first = true
+dotnet_style_namespace_match_folder = true:warning
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1848.severity = none
+
+[*.{csproj,props,targets}]
+indent_size = 2
+
+# Файли міграцій генерує EF Core — стиль у них не наш.
+[**/Migrations/*.cs]
+generated_code = true
+dotnet_diagnostic.IDE0161.severity = none
