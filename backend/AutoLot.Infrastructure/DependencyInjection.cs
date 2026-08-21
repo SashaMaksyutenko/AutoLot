@@ -1,6 +1,9 @@
 using AutoLot.Application.Auth;
 using AutoLot.Application.Common.Abstractions;
+using AutoLot.Application.Geo;
+using AutoLot.Application.Users;
 using AutoLot.Domain.Identity;
+using AutoLot.Infrastructure.Geo;
 using AutoLot.Infrastructure.Identity;
 using AutoLot.Infrastructure.Persistence;
 using AutoLot.Infrastructure.Persistence.Interceptors;
@@ -21,6 +24,15 @@ public static class DependencyInjection
 
         services.AddPersistence(configuration);
         services.AddIdentity(configuration);
+        services.AddGeography();
+
+        return services;
+    }
+
+    private static IServiceCollection AddGeography(this IServiceCollection services)
+    {
+        services.AddScoped<IGeoCatalog, GeoCatalog>();
+        services.AddScoped<IDataSeeder, GeographySeeder>();
 
         return services;
     }
@@ -93,7 +105,8 @@ public static class DependencyInjection
 
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IdentitySeeder>();
+        services.AddScoped<IUserProfileService, UserProfileService>();
+        services.AddScoped<IDataSeeder, IdentitySeeder>();
 
         return services;
     }

@@ -5,6 +5,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Тести перевіряють вміст geography.json, а його типи внутрішні:
+         назовні вони нікому не потрібні, тож відкриваємо адресно. -->
+    <InternalsVisibleTo Include="AutoLot.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Довідники їдуть усередині збірки, щоб сід не залежав від того,
+         чи скопіювали файли поруч із застосунком. -->
+    <EmbeddedResource Include="Persistence\SeedData\*.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" />

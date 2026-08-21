@@ -2,10 +2,10 @@ using System.Data.Common;
 using AutoLot.Api.Auth;
 using AutoLot.Api.Extensions;
 using AutoLot.Api.Filters;
+using AutoLot.Api.Localization;
 using AutoLot.Application;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Infrastructure;
-using AutoLot.Infrastructure.Identity;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -20,6 +20,8 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddAutoLotAuthentication(builder.Configuration);
 builder.Services.AddAutoLotRateLimiting();
+
+builder.Services.AddAutoLotLocalization();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
@@ -45,10 +47,14 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
-await SeedIdentityAsync(app);
+await SeedDatabaseAsync(app);
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+
+// Має стояти раніше за контролери: саме тут з Accept-Language обирається
+// мова, якою довідники віддадуть свої назви.
+app.UseRequestLocalization();
 
 if (app.Environment.IsDevelopment())
 {
@@ -90,26 +96,34 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 await app.RunAsync();
 
 /// <summary>
-/// Ролі та перший адміністратор мають існувати до першого запиту. Якщо база
-/// недоступна чи не мігрована, застосунок усе одно піднімаємо: про це чесно
-/// розкаже /health, а падіння на старті сховало б причину.
+/// Довідники, ролі та перший адміністратор мають існувати до першого запиту.
+/// Якщо база недоступна чи не мігрована, застосунок усе одно піднімаємо: про
+/// це чесно розкаже /health, а падіння на старті сховало б причину.
 /// </summary>
-static async Task SeedIdentityAsync(WebApplication app)
+static async Task SeedDatabaseAsync(WebApplication app)
 {
     await using var scope = app.Services.CreateAsyncScope();
 
-    var seeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
-    try
+    // Порядок задають самі сідери — тому, хто додає новий, не треба лізти сюди.
+    var seeders = scope.ServiceProvider
+        .GetServices<IDataSeeder>()
+        .OrderBy(seeder => seeder.Order);
+
+    foreach (var seeder in seeders)
     {
-        await seeder.SeedAsync();
-    }
-    catch (DbException exception)
-    {
-        logger.LogError(
-            exception,
-            "Сід ролей і адміністратора не виконано — база недоступна або не мігрована");
+        try
+        {
+            await seeder.SeedAsync();
+        }
+        catch (DbException exception)
+        {
+            logger.LogError(
+                exception,
+                "Сід {Seeder} не виконано — база недоступна або не мігрована",
+                seeder.GetType().Name);
+        }
     }
 }
 

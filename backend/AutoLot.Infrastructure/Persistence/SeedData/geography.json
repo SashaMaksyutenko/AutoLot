@@ -1,0 +1,762 @@
+{
+  "$comment": "Довідник географії України. Коди областей - ISO 3166-2:UA, вони сталі, тож сід упізнає наявні записи за ними й не створює дублів. Райони - за адміністративною реформою 2020 року, усього 136. Київ і Севастополь районів області не мають. Щоб розширити довідник, достатньо дописати записи сюди - код C# міняти не треба.",
+  "regions": [
+    {
+      "code": "UA-30",
+      "sortOrder": 1,
+      "names": { "uk": "Київ", "en": "Kyiv" },
+      "districts": [],
+      "cities": [
+        {
+          "code": "UA-30-KYIV",
+          "isRegionCentre": true,
+          "population": 2950000,
+          "names": { "uk": "Київ", "en": "Kyiv" },
+          "cityDistricts": [
+            { "code": "UA-30-KYIV-HOL", "names": { "uk": "Голосіївський", "en": "Holosiivskyi" } },
+            { "code": "UA-30-KYIV-DAR", "names": { "uk": "Дарницький", "en": "Darnytskyi" } },
+            { "code": "UA-30-KYIV-DES", "names": { "uk": "Деснянський", "en": "Desnianskyi" } },
+            { "code": "UA-30-KYIV-DNI", "names": { "uk": "Дніпровський", "en": "Dniprovskyi" } },
+            { "code": "UA-30-KYIV-OBO", "names": { "uk": "Оболонський", "en": "Obolonskyi" } },
+            { "code": "UA-30-KYIV-PEC", "names": { "uk": "Печерський", "en": "Pecherskyi" } },
+            { "code": "UA-30-KYIV-POD", "names": { "uk": "Подільський", "en": "Podilskyi" } },
+            { "code": "UA-30-KYIV-SVI", "names": { "uk": "Святошинський", "en": "Sviatoshynskyi" } },
+            { "code": "UA-30-KYIV-SOL", "names": { "uk": "Солом'янський", "en": "Solomianskyi" } },
+            { "code": "UA-30-KYIV-SHE", "names": { "uk": "Шевченківський", "en": "Shevchenkivskyi" } }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "UA-32",
+      "sortOrder": 2,
+      "names": { "uk": "Київська область", "en": "Kyiv Oblast" },
+      "districts": [
+        { "code": "UA-32-BIL", "names": { "uk": "Білоцерківський район", "en": "Bila Tserkva Raion" } },
+        { "code": "UA-32-BOR", "names": { "uk": "Бориспільський район", "en": "Boryspil Raion" } },
+        { "code": "UA-32-BRO", "names": { "uk": "Броварський район", "en": "Brovary Raion" } },
+        { "code": "UA-32-BUC", "names": { "uk": "Бучанський район", "en": "Bucha Raion" } },
+        { "code": "UA-32-VYS", "names": { "uk": "Вишгородський район", "en": "Vyshhorod Raion" } },
+        { "code": "UA-32-OBU", "names": { "uk": "Обухівський район", "en": "Obukhiv Raion" } },
+        { "code": "UA-32-FAS", "names": { "uk": "Фастівський район", "en": "Fastiv Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-32-BILA", "districtCode": "UA-32-BIL", "population": 200000, "names": { "uk": "Біла Церква", "en": "Bila Tserkva" } },
+        { "code": "UA-32-BROV", "districtCode": "UA-32-BRO", "population": 105000, "names": { "uk": "Бровари", "en": "Brovary" } },
+        { "code": "UA-32-BORY", "districtCode": "UA-32-BOR", "population": 60000, "names": { "uk": "Бориспіль", "en": "Boryspil" } },
+        { "code": "UA-32-IRPN", "districtCode": "UA-32-BUC", "population": 62000, "names": { "uk": "Ірпінь", "en": "Irpin" } },
+        { "code": "UA-32-VYSH", "districtCode": "UA-32-BUC", "population": 40000, "names": { "uk": "Вишневе", "en": "Vyshneve" } },
+        { "code": "UA-32-BUCH", "districtCode": "UA-32-BUC", "population": 36000, "names": { "uk": "Буча", "en": "Bucha" } },
+        { "code": "UA-32-VASY", "districtCode": "UA-32-FAS", "population": 36000, "names": { "uk": "Васильків", "en": "Vasylkiv" } },
+        { "code": "UA-32-BOYA", "districtCode": "UA-32-FAS", "population": 35000, "names": { "uk": "Боярка", "en": "Boiarka" } },
+        { "code": "UA-32-FAST", "districtCode": "UA-32-FAS", "population": 45000, "names": { "uk": "Фастів", "en": "Fastiv" } },
+        { "code": "UA-32-OBUK", "districtCode": "UA-32-OBU", "population": 33000, "names": { "uk": "Обухів", "en": "Obukhiv" } },
+        { "code": "UA-32-VYSG", "districtCode": "UA-32-VYS", "population": 30000, "names": { "uk": "Вишгород", "en": "Vyshhorod" } },
+        { "code": "UA-32-SLAV", "districtCode": "UA-32-VYS", "population": 24000, "names": { "uk": "Славутич", "en": "Slavutych" } },
+        { "code": "UA-32-PERE", "districtCode": "UA-32-BOR", "population": 27000, "names": { "uk": "Переяслав", "en": "Pereiaslav" } },
+        { "code": "UA-32-YAHO", "districtCode": "UA-32-BOR", "population": 20000, "names": { "uk": "Яготин", "en": "Yahotyn" } },
+        { "code": "UA-32-BERE", "districtCode": "UA-32-BRO", "population": 17000, "names": { "uk": "Березань", "en": "Berezan" } },
+        { "code": "UA-32-UKRA", "districtCode": "UA-32-OBU", "population": 15000, "names": { "uk": "Українка", "en": "Ukrainka" } },
+        { "code": "UA-32-BOHU", "districtCode": "UA-32-OBU", "population": 16000, "names": { "uk": "Богуслав", "en": "Bohuslav" } },
+        { "code": "UA-32-KAHA", "districtCode": "UA-32-OBU", "population": 13000, "names": { "uk": "Кагарлик", "en": "Kaharlyk" } },
+        { "code": "UA-32-MYRO", "districtCode": "UA-32-OBU", "population": 11000, "names": { "uk": "Миронівка", "en": "Myronivka" } },
+        { "code": "UA-32-RZHY", "districtCode": "UA-32-OBU", "population": 7000, "names": { "uk": "Ржищів", "en": "Rzhyshchiv" } },
+        { "code": "UA-32-SKVY", "districtCode": "UA-32-BIL", "population": 16000, "names": { "uk": "Сквира", "en": "Skvyra" } },
+        { "code": "UA-32-TETI", "districtCode": "UA-32-BIL", "population": 12000, "names": { "uk": "Тетіїв", "en": "Tetiiv" } },
+        { "code": "UA-32-UZYN", "districtCode": "UA-32-BIL", "population": 12000, "names": { "uk": "Узин", "en": "Uzyn" } }
+      ]
+    },
+    {
+      "code": "UA-63",
+      "sortOrder": 3,
+      "names": { "uk": "Харківська область", "en": "Kharkiv Oblast" },
+      "districts": [
+        { "code": "UA-63-KHA", "names": { "uk": "Харківський район", "en": "Kharkiv Raion" } },
+        { "code": "UA-63-BOH", "names": { "uk": "Богодухівський район", "en": "Bohodukhiv Raion" } },
+        { "code": "UA-63-IZY", "names": { "uk": "Ізюмський район", "en": "Izium Raion" } },
+        { "code": "UA-63-KRA", "names": { "uk": "Красноградський район", "en": "Krasnohrad Raion" } },
+        { "code": "UA-63-KUP", "names": { "uk": "Куп'янський район", "en": "Kupiansk Raion" } },
+        { "code": "UA-63-LOZ", "names": { "uk": "Лозівський район", "en": "Lozova Raion" } },
+        { "code": "UA-63-CHU", "names": { "uk": "Чугуївський район", "en": "Chuhuiv Raion" } }
+      ],
+      "cities": [
+        {
+          "code": "UA-63-KHAR",
+          "districtCode": "UA-63-KHA",
+          "isRegionCentre": true,
+          "population": 1430000,
+          "names": { "uk": "Харків", "en": "Kharkiv" },
+          "cityDistricts": [
+            { "code": "UA-63-KHAR-HOL", "names": { "uk": "Холодногірський", "en": "Kholodnohirskyi" } },
+            { "code": "UA-63-KHAR-SHE", "names": { "uk": "Шевченківський", "en": "Shevchenkivskyi" } },
+            { "code": "UA-63-KHAR-KYI", "names": { "uk": "Київський", "en": "Kyivskyi" } },
+            { "code": "UA-63-KHAR-SAL", "names": { "uk": "Салтівський", "en": "Saltivskyi" } },
+            { "code": "UA-63-KHAR-NEM", "names": { "uk": "Немишлянський", "en": "Nemyshlianskyi" } },
+            { "code": "UA-63-KHAR-IND", "names": { "uk": "Індустріальний", "en": "Industrialnyi" } },
+            { "code": "UA-63-KHAR-SLO", "names": { "uk": "Слобідський", "en": "Slobidskyi" } },
+            { "code": "UA-63-KHAR-OSN", "names": { "uk": "Основ'янський", "en": "Osnovianskyi" } },
+            { "code": "UA-63-KHAR-NOV", "names": { "uk": "Новобаварський", "en": "Novobavarskyi" } }
+          ]
+        },
+        { "code": "UA-63-LOZO", "districtCode": "UA-63-LOZ", "population": 54000, "names": { "uk": "Лозова", "en": "Lozova" } },
+        { "code": "UA-63-IZYU", "districtCode": "UA-63-IZY", "population": 45000, "names": { "uk": "Ізюм", "en": "Izium" } },
+        { "code": "UA-63-CHUH", "districtCode": "UA-63-CHU", "population": 31000, "names": { "uk": "Чугуїв", "en": "Chuhuiv" } },
+        { "code": "UA-63-PERV", "districtCode": "UA-63-LOZ", "population": 28000, "names": { "uk": "Первомайський", "en": "Pervomaiskyi" } },
+        { "code": "UA-63-KUPY", "districtCode": "UA-63-KUP", "population": 26000, "names": { "uk": "Куп'янськ", "en": "Kupiansk" } },
+        { "code": "UA-63-BALA", "districtCode": "UA-63-IZY", "population": 26000, "names": { "uk": "Балаклія", "en": "Balakliia" } },
+        { "code": "UA-63-MERE", "districtCode": "UA-63-KHA", "population": 21000, "names": { "uk": "Мерефа", "en": "Merefa" } },
+        { "code": "UA-63-LYUB", "districtCode": "UA-63-KHA", "population": 20000, "names": { "uk": "Люботин", "en": "Liubotyn" } },
+        { "code": "UA-63-KRAS", "districtCode": "UA-63-KRA", "population": 20000, "names": { "uk": "Красноград", "en": "Krasnohrad" } },
+        { "code": "UA-63-DERH", "districtCode": "UA-63-KHA", "population": 17000, "names": { "uk": "Дергачі", "en": "Derhachi" } },
+        { "code": "UA-63-BOHO", "districtCode": "UA-63-BOH", "population": 15000, "names": { "uk": "Богодухів", "en": "Bohodukhiv" } },
+        { "code": "UA-63-ZMII", "districtCode": "UA-63-CHU", "population": 14000, "names": { "uk": "Зміїв", "en": "Zmiiv" } },
+        { "code": "UA-63-VALK", "districtCode": "UA-63-BOH", "population": 9000, "names": { "uk": "Валки", "en": "Valky" } },
+        { "code": "UA-63-BARV", "districtCode": "UA-63-IZY", "population": 8000, "names": { "uk": "Барвінкове", "en": "Barvinkove" } }
+      ]
+    },
+    {
+      "code": "UA-51",
+      "sortOrder": 4,
+      "names": { "uk": "Одеська область", "en": "Odesa Oblast" },
+      "districts": [
+        { "code": "UA-51-ODE", "names": { "uk": "Одеський район", "en": "Odesa Raion" } },
+        { "code": "UA-51-BER", "names": { "uk": "Березівський район", "en": "Berezivka Raion" } },
+        { "code": "UA-51-BIL", "names": { "uk": "Білгород-Дністровський район", "en": "Bilhorod-Dnistrovskyi Raion" } },
+        { "code": "UA-51-BOL", "names": { "uk": "Болградський район", "en": "Bolhrad Raion" } },
+        { "code": "UA-51-IZM", "names": { "uk": "Ізмаїльський район", "en": "Izmail Raion" } },
+        { "code": "UA-51-POD", "names": { "uk": "Подільський район", "en": "Podilsk Raion" } },
+        { "code": "UA-51-ROZ", "names": { "uk": "Роздільнянський район", "en": "Rozdilna Raion" } }
+      ],
+      "cities": [
+        {
+          "code": "UA-51-ODES",
+          "districtCode": "UA-51-ODE",
+          "isRegionCentre": true,
+          "population": 1010000,
+          "names": { "uk": "Одеса", "en": "Odesa" },
+          "cityDistricts": [
+            { "code": "UA-51-ODES-KYI", "names": { "uk": "Київський", "en": "Kyivskyi" } },
+            { "code": "UA-51-ODES-PRY", "names": { "uk": "Приморський", "en": "Prymorskyi" } },
+            { "code": "UA-51-ODES-KHA", "names": { "uk": "Хаджибейський", "en": "Khadzhybeiskyi" } },
+            { "code": "UA-51-ODES-PER", "names": { "uk": "Пересипський", "en": "Peresypskyi" } }
+          ]
+        },
+        { "code": "UA-51-IZMA", "districtCode": "UA-51-IZM", "population": 70000, "names": { "uk": "Ізмаїл", "en": "Izmail" } },
+        { "code": "UA-51-CHOR", "districtCode": "UA-51-ODE", "population": 60000, "names": { "uk": "Чорноморськ", "en": "Chornomorsk" } },
+        { "code": "UA-51-BILH", "districtCode": "UA-51-BIL", "population": 47000, "names": { "uk": "Білгород-Дністровський", "en": "Bilhorod-Dnistrovskyi" } },
+        { "code": "UA-51-PODI", "districtCode": "UA-51-POD", "population": 39000, "names": { "uk": "Подільськ", "en": "Podilsk" } },
+        { "code": "UA-51-YUZH", "districtCode": "UA-51-ODE", "population": 32000, "names": { "uk": "Южне", "en": "Yuzhne" } },
+        { "code": "UA-51-KILI", "districtCode": "UA-51-IZM", "population": 19000, "names": { "uk": "Кілія", "en": "Kiliia" } },
+        { "code": "UA-51-RENI", "districtCode": "UA-51-IZM", "population": 19000, "names": { "uk": "Рені", "en": "Reni" } },
+        { "code": "UA-51-BALT", "districtCode": "UA-51-POD", "population": 18000, "names": { "uk": "Балта", "en": "Balta" } },
+        { "code": "UA-51-ROZD", "districtCode": "UA-51-ROZ", "population": 18000, "names": { "uk": "Роздільна", "en": "Rozdilna" } },
+        { "code": "UA-51-ARTS", "districtCode": "UA-51-BOL", "population": 15000, "names": { "uk": "Арциз", "en": "Artsyz" } },
+        { "code": "UA-51-BOLH", "districtCode": "UA-51-BOL", "population": 15000, "names": { "uk": "Болград", "en": "Bolhrad" } },
+        { "code": "UA-51-TATA", "districtCode": "UA-51-BIL", "population": 10000, "names": { "uk": "Татарбунари", "en": "Tatarbunary" } },
+        { "code": "UA-51-BERZ", "districtCode": "UA-51-BER", "population": 10000, "names": { "uk": "Березівка", "en": "Berezivka" } }
+      ]
+    },
+    {
+      "code": "UA-46",
+      "sortOrder": 5,
+      "names": { "uk": "Львівська область", "en": "Lviv Oblast" },
+      "districts": [
+        { "code": "UA-46-LVI", "names": { "uk": "Львівський район", "en": "Lviv Raion" } },
+        { "code": "UA-46-DRO", "names": { "uk": "Дрогобицький район", "en": "Drohobych Raion" } },
+        { "code": "UA-46-ZOL", "names": { "uk": "Золочівський район", "en": "Zolochiv Raion" } },
+        { "code": "UA-46-SAM", "names": { "uk": "Самбірський район", "en": "Sambir Raion" } },
+        { "code": "UA-46-STR", "names": { "uk": "Стрийський район", "en": "Stryi Raion" } },
+        { "code": "UA-46-CHE", "names": { "uk": "Червоноградський район", "en": "Chervonohrad Raion" } },
+        { "code": "UA-46-YAV", "names": { "uk": "Яворівський район", "en": "Yavoriv Raion" } }
+      ],
+      "cities": [
+        {
+          "code": "UA-46-LVIV",
+          "districtCode": "UA-46-LVI",
+          "isRegionCentre": true,
+          "population": 720000,
+          "names": { "uk": "Львів", "en": "Lviv" },
+          "cityDistricts": [
+            { "code": "UA-46-LVIV-HAL", "names": { "uk": "Галицький", "en": "Halytskyi" } },
+            { "code": "UA-46-LVIV-ZAL", "names": { "uk": "Залізничний", "en": "Zaliznychnyi" } },
+            { "code": "UA-46-LVIV-LYC", "names": { "uk": "Личаківський", "en": "Lychakivskyi" } },
+            { "code": "UA-46-LVIV-SYK", "names": { "uk": "Сихівський", "en": "Sykhivskyi" } },
+            { "code": "UA-46-LVIV-FRA", "names": { "uk": "Франківський", "en": "Frankivskyi" } },
+            { "code": "UA-46-LVIV-SHE", "names": { "uk": "Шевченківський", "en": "Shevchenkivskyi" } }
+          ]
+        },
+        { "code": "UA-46-DROH", "districtCode": "UA-46-DRO", "population": 75000, "names": { "uk": "Дрогобич", "en": "Drohobych" } },
+        { "code": "UA-46-CHER", "districtCode": "UA-46-CHE", "population": 65000, "names": { "uk": "Червоноград", "en": "Chervonohrad" } },
+        { "code": "UA-46-STRY", "districtCode": "UA-46-STR", "population": 59000, "names": { "uk": "Стрий", "en": "Stryi" } },
+        { "code": "UA-46-SAMB", "districtCode": "UA-46-SAM", "population": 34000, "names": { "uk": "Самбір", "en": "Sambir" } },
+        { "code": "UA-46-BORY", "districtCode": "UA-46-DRO", "population": 33000, "names": { "uk": "Борислав", "en": "Boryslav" } },
+        { "code": "UA-46-TRUS", "districtCode": "UA-46-DRO", "population": 29000, "names": { "uk": "Трускавець", "en": "Truskavets" } },
+        { "code": "UA-46-NOVY", "districtCode": "UA-46-YAV", "population": 29000, "names": { "uk": "Новояворівськ", "en": "Novoiavorivsk" } },
+        { "code": "UA-46-NOVR", "districtCode": "UA-46-STR", "population": 28000, "names": { "uk": "Новий Розділ", "en": "Novyi Rozdil" } },
+        { "code": "UA-46-ZOLO", "districtCode": "UA-46-ZOL", "population": 23000, "names": { "uk": "Золочів", "en": "Zolochiv" } },
+        { "code": "UA-46-BROD", "districtCode": "UA-46-ZOL", "population": 23000, "names": { "uk": "Броди", "en": "Brody" } },
+        { "code": "UA-46-SOKA", "districtCode": "UA-46-CHE", "population": 20000, "names": { "uk": "Сокаль", "en": "Sokal" } },
+        { "code": "UA-46-HORO", "districtCode": "UA-46-LVI", "population": 16000, "names": { "uk": "Городок", "en": "Horodok" } },
+        { "code": "UA-46-ZHOV", "districtCode": "UA-46-LVI", "population": 13000, "names": { "uk": "Жовква", "en": "Zhovkva" } },
+        { "code": "UA-46-YAVO", "districtCode": "UA-46-YAV", "population": 13000, "names": { "uk": "Яворів", "en": "Yavoriv" } },
+        { "code": "UA-46-PUST", "districtCode": "UA-46-LVI", "population": 9000, "names": { "uk": "Пустомити", "en": "Pustomyty" } },
+        { "code": "UA-46-SOSN", "districtCode": "UA-46-CHE", "population": 9000, "names": { "uk": "Соснівка", "en": "Sosnivka" } },
+        { "code": "UA-46-BUSK", "districtCode": "UA-46-ZOL", "population": 8000, "names": { "uk": "Буськ", "en": "Busk" } },
+        { "code": "UA-46-MORS", "districtCode": "UA-46-STR", "population": 6000, "names": { "uk": "Моршин", "en": "Morshyn" } }
+      ]
+    },
+    {
+      "code": "UA-12",
+      "sortOrder": 6,
+      "names": { "uk": "Дніпропетровська область", "en": "Dnipropetrovsk Oblast" },
+      "districts": [
+        { "code": "UA-12-DNI", "names": { "uk": "Дніпровський район", "en": "Dnipro Raion" } },
+        { "code": "UA-12-KAM", "names": { "uk": "Кам'янський район", "en": "Kamianske Raion" } },
+        { "code": "UA-12-KRY", "names": { "uk": "Криворізький район", "en": "Kryvyi Rih Raion" } },
+        { "code": "UA-12-NIK", "names": { "uk": "Нікопольський район", "en": "Nikopol Raion" } },
+        { "code": "UA-12-NOV", "names": { "uk": "Новомосковський район", "en": "Novomoskovsk Raion" } },
+        { "code": "UA-12-PAV", "names": { "uk": "Павлоградський район", "en": "Pavlohrad Raion" } },
+        { "code": "UA-12-SYN", "names": { "uk": "Синельниківський район", "en": "Synelnykove Raion" } }
+      ],
+      "cities": [
+        {
+          "code": "UA-12-DNIP",
+          "districtCode": "UA-12-DNI",
+          "isRegionCentre": true,
+          "population": 970000,
+          "names": { "uk": "Дніпро", "en": "Dnipro" },
+          "cityDistricts": [
+            { "code": "UA-12-DNIP-AMU", "names": { "uk": "Амур-Нижньодніпровський", "en": "Amur-Nyzhnodniprovskyi" } },
+            { "code": "UA-12-DNIP-IND", "names": { "uk": "Індустріальний", "en": "Industrialnyi" } },
+            { "code": "UA-12-DNIP-NOV", "names": { "uk": "Новокодацький", "en": "Novokodatskyi" } },
+            { "code": "UA-12-DNIP-SAM", "names": { "uk": "Самарський", "en": "Samarskyi" } },
+            { "code": "UA-12-DNIP-SOB", "names": { "uk": "Соборний", "en": "Sobornyi" } },
+            { "code": "UA-12-DNIP-CEN", "names": { "uk": "Центральний", "en": "Tsentralnyi" } },
+            { "code": "UA-12-DNIP-CHE", "names": { "uk": "Чечелівський", "en": "Chechelivskyi" } },
+            { "code": "UA-12-DNIP-SHE", "names": { "uk": "Шевченківський", "en": "Shevchenkivskyi" } }
+          ]
+        },
+        { "code": "UA-12-KRYV", "districtCode": "UA-12-KRY", "population": 610000, "names": { "uk": "Кривий Ріг", "en": "Kryvyi Rih" } },
+        { "code": "UA-12-KAMY", "districtCode": "UA-12-KAM", "population": 230000, "names": { "uk": "Кам'янське", "en": "Kamianske" } },
+        { "code": "UA-12-NIKO", "districtCode": "UA-12-NIK", "population": 107000, "names": { "uk": "Нікополь", "en": "Nikopol" } },
+        { "code": "UA-12-PAVL", "districtCode": "UA-12-PAV", "population": 100000, "names": { "uk": "Павлоград", "en": "Pavlohrad" } },
+        { "code": "UA-12-MARH", "districtCode": "UA-12-NIK", "population": 45000, "names": { "uk": "Марганець", "en": "Marhanets" } },
+        { "code": "UA-12-ZHOV", "districtCode": "UA-12-KRY", "population": 43000, "names": { "uk": "Жовті Води", "en": "Zhovti Vody" } },
+        { "code": "UA-12-POKR", "districtCode": "UA-12-NIK", "population": 38000, "names": { "uk": "Покров", "en": "Pokrov" } },
+        { "code": "UA-12-SYNE", "districtCode": "UA-12-SYN", "population": 30000, "names": { "uk": "Синельникове", "en": "Synelnykove" } },
+        { "code": "UA-12-TERN", "districtCode": "UA-12-PAV", "population": 28000, "names": { "uk": "Тернівка", "en": "Ternivka" } },
+        { "code": "UA-12-VILN", "districtCode": "UA-12-KAM", "population": 22000, "names": { "uk": "Вільногірськ", "en": "Vilnohirsk" } },
+        { "code": "UA-12-PIDH", "districtCode": "UA-12-DNI", "population": 19000, "names": { "uk": "Підгородне", "en": "Pidhorodne" } },
+        { "code": "UA-12-VERK", "districtCode": "UA-12-KAM", "population": 16000, "names": { "uk": "Верхньодніпровськ", "en": "Verkhnodniprovsk" } },
+        { "code": "UA-12-APOS", "districtCode": "UA-12-KRY", "population": 13000, "names": { "uk": "Апостолове", "en": "Apostolove" } }
+      ]
+    },
+    {
+      "code": "UA-23",
+      "sortOrder": 7,
+      "names": { "uk": "Запорізька область", "en": "Zaporizhzhia Oblast" },
+      "districts": [
+        { "code": "UA-23-ZAP", "names": { "uk": "Запорізький район", "en": "Zaporizhzhia Raion" } },
+        { "code": "UA-23-BER", "names": { "uk": "Бердянський район", "en": "Berdiansk Raion" } },
+        { "code": "UA-23-VAS", "names": { "uk": "Василівський район", "en": "Vasylivka Raion" } },
+        { "code": "UA-23-MEL", "names": { "uk": "Мелітопольський район", "en": "Melitopol Raion" } },
+        { "code": "UA-23-POL", "names": { "uk": "Пологівський район", "en": "Polohy Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-23-ZAPO", "districtCode": "UA-23-ZAP", "isRegionCentre": true, "population": 720000, "names": { "uk": "Запоріжжя", "en": "Zaporizhzhia" } },
+        { "code": "UA-23-MELI", "districtCode": "UA-23-MEL", "population": 150000, "names": { "uk": "Мелітополь", "en": "Melitopol" } },
+        { "code": "UA-23-BERD", "districtCode": "UA-23-BER", "population": 108000, "names": { "uk": "Бердянськ", "en": "Berdiansk" } },
+        { "code": "UA-23-ENER", "districtCode": "UA-23-VAS", "population": 53000, "names": { "uk": "Енергодар", "en": "Enerhodar" } },
+        { "code": "UA-23-TOKM", "districtCode": "UA-23-POL", "population": 30000, "names": { "uk": "Токмак", "en": "Tokmak" } },
+        { "code": "UA-23-POLO", "districtCode": "UA-23-POL", "population": 19000, "names": { "uk": "Пологи", "en": "Polohy" } },
+        { "code": "UA-23-DNIP", "districtCode": "UA-23-VAS", "population": 18000, "names": { "uk": "Дніпрорудне", "en": "Dniprorudne" } },
+        { "code": "UA-23-ORIK", "districtCode": "UA-23-POL", "population": 14000, "names": { "uk": "Оріхів", "en": "Orikhiv" } },
+        { "code": "UA-23-VASY", "districtCode": "UA-23-VAS", "population": 13000, "names": { "uk": "Василівка", "en": "Vasylivka" } },
+        { "code": "UA-23-PRYM", "districtCode": "UA-23-BER", "population": 11000, "names": { "uk": "Приморськ", "en": "Prymorsk" } }
+      ]
+    },
+    {
+      "code": "UA-05",
+      "sortOrder": 8,
+      "names": { "uk": "Вінницька область", "en": "Vinnytsia Oblast" },
+      "districts": [
+        { "code": "UA-05-VIN", "names": { "uk": "Вінницький район", "en": "Vinnytsia Raion" } },
+        { "code": "UA-05-HAI", "names": { "uk": "Гайсинський район", "en": "Haisyn Raion" } },
+        { "code": "UA-05-ZHM", "names": { "uk": "Жмеринський район", "en": "Zhmerynka Raion" } },
+        { "code": "UA-05-MOH", "names": { "uk": "Могилів-Подільський район", "en": "Mohyliv-Podilskyi Raion" } },
+        { "code": "UA-05-TUL", "names": { "uk": "Тульчинський район", "en": "Tulchyn Raion" } },
+        { "code": "UA-05-KHM", "names": { "uk": "Хмільницький район", "en": "Khmilnyk Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-05-VINN", "districtCode": "UA-05-VIN", "isRegionCentre": true, "population": 370000, "names": { "uk": "Вінниця", "en": "Vinnytsia" } },
+        { "code": "UA-05-ZHME", "districtCode": "UA-05-ZHM", "population": 35000, "names": { "uk": "Жмеринка", "en": "Zhmerynka" } },
+        { "code": "UA-05-MOHY", "districtCode": "UA-05-MOH", "population": 31000, "names": { "uk": "Могилів-Подільський", "en": "Mohyliv-Podilskyi" } },
+        { "code": "UA-05-KHML", "districtCode": "UA-05-KHM", "population": 26000, "names": { "uk": "Хмільник", "en": "Khmilnyk" } },
+        { "code": "UA-05-HAIS", "districtCode": "UA-05-HAI", "population": 25000, "names": { "uk": "Гайсин", "en": "Haisyn" } },
+        { "code": "UA-05-KOZY", "districtCode": "UA-05-KHM", "population": 22000, "names": { "uk": "Козятин", "en": "Koziatyn" } },
+        { "code": "UA-05-LADY", "districtCode": "UA-05-HAI", "population": 22000, "names": { "uk": "Ладижин", "en": "Ladyzhyn" } },
+        { "code": "UA-05-KALY", "districtCode": "UA-05-KHM", "population": 19000, "names": { "uk": "Калинівка", "en": "Kalynivka" } },
+        { "code": "UA-05-BARR", "districtCode": "UA-05-ZHM", "population": 16000, "names": { "uk": "Бар", "en": "Bar" } },
+        { "code": "UA-05-TULC", "districtCode": "UA-05-TUL", "population": 15000, "names": { "uk": "Тульчин", "en": "Tulchyn" } },
+        { "code": "UA-05-NEMY", "districtCode": "UA-05-TUL", "population": 11000, "names": { "uk": "Немирів", "en": "Nemyriv" } },
+        { "code": "UA-05-ILLI", "districtCode": "UA-05-VIN", "population": 11000, "names": { "uk": "Іллінці", "en": "Illintsi" } }
+      ]
+    },
+    {
+      "code": "UA-07",
+      "sortOrder": 9,
+      "names": { "uk": "Волинська область", "en": "Volyn Oblast" },
+      "districts": [
+        { "code": "UA-07-LUT", "names": { "uk": "Луцький район", "en": "Lutsk Raion" } },
+        { "code": "UA-07-VOL", "names": { "uk": "Володимирський район", "en": "Volodymyr Raion" } },
+        { "code": "UA-07-KOV", "names": { "uk": "Ковельський район", "en": "Kovel Raion" } },
+        { "code": "UA-07-KAM", "names": { "uk": "Камінь-Каширський район", "en": "Kamin-Kashyrskyi Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-07-LUTS", "districtCode": "UA-07-LUT", "isRegionCentre": true, "population": 215000, "names": { "uk": "Луцьк", "en": "Lutsk" } },
+        { "code": "UA-07-KOVE", "districtCode": "UA-07-KOV", "population": 68000, "names": { "uk": "Ковель", "en": "Kovel" } },
+        { "code": "UA-07-NOVO", "districtCode": "UA-07-VOL", "population": 52000, "names": { "uk": "Нововолинськ", "en": "Novovolynsk" } },
+        { "code": "UA-07-VOLO", "districtCode": "UA-07-VOL", "population": 38000, "names": { "uk": "Володимир", "en": "Volodymyr" } },
+        { "code": "UA-07-KIVE", "districtCode": "UA-07-LUT", "population": 14000, "names": { "uk": "Ківерці", "en": "Kivertsi" } },
+        { "code": "UA-07-ROZH", "districtCode": "UA-07-LUT", "population": 13000, "names": { "uk": "Рожище", "en": "Rozhyshche" } },
+        { "code": "UA-07-KAMI", "districtCode": "UA-07-KAM", "population": 12000, "names": { "uk": "Камінь-Каширський", "en": "Kamin-Kashyrskyi" } },
+        { "code": "UA-07-HORO", "districtCode": "UA-07-LUT", "population": 9000, "names": { "uk": "Горохів", "en": "Horokhiv" } }
+      ]
+    },
+    {
+      "code": "UA-18",
+      "sortOrder": 10,
+      "names": { "uk": "Житомирська область", "en": "Zhytomyr Oblast" },
+      "districts": [
+        { "code": "UA-18-ZHY", "names": { "uk": "Житомирський район", "en": "Zhytomyr Raion" } },
+        { "code": "UA-18-BER", "names": { "uk": "Бердичівський район", "en": "Berdychiv Raion" } },
+        { "code": "UA-18-KOR", "names": { "uk": "Коростенський район", "en": "Korosten Raion" } },
+        { "code": "UA-18-ZVI", "names": { "uk": "Звягельський район", "en": "Zviahel Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-18-ZHYT", "districtCode": "UA-18-ZHY", "isRegionCentre": true, "population": 260000, "names": { "uk": "Житомир", "en": "Zhytomyr" } },
+        { "code": "UA-18-KORO", "districtCode": "UA-18-KOR", "population": 62000, "names": { "uk": "Коростень", "en": "Korosten" } },
+        { "code": "UA-18-BERD", "districtCode": "UA-18-BER", "population": 58000, "names": { "uk": "Бердичів", "en": "Berdychiv" } },
+        { "code": "UA-18-ZVIA", "districtCode": "UA-18-ZVI", "population": 55000, "names": { "uk": "Звягель", "en": "Zviahel" } },
+        { "code": "UA-18-MALY", "districtCode": "UA-18-KOR", "population": 25000, "names": { "uk": "Малин", "en": "Malyn" } },
+        { "code": "UA-18-KORS", "districtCode": "UA-18-ZHY", "population": 24000, "names": { "uk": "Коростишів", "en": "Korostyshiv" } },
+        { "code": "UA-18-OVRU", "districtCode": "UA-18-KOR", "population": 15000, "names": { "uk": "Овруч", "en": "Ovruch" } },
+        { "code": "UA-18-RADO", "districtCode": "UA-18-ZHY", "population": 14000, "names": { "uk": "Радомишль", "en": "Radomyshl" } },
+        { "code": "UA-18-BARA", "districtCode": "UA-18-ZVI", "population": 11000, "names": { "uk": "Баранівка", "en": "Baranivka" } }
+      ]
+    },
+    {
+      "code": "UA-21",
+      "sortOrder": 11,
+      "names": { "uk": "Закарпатська область", "en": "Zakarpattia Oblast" },
+      "districts": [
+        { "code": "UA-21-UZH", "names": { "uk": "Ужгородський район", "en": "Uzhhorod Raion" } },
+        { "code": "UA-21-BER", "names": { "uk": "Берегівський район", "en": "Berehove Raion" } },
+        { "code": "UA-21-MUK", "names": { "uk": "Мукачівський район", "en": "Mukachevo Raion" } },
+        { "code": "UA-21-RAK", "names": { "uk": "Рахівський район", "en": "Rakhiv Raion" } },
+        { "code": "UA-21-TYA", "names": { "uk": "Тячівський район", "en": "Tiachiv Raion" } },
+        { "code": "UA-21-KHU", "names": { "uk": "Хустський район", "en": "Khust Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-21-UZHH", "districtCode": "UA-21-UZH", "isRegionCentre": true, "population": 115000, "names": { "uk": "Ужгород", "en": "Uzhhorod" } },
+        { "code": "UA-21-MUKA", "districtCode": "UA-21-MUK", "population": 86000, "names": { "uk": "Мукачево", "en": "Mukachevo" } },
+        { "code": "UA-21-KHUS", "districtCode": "UA-21-KHU", "population": 28000, "names": { "uk": "Хуст", "en": "Khust" } },
+        { "code": "UA-21-VYNO", "districtCode": "UA-21-BER", "population": 25000, "names": { "uk": "Виноградів", "en": "Vynohradiv" } },
+        { "code": "UA-21-BERE", "districtCode": "UA-21-BER", "population": 23000, "names": { "uk": "Берегове", "en": "Berehove" } },
+        { "code": "UA-21-SVAL", "districtCode": "UA-21-MUK", "population": 16000, "names": { "uk": "Свалява", "en": "Svaliava" } },
+        { "code": "UA-21-RAKH", "districtCode": "UA-21-RAK", "population": 15000, "names": { "uk": "Рахів", "en": "Rakhiv" } },
+        { "code": "UA-21-IRSH", "districtCode": "UA-21-KHU", "population": 9000, "names": { "uk": "Іршава", "en": "Irshava" } },
+        { "code": "UA-21-TYAC", "districtCode": "UA-21-TYA", "population": 9000, "names": { "uk": "Тячів", "en": "Tiachiv" } },
+        { "code": "UA-21-CHOP", "districtCode": "UA-21-UZH", "population": 8000, "names": { "uk": "Чоп", "en": "Chop" } }
+      ]
+    },
+    {
+      "code": "UA-26",
+      "sortOrder": 12,
+      "names": { "uk": "Івано-Франківська область", "en": "Ivano-Frankivsk Oblast" },
+      "districts": [
+        { "code": "UA-26-IVA", "names": { "uk": "Івано-Франківський район", "en": "Ivano-Frankivsk Raion" } },
+        { "code": "UA-26-VER", "names": { "uk": "Верховинський район", "en": "Verkhovyna Raion" } },
+        { "code": "UA-26-KAL", "names": { "uk": "Калуський район", "en": "Kalush Raion" } },
+        { "code": "UA-26-KOL", "names": { "uk": "Коломийський район", "en": "Kolomyia Raion" } },
+        { "code": "UA-26-KOS", "names": { "uk": "Косівський район", "en": "Kosiv Raion" } },
+        { "code": "UA-26-NAD", "names": { "uk": "Надвірнянський район", "en": "Nadvirna Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-26-IVAN", "districtCode": "UA-26-IVA", "isRegionCentre": true, "population": 240000, "names": { "uk": "Івано-Франківськ", "en": "Ivano-Frankivsk" } },
+        { "code": "UA-26-KALU", "districtCode": "UA-26-KAL", "population": 66000, "names": { "uk": "Калуш", "en": "Kalush" } },
+        { "code": "UA-26-KOLO", "districtCode": "UA-26-KOL", "population": 61000, "names": { "uk": "Коломия", "en": "Kolomyia" } },
+        { "code": "UA-26-NADV", "districtCode": "UA-26-NAD", "population": 21000, "names": { "uk": "Надвірна", "en": "Nadvirna" } },
+        { "code": "UA-26-DOLY", "districtCode": "UA-26-KAL", "population": 20000, "names": { "uk": "Долина", "en": "Dolyna" } },
+        { "code": "UA-26-BURS", "districtCode": "UA-26-IVA", "population": 15000, "names": { "uk": "Бурштин", "en": "Burshtyn" } },
+        { "code": "UA-26-SNYA", "districtCode": "UA-26-KOL", "population": 10000, "names": { "uk": "Снятин", "en": "Sniatyn" } },
+        { "code": "UA-26-BOLE", "districtCode": "UA-26-KAL", "population": 10000, "names": { "uk": "Болехів", "en": "Bolekhiv" } },
+        { "code": "UA-26-TLUM", "districtCode": "UA-26-IVA", "population": 9000, "names": { "uk": "Тлумач", "en": "Tlumach" } },
+        { "code": "UA-26-KOSI", "districtCode": "UA-26-KOS", "population": 8000, "names": { "uk": "Косів", "en": "Kosiv" } },
+        { "code": "UA-26-YARE", "districtCode": "UA-26-NAD", "population": 8000, "names": { "uk": "Яремче", "en": "Yaremche" } },
+        { "code": "UA-26-HORO", "districtCode": "UA-26-KOL", "population": 8000, "names": { "uk": "Городенка", "en": "Horodenka" } }
+      ]
+    },
+    {
+      "code": "UA-35",
+      "sortOrder": 13,
+      "names": { "uk": "Кіровоградська область", "en": "Kirovohrad Oblast" },
+      "districts": [
+        { "code": "UA-35-KRO", "names": { "uk": "Кропивницький район", "en": "Kropyvnytskyi Raion" } },
+        { "code": "UA-35-HOL", "names": { "uk": "Голованівський район", "en": "Holovanivsk Raion" } },
+        { "code": "UA-35-NOV", "names": { "uk": "Новоукраїнський район", "en": "Novoukrainka Raion" } },
+        { "code": "UA-35-OLE", "names": { "uk": "Олександрійський район", "en": "Oleksandriia Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-35-KROP", "districtCode": "UA-35-KRO", "isRegionCentre": true, "population": 220000, "names": { "uk": "Кропивницький", "en": "Kropyvnytskyi" } },
+        { "code": "UA-35-OLEK", "districtCode": "UA-35-OLE", "population": 80000, "names": { "uk": "Олександрія", "en": "Oleksandriia" } },
+        { "code": "UA-35-SVIT", "districtCode": "UA-35-OLE", "population": 42000, "names": { "uk": "Світловодськ", "en": "Svitlovodsk" } },
+        { "code": "UA-35-ZNAM", "districtCode": "UA-35-KRO", "population": 22000, "names": { "uk": "Знам'янка", "en": "Znamianka" } },
+        { "code": "UA-35-DOLY", "districtCode": "UA-35-KRO", "population": 17000, "names": { "uk": "Долинська", "en": "Dolynska" } },
+        { "code": "UA-35-NOVO", "districtCode": "UA-35-NOV", "population": 16000, "names": { "uk": "Новоукраїнка", "en": "Novoukrainka" } },
+        { "code": "UA-35-HAIV", "districtCode": "UA-35-HOL", "population": 14000, "names": { "uk": "Гайворон", "en": "Haivoron" } },
+        { "code": "UA-35-MALA", "districtCode": "UA-35-NOV", "population": 11000, "names": { "uk": "Мала Виска", "en": "Mala Vyska" } },
+        { "code": "UA-35-BOBR", "districtCode": "UA-35-KRO", "population": 10000, "names": { "uk": "Бобринець", "en": "Bobrynets" } }
+      ]
+    },
+    {
+      "code": "UA-48",
+      "sortOrder": 14,
+      "names": { "uk": "Миколаївська область", "en": "Mykolaiv Oblast" },
+      "districts": [
+        { "code": "UA-48-MYK", "names": { "uk": "Миколаївський район", "en": "Mykolaiv Raion" } },
+        { "code": "UA-48-BAS", "names": { "uk": "Баштанський район", "en": "Bashtanka Raion" } },
+        { "code": "UA-48-VOZ", "names": { "uk": "Вознесенський район", "en": "Voznesensk Raion" } },
+        { "code": "UA-48-PER", "names": { "uk": "Первомайський район", "en": "Pervomaisk Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-48-MYKO", "districtCode": "UA-48-MYK", "isRegionCentre": true, "population": 480000, "names": { "uk": "Миколаїв", "en": "Mykolaiv" } },
+        { "code": "UA-48-PERV", "districtCode": "UA-48-PER", "population": 65000, "names": { "uk": "Первомайськ", "en": "Pervomaisk" } },
+        { "code": "UA-48-YUZH", "districtCode": "UA-48-VOZ", "population": 38000, "names": { "uk": "Южноукраїнськ", "en": "Yuzhnoukrainsk" } },
+        { "code": "UA-48-VOZN", "districtCode": "UA-48-VOZ", "population": 34000, "names": { "uk": "Вознесенськ", "en": "Voznesensk" } },
+        { "code": "UA-48-OCHA", "districtCode": "UA-48-MYK", "population": 14000, "names": { "uk": "Очаків", "en": "Ochakiv" } },
+        { "code": "UA-48-NOVA", "districtCode": "UA-48-MYK", "population": 12000, "names": { "uk": "Нова Одеса", "en": "Nova Odesa" } },
+        { "code": "UA-48-BASH", "districtCode": "UA-48-BAS", "population": 12000, "names": { "uk": "Баштанка", "en": "Bashtanka" } },
+        { "code": "UA-48-SNIH", "districtCode": "UA-48-BAS", "population": 12000, "names": { "uk": "Снігурівка", "en": "Snihurivka" } }
+      ]
+    },
+    {
+      "code": "UA-53",
+      "sortOrder": 15,
+      "names": { "uk": "Полтавська область", "en": "Poltava Oblast" },
+      "districts": [
+        { "code": "UA-53-POL", "names": { "uk": "Полтавський район", "en": "Poltava Raion" } },
+        { "code": "UA-53-KRE", "names": { "uk": "Кременчуцький район", "en": "Kremenchuk Raion" } },
+        { "code": "UA-53-LUB", "names": { "uk": "Лубенський район", "en": "Lubny Raion" } },
+        { "code": "UA-53-MYR", "names": { "uk": "Миргородський район", "en": "Myrhorod Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-53-POLT", "districtCode": "UA-53-POL", "isRegionCentre": true, "population": 280000, "names": { "uk": "Полтава", "en": "Poltava" } },
+        { "code": "UA-53-KREM", "districtCode": "UA-53-KRE", "population": 217000, "names": { "uk": "Кременчук", "en": "Kremenchuk" } },
+        { "code": "UA-53-HORI", "districtCode": "UA-53-KRE", "population": 52000, "names": { "uk": "Горішні Плавні", "en": "Horishni Plavni" } },
+        { "code": "UA-53-LUBN", "districtCode": "UA-53-LUB", "population": 44000, "names": { "uk": "Лубни", "en": "Lubny" } },
+        { "code": "UA-53-MYRH", "districtCode": "UA-53-MYR", "population": 38000, "names": { "uk": "Миргород", "en": "Myrhorod" } },
+        { "code": "UA-53-HADY", "districtCode": "UA-53-MYR", "population": 23000, "names": { "uk": "Гадяч", "en": "Hadiach" } },
+        { "code": "UA-53-PYRY", "districtCode": "UA-53-LUB", "population": 15000, "names": { "uk": "Пирятин", "en": "Pyriatyn" } },
+        { "code": "UA-53-KARL", "districtCode": "UA-53-POL", "population": 14000, "names": { "uk": "Карлівка", "en": "Karlivka" } },
+        { "code": "UA-53-KHOR", "districtCode": "UA-53-LUB", "population": 13000, "names": { "uk": "Хорол", "en": "Khorol" } },
+        { "code": "UA-53-LOKH", "districtCode": "UA-53-MYR", "population": 11000, "names": { "uk": "Лохвиця", "en": "Lokhvytsia" } },
+        { "code": "UA-53-ZINK", "districtCode": "UA-53-POL", "population": 9000, "names": { "uk": "Зіньків", "en": "Zinkiv" } }
+      ]
+    },
+    {
+      "code": "UA-56",
+      "sortOrder": 16,
+      "names": { "uk": "Рівненська область", "en": "Rivne Oblast" },
+      "districts": [
+        { "code": "UA-56-RIV", "names": { "uk": "Рівненський район", "en": "Rivne Raion" } },
+        { "code": "UA-56-VAR", "names": { "uk": "Вараський район", "en": "Varash Raion" } },
+        { "code": "UA-56-DUB", "names": { "uk": "Дубенський район", "en": "Dubno Raion" } },
+        { "code": "UA-56-SAR", "names": { "uk": "Сарненський район", "en": "Sarny Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-56-RIVN", "districtCode": "UA-56-RIV", "isRegionCentre": true, "population": 240000, "names": { "uk": "Рівне", "en": "Rivne" } },
+        { "code": "UA-56-VARA", "districtCode": "UA-56-VAR", "population": 42000, "names": { "uk": "Вараш", "en": "Varash" } },
+        { "code": "UA-56-DUBN", "districtCode": "UA-56-DUB", "population": 37000, "names": { "uk": "Дубно", "en": "Dubno" } },
+        { "code": "UA-56-KOST", "districtCode": "UA-56-RIV", "population": 30000, "names": { "uk": "Костопіль", "en": "Kostopil" } },
+        { "code": "UA-56-SARN", "districtCode": "UA-56-SAR", "population": 28000, "names": { "uk": "Сарни", "en": "Sarny" } },
+        { "code": "UA-56-ZDOL", "districtCode": "UA-56-RIV", "population": 24000, "names": { "uk": "Здолбунів", "en": "Zdolbuniv" } },
+        { "code": "UA-56-OSTR", "districtCode": "UA-56-RIV", "population": 15000, "names": { "uk": "Острог", "en": "Ostroh" } },
+        { "code": "UA-56-BERE", "districtCode": "UA-56-RIV", "population": 13000, "names": { "uk": "Березне", "en": "Berezne" } },
+        { "code": "UA-56-RADY", "districtCode": "UA-56-DUB", "population": 10000, "names": { "uk": "Радивилів", "en": "Radyvyliv" } }
+      ]
+    },
+    {
+      "code": "UA-59",
+      "sortOrder": 17,
+      "names": { "uk": "Сумська область", "en": "Sumy Oblast" },
+      "districts": [
+        { "code": "UA-59-SUM", "names": { "uk": "Сумський район", "en": "Sumy Raion" } },
+        { "code": "UA-59-KON", "names": { "uk": "Конотопський район", "en": "Konotop Raion" } },
+        { "code": "UA-59-OKH", "names": { "uk": "Охтирський район", "en": "Okhtyrka Raion" } },
+        { "code": "UA-59-ROM", "names": { "uk": "Роменський район", "en": "Romny Raion" } },
+        { "code": "UA-59-SHO", "names": { "uk": "Шосткинський район", "en": "Shostka Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-59-SUMY", "districtCode": "UA-59-SUM", "isRegionCentre": true, "population": 260000, "names": { "uk": "Суми", "en": "Sumy" } },
+        { "code": "UA-59-KONO", "districtCode": "UA-59-KON", "population": 83000, "names": { "uk": "Конотоп", "en": "Konotop" } },
+        { "code": "UA-59-SHOS", "districtCode": "UA-59-SHO", "population": 72000, "names": { "uk": "Шостка", "en": "Shostka" } },
+        { "code": "UA-59-OKHT", "districtCode": "UA-59-OKH", "population": 47000, "names": { "uk": "Охтирка", "en": "Okhtyrka" } },
+        { "code": "UA-59-ROMN", "districtCode": "UA-59-ROM", "population": 38000, "names": { "uk": "Ромни", "en": "Romny" } },
+        { "code": "UA-59-HLUK", "districtCode": "UA-59-SHO", "population": 33000, "names": { "uk": "Глухів", "en": "Hlukhiv" } },
+        { "code": "UA-59-LEBE", "districtCode": "UA-59-SUM", "population": 24000, "names": { "uk": "Лебедин", "en": "Lebedyn" } },
+        { "code": "UA-59-KROL", "districtCode": "UA-59-KON", "population": 22000, "names": { "uk": "Кролевець", "en": "Krolevets" } },
+        { "code": "UA-59-TROS", "districtCode": "UA-59-OKH", "population": 19000, "names": { "uk": "Тростянець", "en": "Trostianets" } },
+        { "code": "UA-59-BILO", "districtCode": "UA-59-SUM", "population": 15000, "names": { "uk": "Білопілля", "en": "Bilopillia" } },
+        { "code": "UA-59-PUTY", "districtCode": "UA-59-KON", "population": 15000, "names": { "uk": "Путивль", "en": "Putyvl" } }
+      ]
+    },
+    {
+      "code": "UA-61",
+      "sortOrder": 18,
+      "names": { "uk": "Тернопільська область", "en": "Ternopil Oblast" },
+      "districts": [
+        { "code": "UA-61-TER", "names": { "uk": "Тернопільський район", "en": "Ternopil Raion" } },
+        { "code": "UA-61-KRE", "names": { "uk": "Кременецький район", "en": "Kremenets Raion" } },
+        { "code": "UA-61-CHO", "names": { "uk": "Чортківський район", "en": "Chortkiv Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-61-TERN", "districtCode": "UA-61-TER", "isRegionCentre": true, "population": 220000, "names": { "uk": "Тернопіль", "en": "Ternopil" } },
+        { "code": "UA-61-CHOR", "districtCode": "UA-61-CHO", "population": 27000, "names": { "uk": "Чортків", "en": "Chortkiv" } },
+        { "code": "UA-61-KREM", "districtCode": "UA-61-KRE", "population": 21000, "names": { "uk": "Кременець", "en": "Kremenets" } },
+        { "code": "UA-61-BERE", "districtCode": "UA-61-TER", "population": 17000, "names": { "uk": "Бережани", "en": "Berezhany" } },
+        { "code": "UA-61-ZBAR", "districtCode": "UA-61-TER", "population": 13000, "names": { "uk": "Збараж", "en": "Zbarazh" } },
+        { "code": "UA-61-TERE", "districtCode": "UA-61-TER", "population": 13000, "names": { "uk": "Теребовля", "en": "Terebovlia" } },
+        { "code": "UA-61-BUCH", "districtCode": "UA-61-CHO", "population": 12000, "names": { "uk": "Бучач", "en": "Buchach" } },
+        { "code": "UA-61-BORS", "districtCode": "UA-61-CHO", "population": 11000, "names": { "uk": "Борщів", "en": "Borshchiv" } },
+        { "code": "UA-61-ZALI", "districtCode": "UA-61-CHO", "population": 9000, "names": { "uk": "Заліщики", "en": "Zalishchyky" } },
+        { "code": "UA-61-POCH", "districtCode": "UA-61-KRE", "population": 8000, "names": { "uk": "Почаїв", "en": "Pochaiv" } },
+        { "code": "UA-61-KOPY", "districtCode": "UA-61-CHO", "population": 7000, "names": { "uk": "Копичинці", "en": "Kopychyntsi" } }
+      ]
+    },
+    {
+      "code": "UA-65",
+      "sortOrder": 19,
+      "names": { "uk": "Херсонська область", "en": "Kherson Oblast" },
+      "districts": [
+        { "code": "UA-65-KHE", "names": { "uk": "Херсонський район", "en": "Kherson Raion" } },
+        { "code": "UA-65-BER", "names": { "uk": "Бериславський район", "en": "Beryslav Raion" } },
+        { "code": "UA-65-HEN", "names": { "uk": "Генічеський район", "en": "Henichesk Raion" } },
+        { "code": "UA-65-KAK", "names": { "uk": "Каховський район", "en": "Kakhovka Raion" } },
+        { "code": "UA-65-SKA", "names": { "uk": "Скадовський район", "en": "Skadovsk Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-65-KHER", "districtCode": "UA-65-KHE", "isRegionCentre": true, "population": 280000, "names": { "uk": "Херсон", "en": "Kherson" } },
+        { "code": "UA-65-NOVA", "districtCode": "UA-65-KAK", "population": 45000, "names": { "uk": "Нова Каховка", "en": "Nova Kakhovka" } },
+        { "code": "UA-65-KAKH", "districtCode": "UA-65-KAK", "population": 35000, "names": { "uk": "Каховка", "en": "Kakhovka" } },
+        { "code": "UA-65-OLES", "districtCode": "UA-65-KHE", "population": 24000, "names": { "uk": "Олешки", "en": "Oleshky" } },
+        { "code": "UA-65-HENI", "districtCode": "UA-65-HEN", "population": 19000, "names": { "uk": "Генічеськ", "en": "Henichesk" } },
+        { "code": "UA-65-SKAD", "districtCode": "UA-65-SKA", "population": 17000, "names": { "uk": "Скадовськ", "en": "Skadovsk" } },
+        { "code": "UA-65-HOLA", "districtCode": "UA-65-SKA", "population": 14000, "names": { "uk": "Гола Пристань", "en": "Hola Prystan" } },
+        { "code": "UA-65-BERY", "districtCode": "UA-65-BER", "population": 12000, "names": { "uk": "Берислав", "en": "Beryslav" } }
+      ]
+    },
+    {
+      "code": "UA-68",
+      "sortOrder": 20,
+      "names": { "uk": "Хмельницька область", "en": "Khmelnytskyi Oblast" },
+      "districts": [
+        { "code": "UA-68-KHM", "names": { "uk": "Хмельницький район", "en": "Khmelnytskyi Raion" } },
+        { "code": "UA-68-KAM", "names": { "uk": "Кам'янець-Подільський район", "en": "Kamianets-Podilskyi Raion" } },
+        { "code": "UA-68-SHE", "names": { "uk": "Шепетівський район", "en": "Shepetivka Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-68-KHME", "districtCode": "UA-68-KHM", "isRegionCentre": true, "population": 270000, "names": { "uk": "Хмельницький", "en": "Khmelnytskyi" } },
+        { "code": "UA-68-KAMI", "districtCode": "UA-68-KAM", "population": 66000, "names": { "uk": "Кам'янець-Подільський", "en": "Kamianets-Podilskyi" } },
+        { "code": "UA-68-SHEP", "districtCode": "UA-68-SHE", "population": 40000, "names": { "uk": "Шепетівка", "en": "Shepetivka" } },
+        { "code": "UA-68-NETI", "districtCode": "UA-68-SHE", "population": 37000, "names": { "uk": "Нетішин", "en": "Netishyn" } },
+        { "code": "UA-68-SLAV", "districtCode": "UA-68-SHE", "population": 34000, "names": { "uk": "Славута", "en": "Slavuta" } },
+        { "code": "UA-68-STAR", "districtCode": "UA-68-KHM", "population": 34000, "names": { "uk": "Старокостянтинів", "en": "Starokostiantyniv" } },
+        { "code": "UA-68-POLO", "districtCode": "UA-68-SHE", "population": 21000, "names": { "uk": "Полонне", "en": "Polonne" } },
+        { "code": "UA-68-VOLO", "districtCode": "UA-68-KHM", "population": 19000, "names": { "uk": "Волочиськ", "en": "Volochysk" } },
+        { "code": "UA-68-KRAS", "districtCode": "UA-68-KHM", "population": 19000, "names": { "uk": "Красилів", "en": "Krasyliv" } },
+        { "code": "UA-68-IZYA", "districtCode": "UA-68-SHE", "population": 16000, "names": { "uk": "Ізяслав", "en": "Iziaslav" } },
+        { "code": "UA-68-DUNA", "districtCode": "UA-68-KAM", "population": 16000, "names": { "uk": "Дунаївці", "en": "Dunaivtsi" } }
+      ]
+    },
+    {
+      "code": "UA-71",
+      "sortOrder": 21,
+      "names": { "uk": "Черкаська область", "en": "Cherkasy Oblast" },
+      "districts": [
+        { "code": "UA-71-CHE", "names": { "uk": "Черкаський район", "en": "Cherkasy Raion" } },
+        { "code": "UA-71-ZVE", "names": { "uk": "Звенигородський район", "en": "Zvenyhorodka Raion" } },
+        { "code": "UA-71-ZOL", "names": { "uk": "Золотоніський район", "en": "Zolotonosha Raion" } },
+        { "code": "UA-71-UMA", "names": { "uk": "Уманський район", "en": "Uman Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-71-CHER", "districtCode": "UA-71-CHE", "isRegionCentre": true, "population": 270000, "names": { "uk": "Черкаси", "en": "Cherkasy" } },
+        { "code": "UA-71-UMAN", "districtCode": "UA-71-UMA", "population": 82000, "names": { "uk": "Умань", "en": "Uman" } },
+        { "code": "UA-71-SMIL", "districtCode": "UA-71-CHE", "population": 66000, "names": { "uk": "Сміла", "en": "Smila" } },
+        { "code": "UA-71-ZOLO", "districtCode": "UA-71-ZOL", "population": 28000, "names": { "uk": "Золотоноша", "en": "Zolotonosha" } },
+        { "code": "UA-71-KANI", "districtCode": "UA-71-CHE", "population": 24000, "names": { "uk": "Канів", "en": "Kaniv" } },
+        { "code": "UA-71-KORS", "districtCode": "UA-71-ZVE", "population": 17000, "names": { "uk": "Корсунь-Шевченківський", "en": "Korsun-Shevchenkivskyi" } },
+        { "code": "UA-71-ZVEN", "districtCode": "UA-71-ZVE", "population": 17000, "names": { "uk": "Звенигородка", "en": "Zvenyhorodka" } },
+        { "code": "UA-71-VATU", "districtCode": "UA-71-ZVE", "population": 16000, "names": { "uk": "Ватутіне", "en": "Vatutine" } },
+        { "code": "UA-71-HORO", "districtCode": "UA-71-CHE", "population": 14000, "names": { "uk": "Городище", "en": "Horodyshche" } },
+        { "code": "UA-71-SHPO", "districtCode": "UA-71-ZVE", "population": 13000, "names": { "uk": "Шпола", "en": "Shpola" } },
+        { "code": "UA-71-KHRY", "districtCode": "UA-71-UMA", "population": 10000, "names": { "uk": "Христинівка", "en": "Khrystynivka" } }
+      ]
+    },
+    {
+      "code": "UA-74",
+      "sortOrder": 22,
+      "names": { "uk": "Чернігівська область", "en": "Chernihiv Oblast" },
+      "districts": [
+        { "code": "UA-74-CHE", "names": { "uk": "Чернігівський район", "en": "Chernihiv Raion" } },
+        { "code": "UA-74-KOR", "names": { "uk": "Корюківський район", "en": "Koriukivka Raion" } },
+        { "code": "UA-74-NIZ", "names": { "uk": "Ніжинський район", "en": "Nizhyn Raion" } },
+        { "code": "UA-74-NOV", "names": { "uk": "Новгород-Сіверський район", "en": "Novhorod-Siverskyi Raion" } },
+        { "code": "UA-74-PRY", "names": { "uk": "Прилуцький район", "en": "Pryluky Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-74-CHRN", "districtCode": "UA-74-CHE", "isRegionCentre": true, "population": 280000, "names": { "uk": "Чернігів", "en": "Chernihiv" } },
+        { "code": "UA-74-NIZH", "districtCode": "UA-74-NIZ", "population": 68000, "names": { "uk": "Ніжин", "en": "Nizhyn" } },
+        { "code": "UA-74-PRYL", "districtCode": "UA-74-PRY", "population": 53000, "names": { "uk": "Прилуки", "en": "Pryluky" } },
+        { "code": "UA-74-BAKH", "districtCode": "UA-74-NIZ", "population": 17000, "names": { "uk": "Бахмач", "en": "Bakhmach" } },
+        { "code": "UA-74-NOVH", "districtCode": "UA-74-NOV", "population": 13000, "names": { "uk": "Новгород-Сіверський", "en": "Novhorod-Siverskyi" } },
+        { "code": "UA-74-KORY", "districtCode": "UA-74-KOR", "population": 12000, "names": { "uk": "Корюківка", "en": "Koriukivka" } },
+        { "code": "UA-74-MENA", "districtCode": "UA-74-KOR", "population": 11000, "names": { "uk": "Мена", "en": "Mena" } },
+        { "code": "UA-74-BOBR", "districtCode": "UA-74-NIZ", "population": 11000, "names": { "uk": "Бобровиця", "en": "Bobrovytsia" } },
+        { "code": "UA-74-HORO", "districtCode": "UA-74-CHE", "population": 11000, "names": { "uk": "Городня", "en": "Horodnia" } }
+      ]
+    },
+    {
+      "code": "UA-77",
+      "sortOrder": 23,
+      "names": { "uk": "Чернівецька область", "en": "Chernivtsi Oblast" },
+      "districts": [
+        { "code": "UA-77-CHE", "names": { "uk": "Чернівецький район", "en": "Chernivtsi Raion" } },
+        { "code": "UA-77-VYZ", "names": { "uk": "Вижницький район", "en": "Vyzhnytsia Raion" } },
+        { "code": "UA-77-DNI", "names": { "uk": "Дністровський район", "en": "Dnistrovskyi Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-77-CHRV", "districtCode": "UA-77-CHE", "isRegionCentre": true, "population": 260000, "names": { "uk": "Чернівці", "en": "Chernivtsi" } },
+        { "code": "UA-77-STOR", "districtCode": "UA-77-VYZ", "population": 14000, "names": { "uk": "Сторожинець", "en": "Storozhynets" } },
+        { "code": "UA-77-NOVO", "districtCode": "UA-77-DNI", "population": 10000, "names": { "uk": "Новодністровськ", "en": "Novodnistrovsk" } },
+        { "code": "UA-77-KHOT", "districtCode": "UA-77-DNI", "population": 9000, "names": { "uk": "Хотин", "en": "Khotyn" } },
+        { "code": "UA-77-ZAST", "districtCode": "UA-77-CHE", "population": 8000, "names": { "uk": "Заставна", "en": "Zastavna" } },
+        { "code": "UA-77-KITS", "districtCode": "UA-77-CHE", "population": 7000, "names": { "uk": "Кіцмань", "en": "Kitsman" } },
+        { "code": "UA-77-VYZH", "districtCode": "UA-77-VYZ", "population": 4000, "names": { "uk": "Вижниця", "en": "Vyzhnytsia" } }
+      ]
+    },
+    {
+      "code": "UA-14",
+      "sortOrder": 24,
+      "names": { "uk": "Донецька область", "en": "Donetsk Oblast" },
+      "districts": [
+        { "code": "UA-14-DON", "names": { "uk": "Донецький район", "en": "Donetsk Raion" } },
+        { "code": "UA-14-BAK", "names": { "uk": "Бахмутський район", "en": "Bakhmut Raion" } },
+        { "code": "UA-14-VOL", "names": { "uk": "Волноваський район", "en": "Volnovakha Raion" } },
+        { "code": "UA-14-HOR", "names": { "uk": "Горлівський район", "en": "Horlivka Raion" } },
+        { "code": "UA-14-KAL", "names": { "uk": "Кальміуський район", "en": "Kalmiuske Raion" } },
+        { "code": "UA-14-KRA", "names": { "uk": "Краматорський район", "en": "Kramatorsk Raion" } },
+        { "code": "UA-14-MAR", "names": { "uk": "Маріупольський район", "en": "Mariupol Raion" } },
+        { "code": "UA-14-POK", "names": { "uk": "Покровський район", "en": "Pokrovsk Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-14-DONE", "districtCode": "UA-14-DON", "isRegionCentre": true, "population": 900000, "names": { "uk": "Донецьк", "en": "Donetsk" } },
+        { "code": "UA-14-MARI", "districtCode": "UA-14-MAR", "population": 431000, "names": { "uk": "Маріуполь", "en": "Mariupol" } },
+        { "code": "UA-14-MAKI", "districtCode": "UA-14-DON", "population": 340000, "names": { "uk": "Макіївка", "en": "Makiivka" } },
+        { "code": "UA-14-HORL", "districtCode": "UA-14-HOR", "population": 240000, "names": { "uk": "Горлівка", "en": "Horlivka" } },
+        { "code": "UA-14-KRAM", "districtCode": "UA-14-KRA", "population": 150000, "names": { "uk": "Краматорськ", "en": "Kramatorsk" } },
+        { "code": "UA-14-SLOV", "districtCode": "UA-14-KRA", "population": 106000, "names": { "uk": "Слов'янськ", "en": "Sloviansk" } },
+        { "code": "UA-14-YENA", "districtCode": "UA-14-HOR", "population": 78000, "names": { "uk": "Єнакієве", "en": "Yenakiieve" } },
+        { "code": "UA-14-BAKH", "districtCode": "UA-14-BAK", "population": 72000, "names": { "uk": "Бахмут", "en": "Bakhmut" } },
+        { "code": "UA-14-KOST", "districtCode": "UA-14-KRA", "population": 66000, "names": { "uk": "Костянтинівка", "en": "Kostiantynivka" } },
+        { "code": "UA-14-POKR", "districtCode": "UA-14-POK", "population": 60000, "names": { "uk": "Покровськ", "en": "Pokrovsk" } },
+        { "code": "UA-14-DRUZ", "districtCode": "UA-14-KRA", "population": 54000, "names": { "uk": "Дружківка", "en": "Druzhkivka" } },
+        { "code": "UA-14-MYRN", "districtCode": "UA-14-POK", "population": 46000, "names": { "uk": "Мирноград", "en": "Myrnohrad" } },
+        { "code": "UA-14-AVDI", "districtCode": "UA-14-POK", "population": 31000, "names": { "uk": "Авдіївка", "en": "Avdiivka" } },
+        { "code": "UA-14-TORE", "districtCode": "UA-14-BAK", "population": 30000, "names": { "uk": "Торецьк", "en": "Toretsk" } },
+        { "code": "UA-14-SELY", "districtCode": "UA-14-POK", "population": 21000, "names": { "uk": "Селидове", "en": "Selydove" } },
+        { "code": "UA-14-VOLN", "districtCode": "UA-14-VOL", "population": 21000, "names": { "uk": "Волноваха", "en": "Volnovakha" } },
+        { "code": "UA-14-LYMA", "districtCode": "UA-14-KRA", "population": 20000, "names": { "uk": "Лиман", "en": "Lyman" } }
+      ]
+    },
+    {
+      "code": "UA-09",
+      "sortOrder": 25,
+      "names": { "uk": "Луганська область", "en": "Luhansk Oblast" },
+      "districts": [
+        { "code": "UA-09-LUH", "names": { "uk": "Луганський район", "en": "Luhansk Raion" } },
+        { "code": "UA-09-ALC", "names": { "uk": "Алчевський район", "en": "Alchevsk Raion" } },
+        { "code": "UA-09-DOV", "names": { "uk": "Довжанський район", "en": "Dovzhansk Raion" } },
+        { "code": "UA-09-ROV", "names": { "uk": "Ровеньківський район", "en": "Rovenky Raion" } },
+        { "code": "UA-09-SVA", "names": { "uk": "Сватівський район", "en": "Svatove Raion" } },
+        { "code": "UA-09-SIE", "names": { "uk": "Сєвєродонецький район", "en": "Sievierodonetsk Raion" } },
+        { "code": "UA-09-STA", "names": { "uk": "Старобільський район", "en": "Starobilsk Raion" } },
+        { "code": "UA-09-SHC", "names": { "uk": "Щастинський район", "en": "Shchastia Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-09-LUHA", "districtCode": "UA-09-LUH", "isRegionCentre": true, "population": 400000, "names": { "uk": "Луганськ", "en": "Luhansk" } },
+        { "code": "UA-09-ALCH", "districtCode": "UA-09-ALC", "population": 106000, "names": { "uk": "Алчевськ", "en": "Alchevsk" } },
+        { "code": "UA-09-SIEV", "districtCode": "UA-09-SIE", "population": 100000, "names": { "uk": "Сєвєродонецьк", "en": "Sievierodonetsk" } },
+        { "code": "UA-09-LYSY", "districtCode": "UA-09-SIE", "population": 95000, "names": { "uk": "Лисичанськ", "en": "Lysychansk" } },
+        { "code": "UA-09-RUBI", "districtCode": "UA-09-SIE", "population": 56000, "names": { "uk": "Рубіжне", "en": "Rubizhne" } },
+        { "code": "UA-09-POPA", "districtCode": "UA-09-SIE", "population": 20000, "names": { "uk": "Попасна", "en": "Popasna" } },
+        { "code": "UA-09-KREM", "districtCode": "UA-09-SIE", "population": 18000, "names": { "uk": "Кремінна", "en": "Kreminna" } },
+        { "code": "UA-09-SVAT", "districtCode": "UA-09-SVA", "population": 17000, "names": { "uk": "Сватове", "en": "Svatove" } },
+        { "code": "UA-09-STAR", "districtCode": "UA-09-STA", "population": 16000, "names": { "uk": "Старобільськ", "en": "Starobilsk" } },
+        { "code": "UA-09-SHCH", "districtCode": "UA-09-SHC", "population": 12000, "names": { "uk": "Щастя", "en": "Shchastia" } }
+      ]
+    },
+    {
+      "code": "UA-43",
+      "sortOrder": 26,
+      "names": { "uk": "Автономна Республіка Крим", "en": "Autonomous Republic of Crimea" },
+      "districts": [
+        { "code": "UA-43-SIM", "names": { "uk": "Сімферопольський район", "en": "Simferopol Raion" } },
+        { "code": "UA-43-BAK", "names": { "uk": "Бахчисарайський район", "en": "Bakhchysarai Raion" } },
+        { "code": "UA-43-BIL", "names": { "uk": "Білогірський район", "en": "Bilohirsk Raion" } },
+        { "code": "UA-43-DZH", "names": { "uk": "Джанкойський район", "en": "Dzhankoi Raion" } },
+        { "code": "UA-43-YEV", "names": { "uk": "Євпаторійський район", "en": "Yevpatoriia Raion" } },
+        { "code": "UA-43-KER", "names": { "uk": "Керченський район", "en": "Kerch Raion" } },
+        { "code": "UA-43-KRG", "names": { "uk": "Красногвардійський район", "en": "Krasnohvardiiske Raion" } },
+        { "code": "UA-43-KRP", "names": { "uk": "Красноперекопський район", "en": "Krasnoperekopsk Raion" } },
+        { "code": "UA-43-FEO", "names": { "uk": "Феодосійський район", "en": "Feodosiia Raion" } },
+        { "code": "UA-43-YAL", "names": { "uk": "Ялтинський район", "en": "Yalta Raion" } }
+      ],
+      "cities": [
+        { "code": "UA-43-SIMF", "districtCode": "UA-43-SIM", "isRegionCentre": true, "population": 330000, "names": { "uk": "Сімферополь", "en": "Simferopol" } },
+        { "code": "UA-43-KERC", "districtCode": "UA-43-KER", "population": 145000, "names": { "uk": "Керч", "en": "Kerch" } },
+        { "code": "UA-43-YEVP", "districtCode": "UA-43-YEV", "population": 105000, "names": { "uk": "Євпаторія", "en": "Yevpatoriia" } },
+        { "code": "UA-43-YALT", "districtCode": "UA-43-YAL", "population": 78000, "names": { "uk": "Ялта", "en": "Yalta" } },
+        { "code": "UA-43-FEOD", "districtCode": "UA-43-FEO", "population": 69000, "names": { "uk": "Феодосія", "en": "Feodosiia" } },
+        { "code": "UA-43-DZHA", "districtCode": "UA-43-DZH", "population": 39000, "names": { "uk": "Джанкой", "en": "Dzhankoi" } },
+        { "code": "UA-43-ALUS", "districtCode": "UA-43-YAL", "population": 29000, "names": { "uk": "Алушта", "en": "Alushta" } },
+        { "code": "UA-43-BAKH", "districtCode": "UA-43-BAK", "population": 27000, "names": { "uk": "Бахчисарай", "en": "Bakhchysarai" } },
+        { "code": "UA-43-KRAS", "districtCode": "UA-43-KRP", "population": 26000, "names": { "uk": "Красноперекопськ", "en": "Krasnoperekopsk" } },
+        { "code": "UA-43-SAKY", "districtCode": "UA-43-YEV", "population": 24000, "names": { "uk": "Саки", "en": "Saky" } },
+        { "code": "UA-43-ARMY", "districtCode": "UA-43-KRP", "population": 22000, "names": { "uk": "Армянськ", "en": "Armiansk" } },
+        { "code": "UA-43-BILO", "districtCode": "UA-43-BIL", "population": 16000, "names": { "uk": "Білогірськ", "en": "Bilohirsk" } },
+        { "code": "UA-43-SUDA", "districtCode": "UA-43-FEO", "population": 16000, "names": { "uk": "Судак", "en": "Sudak" } }
+      ]
+    },
+    {
+      "code": "UA-40",
+      "sortOrder": 27,
+      "names": { "uk": "Севастополь", "en": "Sevastopol" },
+      "districts": [],
+      "cities": [
+        {
+          "code": "UA-40-SEVA",
+          "isRegionCentre": true,
+          "population": 420000,
+          "names": { "uk": "Севастополь", "en": "Sevastopol" },
+          "cityDistricts": [
+            { "code": "UA-40-SEVA-BAL", "names": { "uk": "Балаклавський", "en": "Balaklavskyi" } },
+            { "code": "UA-40-SEVA-HAH", "names": { "uk": "Гагарінський", "en": "Haharinskyi" } },
+            { "code": "UA-40-SEVA-LEN", "names": { "uk": "Ленінський", "en": "Leninskyi" } },
+            { "code": "UA-40-SEVA-NAK", "names": { "uk": "Нахімовський", "en": "Nakhimovskyi" } }
+          ]
+        }
+      ]
+    }
+  ]
+}

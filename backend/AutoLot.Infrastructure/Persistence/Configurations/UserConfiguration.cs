@@ -27,6 +27,19 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasIndex(user => user.AccountType);
 
+        // Restrict: довідник географії не має зникати «разом із» кимось, і
+        // видалення міста, в якому є користувачі, має впасти з помилкою,
+        // а не тихо занулити їм адресу.
+        builder.HasOne(user => user.City)
+            .WithMany()
+            .HasForeignKey(user => user.CityId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(user => user.CityDistrict)
+            .WithMany()
+            .HasForeignKey(user => user.CityDistrictId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(user => user.RefreshTokens)
             .WithOne(token => token.User)
             .HasForeignKey(token => token.UserId)

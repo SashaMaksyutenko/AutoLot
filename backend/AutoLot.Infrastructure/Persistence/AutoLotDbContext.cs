@@ -1,3 +1,4 @@
+using AutoLot.Domain.Geo;
 using AutoLot.Domain.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,14 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
     : IdentityDbContext<User, Role, long>(options)
 {
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    public DbSet<Region> Regions => Set<Region>();
+
+    public DbSet<District> Districts => Set<District>();
+
+    public DbSet<City> Cities => Set<City>();
+
+    public DbSet<CityDistrict> CityDistricts => Set<CityDistrict>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

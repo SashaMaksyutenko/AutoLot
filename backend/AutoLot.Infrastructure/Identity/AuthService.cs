@@ -1,6 +1,7 @@
 using AutoLot.Application.Auth;
 using AutoLot.Application.Auth.Dtos;
 using AutoLot.Application.Common.Abstractions;
+using AutoLot.Application.Geo;
 using AutoLot.Domain.Enums;
 using AutoLot.Domain.Identity;
 using AutoLot.Infrastructure.Persistence;
@@ -16,6 +17,7 @@ internal sealed class AuthService(
     AutoLotDbContext dbContext,
     JwtTokenGenerator tokenGenerator,
     IOptions<JwtOptions> jwtOptions,
+    IGeoCatalog geoCatalog,
     IDateTimeProvider clock,
     ILogger<AuthService> logger) : IAuthService
 {
@@ -271,7 +273,9 @@ internal sealed class AuthService(
         var user = await userManager.Users
             .FirstOrDefaultAsync(candidate => candidate.Id == userId, cancellationToken);
 
-        return user is null ? null : MapProfile(user, await userManager.GetRolesAsync(user));
+        return user is null
+            ? null
+            : await MapProfileAsync(user, await userManager.GetRolesAsync(user), cancellationToken);
     }
 
     private async Task<AuthTokens> IssueTokensAsync(
@@ -304,7 +308,7 @@ internal sealed class AuthService(
             accessTokenExpiresAt,
             value,
             refreshToken.ExpiresAt,
-            MapProfile(user, roles));
+            await MapProfileAsync(user, roles, cancellationToken));
     }
 
     private async Task RevokeFamilyAsync(
@@ -325,13 +329,27 @@ internal sealed class AuthService(
                 cancellationToken);
     }
 
-    private static UserProfile MapProfile(User user, IList<string> roles) =>
-        new(
+    /// <summary>
+    /// Місцезнаходження розгортаємо в назви лише тоді, коли користувач його
+    /// вказав, — інакше зайвий запит до бази на кожен вхід.
+    /// </summary>
+    private async Task<UserProfile> MapProfileAsync(
+        User user,
+        IList<string> roles,
+        CancellationToken cancellationToken)
+    {
+        var location = user.CityId is { } cityId
+            ? await geoCatalog.GetLocationAsync(cityId, user.CityDistrictId, cancellationToken)
+            : null;
+
+        return new UserProfile(
             user.Id,
             user.Email ?? string.Empty,
             user.DisplayName,
             user.AccountType,
             user.EmailConfirmed,
             user.PhoneNumberConfirmed,
-            [.. roles]);
+            [.. roles],
+            location);
+    }
 }

@@ -1,3 +1,4 @@
+using AutoLot.Application.Geo.Dtos;
 using AutoLot.Domain.Enums;
 
 namespace AutoLot.Application.Auth.Dtos;
@@ -9,4 +10,6 @@ public sealed record UserProfile(
     AccountType AccountType,
     bool EmailConfirmed,
     bool PhoneNumberConfirmed,
-    IReadOnlyList<string> Roles);
+    IReadOnlyList<string> Roles,
+    /// <summary>Порожнє, поки користувач не вказав, звідки він.</summary>
+    UserLocation? Location);

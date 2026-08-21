@@ -1,3 +1,4 @@
+using AutoLot.Application.Common.Abstractions;
 using AutoLot.Domain.Enums;
 using AutoLot.Domain.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -14,8 +15,10 @@ public sealed partial class IdentitySeeder(
     RoleManager<Role> roleManager,
     UserManager<User> userManager,
     IOptions<AdminSeedOptions> options,
-    ILogger<IdentitySeeder> logger)
+    ILogger<IdentitySeeder> logger) : IDataSeeder
 {
+    public int Order => 2;
+
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

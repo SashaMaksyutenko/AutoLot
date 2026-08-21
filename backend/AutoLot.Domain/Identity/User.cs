@@ -1,5 +1,6 @@
 using AutoLot.Domain.Common;
 using AutoLot.Domain.Enums;
+using AutoLot.Domain.Geo;
 using Microsoft.AspNetCore.Identity;
 
 namespace AutoLot.Domain.Identity;
@@ -21,6 +22,20 @@ public class User : IdentityUser<long>, IAuditable
     public DateTimeOffset? UpdatedAt { get; set; }
 
     public DateTimeOffset? LastLoginAt { get; set; }
+
+    /// <summary>
+    /// Місто користувача. Область і район області окремо не зберігаємо — вони
+    /// однозначно випливають із міста, а дублювання рано чи пізно розійшлося б
+    /// із ним і дало б профіль із містом однієї області та областю іншої.
+    /// </summary>
+    public long? CityId { get; set; }
+
+    public City? City { get; set; }
+
+    /// <summary>Район міста. Заповнюється лише там, де місто взагалі має райони.</summary>
+    public long? CityDistrictId { get; set; }
+
+    public CityDistrict? CityDistrict { get; set; }
 
     /// <summary>
     /// Заблокований модератором акаунт. Це не Identity-lockout: той тимчасовий
