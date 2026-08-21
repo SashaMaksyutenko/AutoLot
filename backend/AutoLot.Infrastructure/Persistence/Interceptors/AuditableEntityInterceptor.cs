@@ -37,7 +37,7 @@ internal sealed class AuditableEntityInterceptor(IDateTimeProvider dateTimeProvi
 
         var now = dateTimeProvider.UtcNow;
 
-        foreach (var entry in context.ChangeTracker.Entries<AuditableEntity>())
+        foreach (var entry in context.ChangeTracker.Entries<IAuditable>())
         {
             switch (entry.State)
             {

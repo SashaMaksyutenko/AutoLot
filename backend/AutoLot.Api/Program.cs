@@ -1,6 +1,11 @@
+using System.Data.Common;
+using AutoLot.Api.Auth;
 using AutoLot.Api.Extensions;
+using AutoLot.Api.Filters;
 using AutoLot.Application;
+using AutoLot.Application.Common.Abstractions;
 using AutoLot.Infrastructure;
+using AutoLot.Infrastructure.Identity;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -13,7 +18,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-builder.Services.AddControllers();
+builder.Services.AddAutoLotAuthentication(builder.Configuration);
+builder.Services.AddAutoLotRateLimiting();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+
+builder.Services.AddControllers(options => options.Filters.Add<FluentValidationFilter>());
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
@@ -34,6 +45,8 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+await SeedIdentityAsync(app);
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
@@ -49,6 +62,10 @@ else
 
 app.UseHttpsRedirection();
 app.UseCors(CorsPolicy);
+app.UseRateLimiter();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
@@ -70,7 +87,31 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
     ResponseWriter = HealthCheckResponseWriter.WriteAsync,
 });
 
-app.Run();
+await app.RunAsync();
+
+/// <summary>
+/// Ролі та перший адміністратор мають існувати до першого запиту. Якщо база
+/// недоступна чи не мігрована, застосунок усе одно піднімаємо: про це чесно
+/// розкаже /health, а падіння на старті сховало б причину.
+/// </summary>
+static async Task SeedIdentityAsync(WebApplication app)
+{
+    await using var scope = app.Services.CreateAsyncScope();
+
+    var seeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        await seeder.SeedAsync();
+    }
+    catch (DbException exception)
+    {
+        logger.LogError(
+            exception,
+            "Сід ролей і адміністратора не виконано — база недоступна або не мігрована");
+    }
+}
 
 /// <summary>Видимий для інтеграційних тестів через WebApplicationFactory.</summary>
 public partial class Program;

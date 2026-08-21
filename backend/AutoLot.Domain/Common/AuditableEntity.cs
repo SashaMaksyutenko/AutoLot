@@ -4,7 +4,7 @@ namespace AutoLot.Domain.Common;
 /// Сутність, для якої важливо знати час створення та останньої зміни.
 /// Значення проставляє інфраструктура, а не код домену — див. AuditableEntityInterceptor.
 /// </summary>
-public abstract class AuditableEntity : Entity
+public abstract class AuditableEntity : Entity, IAuditable
 {
     public DateTimeOffset CreatedAt { get; set; }
 

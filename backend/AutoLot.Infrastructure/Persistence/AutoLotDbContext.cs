@@ -1,13 +1,18 @@
+using AutoLot.Domain.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoLot.Infrastructure.Persistence;
 
-public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options) : DbContext(options)
+public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
+    : IdentityDbContext<User, Role, long>(options)
 {
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AutoLotDbContext).Assembly);
+        base.OnModelCreating(builder);
+        builder.ApplyConfigurationsFromAssembly(typeof(AutoLotDbContext).Assembly);
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

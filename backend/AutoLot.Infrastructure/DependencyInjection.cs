@@ -1,4 +1,7 @@
+using AutoLot.Application.Auth;
 using AutoLot.Application.Common.Abstractions;
+using AutoLot.Domain.Identity;
+using AutoLot.Infrastructure.Identity;
 using AutoLot.Infrastructure.Persistence;
 using AutoLot.Infrastructure.Persistence.Interceptors;
 using AutoLot.Infrastructure.Time;
@@ -14,9 +17,20 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
+
+        services.AddPersistence(configuration);
+        services.AddIdentity(configuration);
+
+        return services;
+    }
+
+    private static IServiceCollection AddPersistence(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
         var connectionString = DatabaseConnection.Resolve(configuration);
 
-        services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
         services.AddScoped<AuditableEntityInterceptor>();
 
         services.AddDbContext<AutoLotDbContext>((serviceProvider, options) =>
@@ -35,6 +49,51 @@ public static class DependencyInjection
 
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditableEntityInterceptor>());
         });
+
+        return services;
+    }
+
+    private static IServiceCollection AddIdentity(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .ValidateDataAnnotations();
+
+        services.Configure<AdminSeedOptions>(configuration.GetSection(AdminSeedOptions.SectionName));
+
+        // AddIdentityCore, а не AddIdentity: cookie-сесії нам не потрібні,
+        // автентифікація йде через JWT, тож SignInManager лишається зайвим.
+        services.AddIdentityCore<User>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+
+                // Політика має збігатися з RegisterRequestValidator.
+                options.Password.RequiredLength = 8;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = false;
+
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+
+                // Підтвердження email вмикаємо разом із поштовою інфраструктурою,
+                // яка за планом іде пізніше.
+                options.SignIn.RequireConfirmedEmail = false;
+            })
+            .AddRoles<Role>()
+            .AddEntityFrameworkStores<AutoLotDbContext>();
+
+        // Провайдери токенів (AddDefaultTokenProviders) поки не підключаємо:
+        // вони потрібні для підтвердження пошти та скидання пароля, а це
+        // приходить разом із поштовою інфраструктурою.
+
+        services.AddScoped<JwtTokenGenerator>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IdentitySeeder>();
 
         return services;
     }

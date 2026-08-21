@@ -48,15 +48,33 @@ psql -h localhost -p 5433 -U postgres -f docs/db-setup.sql -v password='<пар�
 docker compose up -d
 ```
 
-### 2. Рядок підключення
+### 2. Секрети
 
 Секрети в репозиторії не зберігаються — лише в `user-secrets`:
 
 ```bash
 cd backend/AutoLot.Api
+
 dotnet user-secrets set "ConnectionStrings:AutoLot" \
   "Host=localhost;Port=5433;Database=autolot;Username=autolot;Password=<пароль>"
+
+# Ключ підпису JWT, щонайменше 32 символи
+dotnet user-secrets set "Jwt:Key" "$(openssl rand -base64 48)"
+
+# Перший адміністратор. Без цих двох значень сід його не створює
+dotnet user-secrets set "Seed:Admin:Email" "admin@autolot.local"
+dotnet user-secrets set "Seed:Admin:Password" "<пароль>"
 ```
+
+Вхід через Google вмикається наявністю ключів; без них схема не реєструється
+взагалі, а `/api/auth/google/start` чесно відповідає `501`:
+
+```bash
+dotnet user-secrets set "Authentication:Google:ClientId" "<id>"
+dotnet user-secrets set "Authentication:Google:ClientSecret" "<secret>"
+```
+
+Redirect URI у консолі Google — `http://localhost:5080/signin-google`.
 
 ### 3. Міграції
 
@@ -89,6 +107,26 @@ dotnet run --project backend/AutoLot.Api
 | `http://localhost:5080/health` | усі перевірки |
 | `http://localhost:5080/health/live` | процес живий |
 | `http://localhost:5080/health/ready` | залежності на місці |
+
+### Автентифікація
+
+| Метод і шлях | Що робить |
+|---|---|
+| `POST /api/auth/register` | реєстрація, одразу видає токени |
+| `POST /api/auth/login` | вхід за email і паролем |
+| `POST /api/auth/refresh` | обмінює refresh-cookie на нову пару токенів |
+| `POST /api/auth/logout` | гасить сесію і чистить cookie |
+| `GET /api/auth/me` | профіль поточного користувача |
+| `GET /api/auth/google/start` | починає вхід через Google |
+| `GET /api/auth/google/callback` | приймає користувача назад від Google |
+
+Access-токен живе 15 хвилин і повертається в тілі відповіді. Refresh-токен
+віддається **лише** в httpOnly cookie з областю `/api/auth`, у базі лежить
+хешем і ротується при кожному оновленні: пред'явлення вже використаного токена
+вважається крадіжкою і гасить усю сім'ю токенів цієї сесії.
+
+Обмеження: 10 запитів за хвилину з однієї адреси на всі маршрути `/api/auth`,
+блокування акаунта на 15 хвилин після 5 невдалих спроб входу.
 
 ### 5. Фронтенд
 
