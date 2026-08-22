@@ -1,8 +1,10 @@
 using AutoLot.Application.Auth;
+using AutoLot.Application.Cars;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Application.Geo;
 using AutoLot.Application.Users;
 using AutoLot.Domain.Identity;
+using AutoLot.Infrastructure.Cars;
 using AutoLot.Infrastructure.Geo;
 using AutoLot.Infrastructure.Identity;
 using AutoLot.Infrastructure.Persistence;
@@ -25,6 +27,7 @@ public static class DependencyInjection
         services.AddPersistence(configuration);
         services.AddIdentity(configuration);
         services.AddGeography();
+        services.AddCarReference();
 
         return services;
     }
@@ -33,6 +36,14 @@ public static class DependencyInjection
     {
         services.AddScoped<IGeoCatalog, GeoCatalog>();
         services.AddScoped<IDataSeeder, GeographySeeder>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddCarReference(this IServiceCollection services)
+    {
+        services.AddScoped<ICarCatalog, CarCatalog>();
+        services.AddScoped<IDataSeeder, CarReferenceSeeder>();
 
         return services;
     }

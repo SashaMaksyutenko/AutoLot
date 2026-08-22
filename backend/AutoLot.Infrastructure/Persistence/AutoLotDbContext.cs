@@ -1,3 +1,5 @@
+using AutoLot.Domain.Cars;
+using AutoLot.Domain.Common;
 using AutoLot.Domain.Geo;
 using AutoLot.Domain.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -17,6 +19,14 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
     public DbSet<City> Cities => Set<City>();
 
     public DbSet<CityDistrict> CityDistricts => Set<CityDistrict>();
+
+    public DbSet<EnumTranslation> EnumTranslations => Set<EnumTranslation>();
+
+    public DbSet<Make> Makes => Set<Make>();
+
+    public DbSet<Model> Models => Set<Model>();
+
+    public DbSet<Generation> Generations => Set<Generation>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
