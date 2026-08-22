@@ -2,6 +2,7 @@ using AutoLot.Domain.Cars;
 using AutoLot.Domain.Common;
 using AutoLot.Domain.Geo;
 using AutoLot.Domain.Identity;
+using AutoLot.Domain.Listings;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,6 +28,16 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
     public DbSet<Model> Models => Set<Model>();
 
     public DbSet<Generation> Generations => Set<Generation>();
+
+    public DbSet<Country> Countries => Set<Country>();
+
+    public DbSet<Feature> Features => Set<Feature>();
+
+    public DbSet<Listing> Listings => Set<Listing>();
+
+    public DbSet<Car> Cars => Set<Car>();
+
+    public DbSet<CarPhoto> CarPhotos => Set<CarPhoto>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

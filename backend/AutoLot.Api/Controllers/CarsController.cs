@@ -23,6 +23,14 @@ public sealed class CarsController(ICarCatalog carCatalog) : ControllerBase
         return Ok(await carCatalog.GetAttributesAsync(cancellationToken));
     }
 
+    /// <summary>Опції комплектації, згруповані за розділами форми.</summary>
+    [HttpGet("features")]
+    [ProducesResponseType<IReadOnlyList<FeatureGroup>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetFeatures(CancellationToken cancellationToken)
+    {
+        return Ok(await carCatalog.GetFeaturesAsync(cancellationToken));
+    }
+
     /// <summary>Марки: спершу популярні, далі за абеткою.</summary>
     [HttpGet("makes")]
     [ProducesResponseType<IReadOnlyList<MakeItem>>(StatusCodes.Status200OK)]

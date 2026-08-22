@@ -45,6 +45,17 @@ public sealed class GeoController(IGeoCatalog geoCatalog) : ControllerBase
         return Ok(await geoCatalog.GetCitiesAsync(regionId, districtId, cancellationToken));
     }
 
+    /// <summary>
+    /// Країни для полів «країна-виробник» і «країна пригону». До ієрархії
+    /// областей не належать, але це той самий довідник географії.
+    /// </summary>
+    [HttpGet("countries")]
+    [ProducesResponseType<IReadOnlyList<GeoItem>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCountries(CancellationToken cancellationToken)
+    {
+        return Ok(await geoCatalog.GetCountriesAsync(cancellationToken));
+    }
+
     /// <summary>Райони всередині міста. Є лише у великих містах.</summary>
     [HttpGet("cities/{cityId:long}/districts")]
     [ProducesResponseType<IReadOnlyList<GeoItem>>(StatusCodes.Status200OK)]

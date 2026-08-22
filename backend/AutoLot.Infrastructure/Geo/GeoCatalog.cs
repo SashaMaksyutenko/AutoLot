@@ -171,6 +171,27 @@ internal sealed class GeoCatalog(AutoLotDbContext dbContext, ICurrentLanguage la
             cityDistrictName);
     }
 
+    public async Task<IReadOnlyList<GeoItem>> GetCountriesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var code = language.Code;
+
+        return await dbContext.Countries
+            .AsNoTracking()
+            .Select(country => new
+            {
+                country.Id,
+                country.SortOrder,
+                Name = country.Translations.Where(t => t.Language == code).Select(t => t.Name).FirstOrDefault()
+                    ?? country.Translations.Where(t => t.Language == LanguageCodes.Default).Select(t => t.Name).FirstOrDefault()
+                    ?? country.Code,
+            })
+            .OrderBy(country => country.SortOrder)
+            .ThenBy(country => country.Name)
+            .Select(country => new GeoItem(country.Id, country.Name))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> LocationExistsAsync(
         long cityId,
         long? cityDistrictId,

@@ -2,6 +2,7 @@ using System.Text.Json;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Domain.Cars;
 using AutoLot.Domain.Common;
+using AutoLot.Domain.Enums;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -19,6 +20,7 @@ public sealed partial class CarReferenceSeeder(
 {
     private const string AttributesResource = "AutoLot.Infrastructure.Persistence.SeedData.car-attributes.json";
     private const string MakesResource = "AutoLot.Infrastructure.Persistence.SeedData.car-makes.json";
+    private const string FeaturesResource = "AutoLot.Infrastructure.Persistence.SeedData.car-features.json";
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -31,7 +33,43 @@ public sealed partial class CarReferenceSeeder(
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         await SeedAttributesAsync(cancellationToken);
+        await SeedFeaturesAsync(cancellationToken);
         await SeedMakesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Опції комплектації. Порядок у файлі стає порядком у формі, а категорія
+    /// розбирається з рядка — якщо у файлі трапиться невідома, сід впаде одразу
+    /// й голосно, а не створить опцію без розділу.
+    /// </summary>
+    private async Task SeedFeaturesAsync(CancellationToken cancellationToken)
+    {
+        var document = await ReadAsync<CarFeaturesSeedDocument>(FeaturesResource, cancellationToken);
+
+        var features = await dbContext.Features
+            .Include(feature => feature.Translations)
+            .ToDictionaryAsync(feature => feature.Code, cancellationToken);
+
+        for (var sortOrder = 0; sortOrder < document.Features.Count; sortOrder++)
+        {
+            var seed = document.Features[sortOrder];
+
+            if (!features.TryGetValue(seed.Code, out var feature))
+            {
+                feature = new Feature { Code = seed.Code };
+                dbContext.Features.Add(feature);
+                features[seed.Code] = feature;
+            }
+
+            feature.Category = Enum.Parse<FeatureCategory>(seed.Category);
+            feature.SortOrder = sortOrder;
+
+            TranslationSeeding.Apply(feature.Translations, seed.Names, () => new FeatureTranslation());
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        LogFeaturesSeeded(logger, features.Count);
     }
 
     private async Task SeedAttributesAsync(CancellationToken cancellationToken)
@@ -158,4 +196,7 @@ public sealed partial class CarReferenceSeeder(
         int models,
         int generations,
         int changed);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Опцій комплектації: {Features}")]
+    private static partial void LogFeaturesSeeded(ILogger logger, int features);
 }

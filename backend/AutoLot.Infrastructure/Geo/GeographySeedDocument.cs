@@ -56,3 +56,16 @@ internal sealed record CityDistrictSeed
 
     public Dictionary<string, string> Names { get; init; } = [];
 }
+
+/// <summary>Форма файла countries.json.</summary>
+internal sealed record CountriesSeedDocument
+{
+    public IReadOnlyList<CountrySeed> Countries { get; init; } = [];
+}
+
+internal sealed record CountrySeed
+{
+    public string Code { get; init; } = string.Empty;
+
+    public Dictionary<string, string> Names { get; init; } = [];
+}

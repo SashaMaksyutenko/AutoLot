@@ -41,4 +41,7 @@ public interface IGeoCatalog
         long cityId,
         long? cityDistrictId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Країни для полів «країна-виробник» і «країна пригону».</summary>
+    Task<IReadOnlyList<GeoItem>> GetCountriesAsync(CancellationToken cancellationToken = default);
 }

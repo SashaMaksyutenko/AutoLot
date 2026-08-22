@@ -1,7 +1,7 @@
-using AutoLot.Application.Common.Abstractions;
 using AutoLot.Domain.Enums;
 using AutoLot.Domain.Identity;
 using AutoLot.Infrastructure.Identity;
+using AutoLot.Tests.TestDoubles;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 
@@ -78,8 +78,4 @@ public class JwtTokenGeneratorTests
         AccountType = AccountType.Dealer,
     };
 
-    private sealed class FixedClock(DateTimeOffset now) : IDateTimeProvider
-    {
-        public DateTimeOffset UtcNow => now;
-    }
 }

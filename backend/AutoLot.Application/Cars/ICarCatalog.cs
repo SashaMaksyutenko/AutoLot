@@ -19,4 +19,7 @@ public interface ICarCatalog
     Task<IReadOnlyList<GenerationItem>> GetGenerationsAsync(
         long modelId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Опції комплектації, згруповані за розділами.</summary>
+    Task<IReadOnlyList<FeatureGroup>> GetFeaturesAsync(CancellationToken cancellationToken = default);
 }

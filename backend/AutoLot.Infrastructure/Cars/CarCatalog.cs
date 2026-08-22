@@ -87,6 +87,38 @@ internal sealed class CarCatalog(AutoLotDbContext dbContext, ICurrentLanguage la
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<FeatureGroup>> GetFeaturesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var code = language.Code;
+
+        var rows = await dbContext.Features
+            .AsNoTracking()
+            .Select(feature => new
+            {
+                feature.Id,
+                feature.Code,
+                feature.Category,
+                feature.SortOrder,
+                Name = feature.Translations.Where(t => t.Language == code).Select(t => t.Name).FirstOrDefault()
+                    ?? feature.Translations.Where(t => t.Language == LanguageCodes.Default).Select(t => t.Name).FirstOrDefault()
+                    ?? feature.Code,
+            })
+            .OrderBy(feature => feature.SortOrder)
+            .ToListAsync(cancellationToken);
+
+        // Групування робимо в пам'яті: опцій менше сотні, а SQL-варіант
+        // повернув би ті самі рядки, лише складнішим запитом.
+        return
+        [
+            .. rows
+                .GroupBy(feature => feature.Category)
+                .Select(group => new FeatureGroup(
+                    group.Key.ToString(),
+                    [.. group.Select(feature => new FeatureItem(feature.Id, feature.Code, feature.Name))])),
+        ];
+    }
+
     /// <summary>
     /// Вибирає значення одного перелічення потрібною мовою. Якщо перекладу
     /// немає, лишається той, що знайшовся — тобто українська.

@@ -19,6 +19,7 @@ public sealed partial class GeographySeeder(
     ILogger<GeographySeeder> logger) : IDataSeeder
 {
     private const string ResourceName = "AutoLot.Infrastructure.Persistence.SeedData.geography.json";
+    private const string CountriesResourceName = "AutoLot.Infrastructure.Persistence.SeedData.countries.json";
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -60,7 +61,7 @@ public sealed partial class GeographySeeder(
         {
             var region = Upsert(regions, regionSeed.Code, () => new Region { Code = regionSeed.Code });
             region.SortOrder = regionSeed.SortOrder;
-            ApplyTranslations(region.Translations, regionSeed.Names, () => new RegionTranslation());
+            TranslationSeeding.Apply(region.Translations, regionSeed.Names, () => new RegionTranslation());
 
             foreach (var districtSeed in regionSeed.Districts)
             {
@@ -69,7 +70,7 @@ public sealed partial class GeographySeeder(
                     districtSeed.Code,
                     () => new District { Code = districtSeed.Code, Region = region });
 
-                ApplyTranslations(district.Translations, districtSeed.Names, () => new DistrictTranslation());
+                TranslationSeeding.Apply(district.Translations, districtSeed.Names, () => new DistrictTranslation());
             }
 
             foreach (var citySeed in regionSeed.Cities)
@@ -87,7 +88,7 @@ public sealed partial class GeographySeeder(
                         ? cityDistrictOwner
                         : null;
 
-                ApplyTranslations(city.Translations, citySeed.Names, () => new CityTranslation());
+                TranslationSeeding.Apply(city.Translations, citySeed.Names, () => new CityTranslation());
 
                 foreach (var cityDistrictSeed in citySeed.CityDistricts)
                 {
@@ -96,7 +97,7 @@ public sealed partial class GeographySeeder(
                         cityDistrictSeed.Code,
                         () => new CityDistrict { Code = cityDistrictSeed.Code, City = city });
 
-                    ApplyTranslations(
+                    TranslationSeeding.Apply(
                         cityDistrict.Translations,
                         cityDistrictSeed.Names,
                         () => new CityDistrictTranslation());
@@ -107,6 +108,8 @@ public sealed partial class GeographySeeder(
         var changed = await dbContext.SaveChangesAsync(cancellationToken);
 
         LogSeeded(logger, regions.Count, districts.Count, cities.Count, cityDistricts.Count, changed);
+
+        await SeedCountriesAsync(cancellationToken);
     }
 
     /// <summary>
@@ -128,40 +131,50 @@ public sealed partial class GeographySeeder(
         return created;
     }
 
-    private static void ApplyTranslations<TTranslation>(
-        ICollection<TTranslation> translations,
-        Dictionary<string, string> names,
-        Func<TTranslation> create)
-        where TTranslation : Translation
+    /// <summary>
+    /// Країни для полів «країна-виробник» і «країна пригону». До ієрархії
+    /// областей стосунку не мають, але це теж географія, тож живуть тут.
+    /// </summary>
+    private async Task SeedCountriesAsync(CancellationToken cancellationToken)
     {
-        foreach (var (rawLanguage, name) in names)
+        var document = await ReadAsync<CountriesSeedDocument>(CountriesResourceName, cancellationToken);
+
+        var countries = await dbContext.Countries
+            .Include(country => country.Translations)
+            .ToDictionaryAsync(country => country.Code, cancellationToken);
+
+        for (var sortOrder = 0; sortOrder < document.Countries.Count; sortOrder++)
         {
-            var language = LanguageCodes.Normalize(rawLanguage);
-            var translation = translations.FirstOrDefault(candidate => candidate.Language == language);
+            var seed = document.Countries[sortOrder];
+            var country = Upsert(countries, seed.Code, () => new Country { Code = seed.Code });
 
-            if (translation is null)
-            {
-                translation = create();
-                translation.Language = language;
-                translations.Add(translation);
-            }
-
-            translation.Name = name;
+            country.SortOrder = sortOrder;
+            TranslationSeeding.Apply(country.Translations, seed.Names, () => new CountryTranslation());
         }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        LogCountriesSeeded(logger, countries.Count);
     }
 
-    private static async Task<GeographySeedDocument> ReadDocumentAsync(CancellationToken cancellationToken)
+    private static Task<GeographySeedDocument> ReadDocumentAsync(CancellationToken cancellationToken) =>
+        ReadAsync<GeographySeedDocument>(ResourceName, cancellationToken);
+
+    private static async Task<TDocument> ReadAsync<TDocument>(
+        string resourceName,
+        CancellationToken cancellationToken)
+        where TDocument : new()
     {
-        await using var stream = typeof(GeographySeeder).Assembly.GetManifestResourceStream(ResourceName)
+        await using var stream = typeof(GeographySeeder).Assembly.GetManifestResourceStream(resourceName)
             ?? throw new InvalidOperationException(
-                $"Вбудований ресурс '{ResourceName}' не знайдено. Перевірте, що файл додано як EmbeddedResource.");
+                $"Вбудований ресурс '{resourceName}' не знайдено. Перевірте, що файл додано як EmbeddedResource.");
 
-        return await JsonSerializer.DeserializeAsync<GeographySeedDocument>(
-                stream,
-                SerializerOptions,
-                cancellationToken)
-            ?? new GeographySeedDocument();
+        return await JsonSerializer.DeserializeAsync<TDocument>(stream, SerializerOptions, cancellationToken)
+            ?? new TDocument();
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Країн у довіднику: {Countries}")]
+    private static partial void LogCountriesSeeded(ILogger logger, int countries);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Файл географії порожній — довідник не наповнено")]
     private static partial void LogEmptyDocument(ILogger logger);

@@ -53,3 +53,19 @@ internal sealed record GenerationSeed
 
     public int? YearTo { get; init; }
 }
+
+/// <summary>Форма файла car-features.json.</summary>
+internal sealed record CarFeaturesSeedDocument
+{
+    public IReadOnlyList<FeatureSeed> Features { get; init; } = [];
+}
+
+internal sealed record FeatureSeed
+{
+    public string Code { get; init; } = string.Empty;
+
+    /// <summary>Назва значення <c>FeatureCategory</c>: «Interior», «Safety» тощо.</summary>
+    public string Category { get; init; } = string.Empty;
+
+    public Dictionary<string, string> Names { get; init; } = [];
+}
