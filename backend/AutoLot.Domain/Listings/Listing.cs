@@ -68,4 +68,98 @@ public sealed class Listing : AuditableEntity
     public int ViewCount { get; set; }
 
     public Car Car { get; set; } = null!;
+
+    // ── Життєвий цикл ────────────────────────────────────────────────
+    //
+    // Переходи між статусами живуть тут, а не в сервісі: правило «продане
+    // оголошення не можна подати на модерацію» стосується самого оголошення,
+    // і якщо його записати збоку, наступний сервіс про нього просто не знатиме.
+
+    /// <summary>Чи можна редагувати. Опубліковане правиться лише через повторну модерацію.</summary>
+    public bool IsEditable => Status is ListingStatus.Draft or ListingStatus.Rejected;
+
+    /// <summary>Чи займає місце в ліміті активних оголошень.</summary>
+    public bool CountsTowardsLimit =>
+        Status is ListingStatus.Active or ListingStatus.PendingModeration;
+
+    /// <summary>Автор подає чернетку або виправлене оголошення на розгляд.</summary>
+    public void SubmitForModeration()
+    {
+        if (!IsEditable)
+        {
+            throw new DomainRuleException(
+                "На модерацію можна подати лише чернетку або відхилене оголошення.");
+        }
+
+        Status = ListingStatus.PendingModeration;
+
+        // Стару причину відмови прибираємо: вона стосувалася попередньої версії.
+        RejectionReason = null;
+    }
+
+    /// <summary>Модератор схвалює: оголошення стає видимим і починає жити.</summary>
+    public void Approve(DateTimeOffset now, TimeSpan lifetime)
+    {
+        if (Status is not ListingStatus.PendingModeration)
+        {
+            throw new DomainRuleException("Схвалити можна лише оголошення, подане на модерацію.");
+        }
+
+        Status = ListingStatus.Active;
+        RejectionReason = null;
+
+        // Дату першої публікації не перезаписуємо — оголошення могло вже
+        // проходити цикл «відхилено → виправлено → схвалено».
+        PublishedAt ??= now;
+        ExpiresAt = now.Add(lifetime);
+    }
+
+    public void Reject(string reason)
+    {
+        if (Status is not ListingStatus.PendingModeration)
+        {
+            throw new DomainRuleException("Відхилити можна лише оголошення, подане на модерацію.");
+        }
+
+        Status = ListingStatus.Rejected;
+        RejectionReason = reason;
+    }
+
+    /// <summary>Автор позначає авто проданим.</summary>
+    public void MarkSold()
+    {
+        if (Status is not ListingStatus.Active)
+        {
+            throw new DomainRuleException("Проданим можна позначити лише активне оголошення.");
+        }
+
+        Status = ListingStatus.Sold;
+    }
+
+    /// <summary>Автор прибирає оголошення з видачі, не видаляючи його.</summary>
+    public void Archive()
+    {
+        if (Status is ListingStatus.Archived)
+        {
+            throw new DomainRuleException("Оголошення вже в архіві.");
+        }
+
+        if (Status is ListingStatus.Draft)
+        {
+            throw new DomainRuleException("Чернетку не архівують — її видаляють.");
+        }
+
+        Status = ListingStatus.Archived;
+    }
+
+    /// <summary>Повертає архівне оголошення в роботу — знову через модерацію.</summary>
+    public void Restore()
+    {
+        if (Status is not ListingStatus.Archived)
+        {
+            throw new DomainRuleException("Відновити можна лише архівне оголошення.");
+        }
+
+        Status = ListingStatus.Draft;
+    }
 }

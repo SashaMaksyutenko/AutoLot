@@ -28,6 +28,7 @@ builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
 builder.Services.AddControllers(options => options.Filters.Add<FluentValidationFilter>());
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services.AddOpenApi();
 
 // Походження фронтенду — з конфігурації, білим списком (SPEC §8).

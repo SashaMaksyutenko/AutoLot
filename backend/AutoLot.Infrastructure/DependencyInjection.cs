@@ -2,11 +2,13 @@ using AutoLot.Application.Auth;
 using AutoLot.Application.Cars;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Application.Geo;
+using AutoLot.Application.Listings;
 using AutoLot.Application.Users;
 using AutoLot.Domain.Identity;
 using AutoLot.Infrastructure.Cars;
 using AutoLot.Infrastructure.Geo;
 using AutoLot.Infrastructure.Identity;
+using AutoLot.Infrastructure.Listings;
 using AutoLot.Infrastructure.Persistence;
 using AutoLot.Infrastructure.Persistence.Interceptors;
 using AutoLot.Infrastructure.Time;
@@ -28,6 +30,21 @@ public static class DependencyInjection
         services.AddIdentity(configuration);
         services.AddGeography();
         services.AddCarReference();
+        services.AddListings(configuration);
+
+        return services;
+    }
+
+    private static IServiceCollection AddListings(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.Configure<ExchangeRateOptions>(configuration.GetSection(ExchangeRateOptions.SectionName));
+
+        services.AddScoped<IExchangeRateProvider, ConfiguredExchangeRateProvider>();
+        services.AddScoped<ListingMapper>();
+        services.AddScoped<IListingService, ListingService>();
+        services.AddScoped<IModerationService, ModerationService>();
 
         return services;
     }

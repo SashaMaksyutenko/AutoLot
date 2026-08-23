@@ -31,18 +31,10 @@ public sealed class ProfileController(
             return Unauthorized();
         }
 
-        try
-        {
-            var profile = await profileService.UpdateLocationAsync(userId, request, cancellationToken);
+        // Некоректне місцезнаходження перетворює на 400 спільний
+        // DomainExceptionHandler — тут ловити його вдруге не треба.
+        var profile = await profileService.UpdateLocationAsync(userId, request, cancellationToken);
 
-            return profile is null ? NotFound() : Ok(profile);
-        }
-        catch (InvalidLocationException exception)
-        {
-            return Problem(
-                title: "Некоректне місцезнаходження",
-                detail: exception.Message,
-                statusCode: StatusCodes.Status400BadRequest);
-        }
+        return profile is null ? NotFound() : Ok(profile);
     }
 }
