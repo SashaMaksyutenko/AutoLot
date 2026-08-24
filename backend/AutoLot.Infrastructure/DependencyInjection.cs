@@ -1,11 +1,13 @@
 using AutoLot.Application.Auth;
 using AutoLot.Application.Cars;
+using AutoLot.Application.Catalog;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Application.Geo;
 using AutoLot.Application.Listings;
 using AutoLot.Application.Users;
 using AutoLot.Domain.Identity;
 using AutoLot.Infrastructure.Cars;
+using AutoLot.Infrastructure.Catalog;
 using AutoLot.Infrastructure.Geo;
 using AutoLot.Infrastructure.Identity;
 using AutoLot.Infrastructure.Listings;
@@ -42,10 +44,13 @@ public static class DependencyInjection
         services.Configure<ExchangeRateOptions>(configuration.GetSection(ExchangeRateOptions.SectionName));
 
         services.Configure<PhotoStorageOptions>(configuration.GetSection(PhotoStorageOptions.SectionName));
+        services.Configure<DemoDataOptions>(configuration.GetSection(DemoDataOptions.SectionName));
 
         services.AddScoped<IExchangeRateProvider, ConfiguredExchangeRateProvider>();
         services.AddScoped<IPhotoStorage, LocalPhotoStorage>();
         services.AddScoped<IListingPhotoService, ListingPhotoService>();
+        services.AddScoped<ICatalogService, CatalogService>();
+        services.AddScoped<IDataSeeder, DemoDataSeeder>();
         services.AddScoped<ListingMapper>();
         services.AddScoped<IListingService, ListingService>();
         services.AddScoped<IModerationService, ModerationService>();
