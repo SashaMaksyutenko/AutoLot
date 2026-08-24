@@ -108,6 +108,7 @@ internal sealed class ListingService(
             .Include(item => item.Car).ThenInclude(car => car.Model)
             .Include(item => item.Car).ThenInclude(car => car.Generation)
             .Include(item => item.Car).ThenInclude(car => car.Features)
+            .Include(item => item.Car).ThenInclude(car => car.Photos)
             .FirstOrDefaultAsync(item => item.Id == listingId, cancellationToken);
 
         if (listing is null)
@@ -123,6 +124,21 @@ internal sealed class ListingService(
         if (!isPublic && !isOwner && !actorIsModerator)
         {
             return null;
+        }
+
+        // Свої перегляди не рахуємо: інакше лічильник накручував би автор,
+        // щоразу відкриваючи власне оголошення.
+        if (isPublic && !isOwner)
+        {
+            // ExecuteUpdate замість читання-зміни-запису: інкремент виконує
+            // сама база, тож два одночасні перегляди не загублять один одного.
+            await dbContext.Listings
+                .Where(item => item.Id == listingId)
+                .ExecuteUpdateAsync(
+                    setters => setters.SetProperty(item => item.ViewCount, item => item.ViewCount + 1),
+                    cancellationToken);
+
+            listing.ViewCount++;
         }
 
         return await mapper.ToDetailsAsync(listing, isOwner || actorIsModerator, cancellationToken);

@@ -19,6 +19,12 @@ public sealed record ListingDetails(
     UserLocation? Location,
     SellerSummary Seller,
     CarDetails Car,
+
+    /// <summary>
+    /// Галерея, головне фото першим. Лежить саме тут, а не за окремим
+    /// маршрутом: той доступний лише власникові, а картку авто дивляться всі.
+    /// </summary>
+    IReadOnlyList<ListingPhoto> Photos,
     DateTimeOffset? PublishedAt,
     DateTimeOffset? ExpiresAt,
     /// <summary>Заповнена лише для автора та модератора.</summary>

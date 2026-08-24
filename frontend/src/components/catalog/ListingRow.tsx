@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { ListingSummary } from '../../api/catalog'
 import { useAttributeLabels } from '../../api/useAttributeLabels'
 import { formatMileage, formatPrice } from '../../format'
@@ -12,65 +13,69 @@ export function ListingRow({ listing }: { listing: ListingSummary }) {
   const labelOf = useAttributeLabels()
 
   return (
-    <article
-      className={`flex gap-4 rounded-md border bg-surface p-3 ${
-        isAuction ? 'border-lot-line border-l-[3px] border-l-lot' : 'border-line'
-      }`}
-    >
-      <Photo listing={listing} isAuction={isAuction} />
+    <Link to={`/listing/${listing.id}`} className="block">
+      <article
+        className={`flex gap-4 rounded-md border bg-surface p-3 transition hover:shadow-[0_1px_6px_rgba(20,24,29,0.09)] ${
+          isAuction
+            ? 'border-lot-line border-l-[3px] border-l-lot'
+            : 'border-line hover:border-line-strong'
+        }`}
+      >
+        <Photo listing={listing} isAuction={isAuction} />
 
-      <div className="flex min-w-0 flex-grow flex-col gap-2 py-0.5">
-        <header className="flex items-start justify-between gap-5">
-          <div className="min-w-0">
-            <h3 className="truncate text-[17px] font-semibold tracking-tight">
-              {listing.make} {listing.model}
-            </h3>
-            <p className="mt-0.5 text-[13px] text-subtle">
-              {listing.year} · {listing.cityName}
-            </p>
-          </div>
-
-          <div className="shrink-0 text-right">
-            {isAuction && (
-              <div className="text-[11px] uppercase tracking-wide text-lot-ink">
-                Стартова ціна
-              </div>
-            )}
-            <div
-              className={`font-mono text-[21px] font-bold tracking-tight ${
-                isAuction ? 'text-lot-ink' : ''
-              }`}
-            >
-              {formatPrice(listing.price, listing.currency)}
+        <div className="flex min-w-0 flex-grow flex-col gap-2 py-0.5">
+          <header className="flex items-start justify-between gap-5">
+            <div className="min-w-0">
+              <h3 className="truncate text-[17px] font-semibold tracking-tight">
+                {listing.make} {listing.model}
+              </h3>
+              <p className="mt-0.5 text-[13px] text-subtle">
+                {listing.year} · {listing.cityName}
+              </p>
             </div>
-            {listing.currency !== 'Uah' && (
-              <div className="mt-0.5 font-mono text-xs text-subtle">
-                {formatPrice(listing.priceUah, 'Uah')}
+
+            <div className="shrink-0 text-right">
+              {isAuction && (
+                <div className="text-[11px] tracking-wide text-lot-ink uppercase">
+                  Стартова ціна
+                </div>
+              )}
+              <div
+                className={`font-mono text-[21px] font-bold tracking-tight ${
+                  isAuction ? 'text-lot-ink' : ''
+                }`}
+              >
+                {formatPrice(listing.price, listing.currency)}
               </div>
-            )}
-          </div>
-        </header>
+              {listing.currency !== 'Uah' && (
+                <div className="mt-0.5 font-mono text-xs text-subtle">
+                  {formatPrice(listing.priceUah, 'Uah')}
+                </div>
+              )}
+            </div>
+          </header>
 
-        <dl className="grid grid-cols-4 gap-2 border-y border-[#eceff2] py-2">
-          <Spec label="Пробіг" value={formatMileage(listing.mileage)} mono />
-          <Spec label="Пальне" value={labelOf('fuelTypes', listing.fuelType)} />
-          <Spec label="Коробка" value={labelOf('transmissions', listing.transmission)} />
-          <Spec label="Рік" value={String(listing.year)} mono />
-        </dl>
+          <dl className="grid grid-cols-4 gap-2 border-y border-[#eceff2] py-2">
+            <Spec label="Пробіг" value={formatMileage(listing.mileage)} mono />
+            <Spec label="Пальне" value={labelOf('fuelTypes', listing.fuelType)} />
+            <Spec label="Коробка" value={labelOf('transmissions', listing.transmission)} />
+            <Spec label="Рік" value={String(listing.year)} mono />
+          </dl>
 
-        <footer className="flex items-center justify-between gap-4">
-          <span className="text-[13px] text-subtle">
-            {isAuction ? 'Торги ще не почалися' : 'Фіксована ціна'}
-          </span>
-
-          {isAuction && (
-            <span className="rounded-sm bg-lot px-4 py-1.5 text-[13px] font-semibold text-white">
-              До лота
+          <footer className="flex items-center justify-between gap-4">
+            <span className="text-[13px] text-subtle">
+              {isAuction ? 'Торги ще не почалися' : 'Фіксована ціна'}
             </span>
-          )}
-        </footer>
-      </div>
-    </article>
+
+            {isAuction && (
+              <span className="rounded-sm bg-lot px-4 py-1.5 text-[13px] font-semibold text-white">
+                До лота
+              </span>
+            )}
+          </footer>
+        </div>
+      </article>
+    </Link>
   )
 }
 

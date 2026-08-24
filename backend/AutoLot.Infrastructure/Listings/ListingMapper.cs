@@ -87,6 +87,19 @@ internal sealed class ListingMapper(
                 car.IsGarageKept,
                 car.IsOnCredit,
                 await GetFeatureNamesAsync(featureIds, cancellationToken)),
+
+            // Головне фото першим, решта — у заданому автором порядку.
+            [
+                .. car.Photos
+                    .OrderByDescending(photo => photo.IsPrimary)
+                    .ThenBy(photo => photo.SortOrder)
+                    .Select(photo => new ListingPhoto(
+                        photo.Id,
+                        photo.Path,
+                        photo.ThumbnailPath,
+                        photo.SortOrder,
+                        photo.IsPrimary)),
+            ],
             listing.PublishedAt,
             listing.ExpiresAt,
 
