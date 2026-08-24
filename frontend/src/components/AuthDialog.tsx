@@ -51,14 +51,18 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}
     >
+      {/*
+        stopPropagation зупиняє «спливання» кліку: без нього натискання
+        всередині вікна дійшло б до підкладки й одразу його закрило.
+      */}
       <div
-        className="w-full max-w-[420px] rounded-md border border-line bg-surface p-6"
+        className="card w-full max-w-[420px] p-6"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mb-5 flex gap-1 rounded-sm bg-[#e4e8ec] p-0.5">
+        <div className="mb-5 flex gap-0.5 rounded-control border border-line bg-surface-2 p-0.5">
           <Tab active={mode === 'login'} onClick={() => setMode('login')} label="Вхід" />
           <Tab active={mode === 'register'} onClick={() => setMode('register')} label="Реєстрація" />
         </div>
@@ -71,7 +75,7 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
                 onChange={(event) => setDisplayName(event.target.value)}
                 autoComplete="name"
                 required
-                className={inputClass}
+                className="control"
               />
             </Field>
           )}
@@ -83,14 +87,18 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
               required
-              className={inputClass}
+              className="control"
             />
           </Field>
 
           <Field
             label="Пароль"
             errors={fieldErrors.Password}
-            hint={mode === 'register' ? 'Щонайменше 8 символів, велика й мала літери та цифра' : undefined}
+            hint={
+              mode === 'register'
+                ? 'Щонайменше 8 символів, велика й мала літери та цифра'
+                : undefined
+            }
           >
             <input
               type="password"
@@ -98,7 +106,7 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
               onChange={(event) => setPassword(event.target.value)}
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               required
-              className={inputClass}
+              className="control"
             />
           </Field>
 
@@ -120,14 +128,12 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
           )}
 
           {error && (
-            <p className="rounded-sm bg-warn-soft px-3 py-2 text-[13px] text-warn-ink">{error}</p>
+            <p className="rounded-control bg-danger-soft px-3 py-2 text-[13px] text-danger">
+              {error}
+            </p>
           )}
 
-          <button
-            type="submit"
-            disabled={busy}
-            className="mt-1 h-11 rounded-sm bg-brand text-sm font-semibold text-white disabled:opacity-60"
-          >
+          <button type="submit" disabled={busy} className="btn btn-primary mt-1 w-full py-2.5">
             {busy ? 'Хвилинку…' : mode === 'login' ? 'Увійти' : 'Зареєструватися'}
           </button>
         </form>
@@ -136,16 +142,14 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
   )
 }
 
-const inputClass =
-  'h-10 w-full rounded-sm border border-line-strong bg-surface px-3 text-sm outline-none focus:border-brand'
-
 function Tab({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex-grow rounded-[3px] py-2 text-sm ${
-        active ? 'bg-surface font-semibold text-ink' : 'text-muted'
+      aria-pressed={active}
+      className={`flex-1 rounded-[4px] py-1.5 text-sm ${
+        active ? 'bg-surface font-semibold text-ink' : 'text-ink-2'
       }`}
     >
       {label}
@@ -166,11 +170,12 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-[13px] font-medium text-muted">{label}</span>
+      <span className="text-[11.5px] font-semibold text-ink-2">{label}</span>
       {children}
-      {hint && !errors && <span className="text-[12px] text-faint">{hint}</span>}
+      {/* Підказку ховаємо, щойно з'явилася помилка: два написи поспіль зайві. */}
+      {hint && !errors && <span className="text-[12px] text-ink-3">{hint}</span>}
       {errors?.map((message) => (
-        <span key={message} className="text-[12px] text-warn-ink">
+        <span key={message} className="text-[12px] text-danger">
           {message}
         </span>
       ))}
@@ -191,8 +196,11 @@ function AccountChoice({
     <button
       type="button"
       onClick={onClick}
-      className={`flex-grow rounded-sm border py-2 text-[13px] ${
-        active ? 'border-brand bg-brand-soft font-semibold text-brand' : 'border-line-strong text-muted'
+      aria-pressed={active}
+      className={`flex-1 rounded-control border py-2 text-[13px] ${
+        active
+          ? 'border-accent bg-accent-soft font-semibold text-accent'
+          : 'border-line text-ink-2 hover:border-ink-3'
       }`}
     >
       {label}

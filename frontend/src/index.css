@@ -1,44 +1,354 @@
 @import 'tailwindcss';
 
 /*
-  Палітра й шрифти напрямку «Збірка»: холодний нейтральний фон, синій акцент
-  для дій, бурштиновий — виключно для лотів з торгами. Оголошено токенами
-  Tailwind, тож у розмітці це звичайні класи на кшталт bg-canvas чи text-ink,
-  а змінити відтінок можна в одному місці.
+  ── Палітра AutoLot ──────────────────────────────────────────────────────
+  Кольори оголошені двічі: світлі — тут, темні — нижче. Кожна змінна
+  зберігає ту саму РОЛЬ (тло, текст, лінія), а не конкретний відтінок,
+  тому розмітці байдуже, яка тема ввімкнена: вона просто каже bg-surface.
+
+  Три блоки замість двох — бо тем насправді три:
+    1) :root                          — світла (і типова, якщо система мовчить)
+    2) @media (prefers-color-scheme)  — темна за налаштуванням системи
+    3) :root[data-theme='dark']       — темна за ручним перемикачем
+
+  Селектор :root:not([data-theme='light']) у другому блоці означає: слухаємо
+  систему лише доти, доки людина не сказала «хочу світлу» явно. Без цього
+  ручний перемикач не зміг би перебити системну темну тему.
 */
-@theme {
-  --font-sans: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+:root {
+  color-scheme: light;
 
-  --color-canvas: #f4f6f8;
-  --color-surface: #ffffff;
-  --color-line: #dce1e6;
-  --color-line-strong: #c9d0d7;
+  --ground: #eff2f5;
+  --surface: #ffffff;
+  --surface-2: #f6f8fa;
+  --surface-3: #e4eaf0;
 
-  --color-ink: #14181d;
-  --color-muted: #48535e;
-  --color-subtle: #6b757f;
-  --color-faint: #8a949e;
+  --ink: #101720;
+  --ink-2: #586574;
+  --ink-3: #8794a3;
 
-  --color-brand: #16457e;
-  --color-brand-dark: #0f2f58;
-  --color-brand-soft: #eaf0f8;
+  --line: #dbe1e9;
 
-  /* Лот з торгами — єдине місце, де з'являється бурштин. */
-  --color-lot: #c7861a;
-  --color-lot-soft: #fbf2e3;
-  --color-lot-line: #e9d3a8;
-  --color-lot-ink: #8a5b12;
+  --accent: #0e6b74;
+  --accent-ink: #ffffff;
+  --accent-soft: #dfeff0;
 
-  --color-ok-soft: #eaf4ec;
-  --color-ok-ink: #256b3e;
-  --color-warn-soft: #fbf0e6;
-  --color-warn-ink: #8a5220;
+  --signal: #b96100;
+  --signal-soft: #fbebd8;
+  --signal-ink: #ffffff;
+
+  --danger: #af2f26;
+  --danger-soft: #fae4e1;
+
+  --good: #1c7350;
+  --good-soft: #e0f1e8;
+
+  --deck: #131a23;
+  --deck-ink: #dce4ec;
+
+  --shadow-soft: 0 1px 2px rgba(16, 23, 32, 0.05), 0 8px 24px -12px rgba(16, 23, 32, 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --ground: #0b0f15;
+    --surface: #141a23;
+    --surface-2: #1a212b;
+    --surface-3: #232c39;
+
+    --ink: #e9eef4;
+    --ink-2: #97a5b4;
+    --ink-3: #6b7a8a;
+
+    --line: #263140;
+
+    --accent: #35a8b2;
+    --accent-ink: #04191c;
+    --accent-soft: #0f3138;
+
+    --signal: #f0a02b;
+    --signal-soft: #38290f;
+    --signal-ink: #2a1b04;
+
+    --danger: #f0685a;
+    --danger-soft: #391c19;
+
+    --good: #4fc08d;
+    --good-soft: #0f2c21;
+
+    --deck: #06090d;
+    --deck-ink: #c3cfdb;
+
+    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.7);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --ground: #0b0f15;
+  --surface: #141a23;
+  --surface-2: #1a212b;
+  --surface-3: #232c39;
+
+  --ink: #e9eef4;
+  --ink-2: #97a5b4;
+  --ink-3: #6b7a8a;
+
+  --line: #263140;
+
+  --accent: #35a8b2;
+  --accent-ink: #04191c;
+  --accent-soft: #0f3138;
+
+  --signal: #f0a02b;
+  --signal-soft: #38290f;
+  --signal-ink: #2a1b04;
+
+  --danger: #f0685a;
+  --danger-soft: #391c19;
+
+  --good: #4fc08d;
+  --good-soft: #0f2c21;
+
+  --deck: #06090d;
+  --deck-ink: #c3cfdb;
+
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.7);
+}
+
+/*
+  «inline» — ключове слово Tailwind 4. Без нього Tailwind підставив би в клас
+  bg-surface поточне ЗНАЧЕННЯ змінної (#ffffff) і темна тема ніколи б не
+  спрацювала. З ним у класі лишається саме посилання var(--surface), яке
+  переобчислюється щоразу, коли змінюється тема.
+*/
+@theme inline {
+  --font-display: 'Bahnschrift', 'DIN Alternate', 'Avenir Next Condensed',
+    'Segoe UI Variable Display', system-ui, sans-serif;
+  --font-sans: 'Segoe UI Variable Text', 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui,
+    sans-serif;
+  --font-mono: 'Cascadia Mono', 'SF Mono', ui-monospace, Consolas, monospace;
+
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+
+  --color-line: var(--line);
+
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-signal: var(--signal);
+  --color-signal-soft: var(--signal-soft);
+  --color-signal-ink: var(--signal-ink);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+
+  --color-deck: var(--deck);
+  --color-deck-ink: var(--deck-ink);
+
+  /* Два радіуси на весь сайт: 10 px для карток, 6 px для дрібних елементів. */
+  --radius-card: 10px;
+  --radius-control: 6px;
+
+  --shadow-card: var(--shadow-soft);
 }
 
 body {
   margin: 0;
-  background: var(--color-canvas);
-  color: var(--color-ink);
+  background: var(--ground);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+  ── Примітиви ────────────────────────────────────────────────────────────
+  Кнопка, картка, поле й «пігулка» трапляються на кожній сторінці. Якби
+  кожен компонент виписував їх десятком класів Tailwind, будь-яка правка
+  вимагала б обійти весь проєкт. Тому вигляд описаний тут один раз, а
+  розмітка лише називає роль: class="btn btn-primary".
+
+  Шар components стоїть НИЖЧЕ за utilities, тож окремий клас Tailwind у
+  розмітці (скажімо, w-full) перекриє це правило, а не навпаки.
+*/
+@layer components {
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: var(--radius-control);
+    padding: 8px 15px;
+    font-family: var(--font-display);
+    font-variation-settings: 'wdth' 92;
+    font-weight: 600;
+    font-size: 14.5px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .btn:hover {
+    border-color: var(--ink-3);
+  }
+
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  /* filter: brightness трохи підсвічує кнопку, не вимагаючи окремого відтінку. */
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.08);
+    border-color: var(--accent);
+  }
+
+  /* Сигнальна кнопка — тільки для торгів: ставка, перехід до лота. */
+  .btn-signal {
+    background: var(--signal);
+    border-color: var(--signal);
+    color: var(--signal-ink);
+  }
+
+  .btn-signal:hover:not(:disabled) {
+    filter: brightness(1.06);
+    border-color: var(--signal);
+  }
+
+  .control {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+    padding: 8px 10px;
+    font-size: 14px;
+    color: var(--ink);
+  }
+
+  .control:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .control:disabled {
+    background: var(--surface-2);
+    color: var(--ink-3);
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 999px;
+    padding: 2px 9px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: var(--surface-3);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  .pill-live {
+    background: var(--signal-soft);
+    color: var(--signal);
+  }
+
+  /*
+    Кружечок усередині «пігулки». currentColor бере колір самої пігулки,
+    тож окремих правил для світлої й темної теми не треба.
+
+    Миготіння тут свідомо немає: воно означало б «торги йдуть просто зараз»,
+    а сам аукціон ще не реалізовано. З'явиться разом зі ставками.
+  */
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+  }
+
+  .pill-good {
+    background: var(--good-soft);
+    color: var(--good);
+  }
+
+  .pill-danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+
+  .pill-accent {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+}
+
+@layer utilities {
+  /*
+    Смуга вмісту: не ширша за 1200 px, а на вужчих екранах лишає по 20 px
+    з боків. Одне правило замість того, щоб повторювати ширину на кожній
+    сторінці — і всі колонки на сайті вирівняні між собою.
+  */
+  .wrap {
+    width: min(1200px, 100% - 40px);
+    margin-inline: auto;
+  }
+
+  /*
+    Bahnschrift — «змінний» (variable) шрифт: замість набору окремих накреслень
+    у ньому є осі, які можна плавно крутити. Вісь wdth відповідає за ширину
+    літер, і 90 замість типових 100 робить заголовки трохи вужчими та щільнішими.
+
+    Вісь ваги (wght) тут свідомо НЕ задана: нею керує звичайний font-weight,
+    тобто класи Tailwind font-semibold і font-bold. Якби ми прописали wght
+    сюди, вона перебила б їх — font-variation-settings має вищий пріоритет.
+  */
+  .font-display {
+    font-variation-settings: 'wdth' 90;
+  }
+
+  /* Дрібний моноширинний напис великими літерами — підпис над значенням. */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+}
+
+/* Смуга прокрутки теж має слухатися теми, інакше в темній вона світить білим. */
+* {
+  scrollbar-color: var(--surface-3) transparent;
 }

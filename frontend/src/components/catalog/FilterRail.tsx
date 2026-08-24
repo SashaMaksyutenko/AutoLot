@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import type { CatalogFilters, ListingType } from '../../api/catalog'
+import type { CatalogFilters, Currency, ListingType } from '../../api/catalog'
 import {
   fetchCarAttributes,
   fetchCities,
@@ -54,27 +54,48 @@ export function FilterRail({ filters, onChange, onReset, totalCount }: Props) {
   })
 
   return (
-    <aside className="flex w-[268px] shrink-0 flex-col gap-px self-start overflow-hidden rounded-md border border-line bg-line">
-      <Section>
+    // sticky вмикається лише з ширини lg: у вузькій одноколонковій розкладці
+    // «прилипла» панель фільтрів заважала б прокручувати видачу.
+    <aside className="card self-start px-4 pt-1 pb-4 lg:sticky lg:top-[74px]">
+      <Group>
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold tracking-wider text-muted uppercase">
-            Фільтри
-          </span>
-          <button type="button" onClick={onReset} className="text-xs text-brand hover:underline">
+          <span className="eyebrow">Фільтри</span>
+          <button
+            type="button"
+            onClick={onReset}
+            className="text-xs text-accent hover:underline"
+          >
             Очистити
           </button>
         </div>
-      </Section>
+      </Group>
 
-      <Section title="Тип продажу">
-        <div className="flex gap-1.5">
-          <SaleType label="Усі" active={filters.type === undefined} onClick={() => onChange({ type: undefined })} />
-          <SaleType label="Ціна" active={filters.type === 'FixedPrice'} onClick={() => onChange({ type: 'FixedPrice' })} />
-          <SaleType label="Торги" active={filters.type === 'Auction'} onClick={() => onChange({ type: 'Auction' })} lot />
+      <Group title="Тип продажу">
+        {/*
+          Три кнопки, з яких активна завжди одна — це «радіо» без круглих
+          позначок. aria-pressed усередині SaleType повідомляє програмам для
+          незрячих, яка з них зараз натиснута.
+        */}
+        <div className="flex overflow-hidden rounded-control border border-line">
+          <SaleType
+            label="Усі"
+            active={filters.type === undefined}
+            onClick={() => onChange({ type: undefined })}
+          />
+          <SaleType
+            label="Ціна"
+            active={filters.type === 'FixedPrice'}
+            onClick={() => onChange({ type: 'FixedPrice' })}
+          />
+          <SaleType
+            label="Торги"
+            active={filters.type === 'Auction'}
+            onClick={() => onChange({ type: 'Auction' })}
+          />
         </div>
-      </Section>
+      </Group>
 
-      <Section title="Марка і модель">
+      <Group title="Марка і модель">
         <Select
           value={filters.makeId}
           placeholder="Будь-яка марка"
@@ -89,9 +110,9 @@ export function FilterRail({ filters, onChange, onReset, totalCount }: Props) {
           options={(models.data ?? []).map((model) => ({ id: model.id, name: model.name }))}
           onChange={(modelId) => onChange({ modelId })}
         />
-      </Section>
+      </Group>
 
-      <Section title="Ціна">
+      <Group title="Ціна">
         <div className="flex gap-2">
           <NumberInput
             value={filters.priceFrom}
@@ -103,61 +124,61 @@ export function FilterRail({ filters, onChange, onReset, totalCount }: Props) {
             placeholder="до"
             onChange={(priceTo) => onChange({ priceTo })}
           />
-          <div className="flex shrink-0 gap-px rounded-sm bg-[#e4e8ec] p-0.5 font-mono text-[11px]">
-            {(['Usd', 'Eur', 'Uah'] as const).map((currency) => (
-              <button
-                key={currency}
-                type="button"
-                onClick={() => onChange({ priceCurrency: currency })}
-                className={`rounded-[3px] px-1.5 py-0.5 ${
-                  filters.priceCurrency === currency
-                    ? 'bg-surface font-semibold text-ink'
-                    : 'text-subtle'
-                }`}
-              >
-                {currency === 'Usd' ? '$' : currency === 'Eur' ? '€' : '₴'}
-              </button>
-            ))}
-          </div>
+          <CurrencyPicker
+            value={filters.priceCurrency}
+            onChange={(priceCurrency) => onChange({ priceCurrency })}
+          />
         </div>
-      </Section>
+      </Group>
 
-      <Section title="Рік випуску">
+      <Group title="Рік випуску">
         <div className="flex gap-2">
-          <NumberInput value={filters.yearFrom} placeholder="від" onChange={(yearFrom) => onChange({ yearFrom })} />
-          <NumberInput value={filters.yearTo} placeholder="до" onChange={(yearTo) => onChange({ yearTo })} />
+          <NumberInput
+            value={filters.yearFrom}
+            placeholder="від"
+            onChange={(yearFrom) => onChange({ yearFrom })}
+          />
+          <NumberInput
+            value={filters.yearTo}
+            placeholder="до"
+            onChange={(yearTo) => onChange({ yearTo })}
+          />
         </div>
-      </Section>
+      </Group>
 
-      <Section title="Пробіг, км">
-        <NumberInput value={filters.mileageTo} placeholder="до" onChange={(mileageTo) => onChange({ mileageTo })} />
-      </Section>
+      <Group title="Пробіг, км">
+        <NumberInput
+          value={filters.mileageTo}
+          placeholder="до"
+          onChange={(mileageTo) => onChange({ mileageTo })}
+        />
+      </Group>
 
-      <Section title="Тип пального">
+      <Group title="Тип пального">
         <Chips
           options={attributes.data?.fuelTypes ?? []}
           selected={filters.fuelTypes}
           onToggle={(fuelTypes) => onChange({ fuelTypes })}
         />
-      </Section>
+      </Group>
 
-      <Section title="Кузов">
+      <Group title="Кузов">
         <Chips
           options={attributes.data?.bodyTypes ?? []}
           selected={filters.bodyTypes}
           onToggle={(bodyTypes) => onChange({ bodyTypes })}
         />
-      </Section>
+      </Group>
 
-      <Section title="Коробка передач">
+      <Group title="Коробка передач">
         <Chips
           options={attributes.data?.transmissions ?? []}
           selected={filters.transmissions}
           onToggle={(transmissions) => onChange({ transmissions })}
         />
-      </Section>
+      </Group>
 
-      <Section title="Регіон">
+      <Group title="Регіон">
         <Select
           value={filters.regionId}
           placeholder="Уся Україна"
@@ -171,35 +192,40 @@ export function FilterRail({ filters, onChange, onReset, totalCount }: Props) {
           options={cities.data ?? []}
           onChange={(cityId) => onChange({ cityId })}
         />
-      </Section>
+      </Group>
 
-      <Section>
-        <label className="flex cursor-pointer items-center gap-2.5 text-sm">
+      <Group>
+        <label className="flex cursor-pointer items-center gap-2 text-[13.5px]">
           <input
             type="checkbox"
             checked={filters.wasInAccident === false}
             onChange={(event) =>
               onChange({ wasInAccident: event.target.checked ? false : undefined })
             }
-            className="h-4 w-4 accent-brand"
+            // accent-accent фарбує саму «галочку» бірюзовим замість
+            // синього кольору браузера за замовчуванням.
+            className="h-[15px] w-[15px] accent-accent"
           />
           <span>Не був у ДТП</span>
         </label>
-      </Section>
+      </Group>
 
-      <Section>
-        <div className="flex h-10 items-center justify-center rounded-sm bg-brand text-sm font-semibold text-white">
-          Знайдено {totalCount}
-        </div>
-      </Section>
+      <Group>
+        <div className="btn btn-primary w-full">Знайдено {totalCount}</div>
+      </Group>
     </aside>
   )
 }
 
-function Section({ title, children }: { title?: string; children: React.ReactNode }) {
+/** Смуга фільтра з підписом. Останню знизу не підкреслюємо — там уже край картки. */
+function Group({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-2.5 bg-surface p-4">
-      {title && <div className="text-xs font-semibold text-muted">{title}</div>}
+    <div className="grid gap-2.5 border-b border-line py-3.5 last:border-0 last:pb-0">
+      {title && (
+        <h4 className="font-display text-xs font-bold tracking-[0.09em] text-ink-3 uppercase">
+          {title}
+        </h4>
+      )}
       {children}
     </div>
   )
@@ -209,22 +235,19 @@ function SaleType({
   label,
   active,
   onClick,
-  lot,
 }: {
   label: string
   active: boolean
   onClick: () => void
-  lot?: boolean
 }) {
-  const activeStyle = lot ? 'border-lot-line bg-lot-soft text-lot-ink' : 'bg-brand text-white'
-
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex-grow rounded-sm border py-1.5 text-[13px] ${
-        active ? `font-semibold ${activeStyle}` : 'border-line-strong text-muted'
-      } ${active && !lot ? 'border-brand' : ''}`}
+      aria-pressed={active}
+      className={`flex-1 border-line px-1 py-1.5 text-[13px] not-first:border-l ${
+        active ? 'bg-accent-soft font-semibold text-accent' : 'bg-surface text-ink-2'
+      }`}
     >
       {label}
     </button>
@@ -249,7 +272,7 @@ function Select({
       value={value ?? ''}
       disabled={disabled}
       onChange={(event) => onChange(event.target.value ? Number(event.target.value) : undefined)}
-      className="h-9 rounded-sm border border-line-strong bg-surface px-2.5 text-sm disabled:bg-[#f6f8f9] disabled:text-faint"
+      className="control"
     >
       <option value="">{placeholder}</option>
       {options.map((option) => (
@@ -277,8 +300,37 @@ function NumberInput({
       value={value ?? ''}
       placeholder={placeholder}
       onChange={(event) => onChange(event.target.value ? Number(event.target.value) : undefined)}
-      className="h-9 w-full min-w-0 rounded-sm border border-line-strong bg-surface px-2.5 font-mono text-sm placeholder:font-sans placeholder:text-faint"
+      className="control min-w-0 font-mono tabular-nums placeholder:font-sans placeholder:text-ink-3"
     />
+  )
+}
+
+const currencySigns: Record<Currency, string> = { Usd: '$', Eur: '€', Uah: '₴' }
+
+/** У якій валюті введено «від» і «до». Бекенд сам переведе межі в гривню. */
+function CurrencyPicker({
+  value,
+  onChange,
+}: {
+  value: Currency
+  onChange: (value: Currency) => void
+}) {
+  return (
+    <div className="flex shrink-0 gap-0.5 rounded-control border border-line bg-surface-2 p-0.5">
+      {(Object.keys(currencySigns) as Currency[]).map((currency) => (
+        <button
+          key={currency}
+          type="button"
+          onClick={() => onChange(currency)}
+          aria-pressed={value === currency}
+          className={`rounded-[4px] px-1.5 font-mono text-xs ${
+            value === currency ? 'bg-ink font-semibold text-surface' : 'text-ink-2'
+          }`}
+        >
+          {currencySigns[currency]}
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -301,6 +353,7 @@ function Chips({
           <button
             key={option.value}
             type="button"
+            aria-pressed={active}
             onClick={() =>
               onToggle(
                 active
@@ -308,10 +361,10 @@ function Chips({
                   : [...selected, option.value],
               )
             }
-            className={`rounded-sm border px-2.5 py-1 text-[13px] ${
+            className={`rounded-control border px-2.5 py-1 text-[13px] ${
               active
-                ? 'border-brand bg-brand-soft font-medium text-brand'
-                : 'border-line-strong text-muted'
+                ? 'border-accent bg-accent-soft font-medium text-accent'
+                : 'border-line text-ink-2 hover:border-ink-3'
             }`}
           >
             {option.name}

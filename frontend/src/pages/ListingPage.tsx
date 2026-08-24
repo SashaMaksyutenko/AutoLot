@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { fetchListing, type CarDetails, type ListingDetails } from '../api/listing'
+import { fetchListing, type ListingDetails } from '../api/listing'
 import { useAttributeLabels } from '../api/useAttributeLabels'
 import { Gallery } from '../components/listing/Gallery'
 import { formatCount, formatMileage, formatPrice, plural } from '../format'
@@ -23,7 +23,7 @@ export function ListingPage() {
     return (
       <Notice>
         Оголошення не знайдено або воно ще не опубліковане.{' '}
-        <Link to="/" className="text-brand hover:underline">
+        <Link to="/" className="text-accent hover:underline">
           Повернутися до каталогу
         </Link>
       </Notice>
@@ -39,37 +39,68 @@ function Loaded({ listing }: { listing: ListingDetails }) {
   const isAuction = listing.type === 'Auction'
 
   return (
-    <div className="mx-auto flex max-w-[1180px] flex-col gap-5 px-10 pt-6 pb-14">
-      <nav className="text-[13px] text-subtle">
-        <Link to="/" className="hover:text-brand hover:underline">
+    <div className="wrap grid gap-4 py-[26px]">
+      <nav className="text-[13px] text-ink-2">
+        <Link to="/" className="hover:text-accent hover:underline">
           Каталог
         </Link>
-        <span className="px-1.5 text-faint">/</span>
+        <span className="px-1.5 text-ink-3">/</span>
         <span>
           {car.make} {car.model}
         </span>
       </nav>
 
-      <div className="flex gap-6">
-        <div className="flex min-w-0 flex-grow flex-col gap-5">
+      <div className="grid items-start gap-[26px] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div className="grid min-w-0 gap-5">
           <Gallery photos={listing.photos} alt={`${car.make} ${car.model}`} />
 
-          <Panel title="Характеристики">
-            <dl className="grid grid-cols-2 gap-x-10 gap-y-0">
-              <Row label="Рік випуску" value={String(car.year)} mono />
+          {/*
+            Шість головних характеристик у сітці 3×2. Саме шість, бо вони є
+            в кожного авто: жодна клітинка не лишиться порожньою, і сітка
+            не розсиплеться. Решта, яку заповнюють не всі, — списком нижче.
+          */}
+          <KeySpecs
+            items={[
+              { label: 'Рік випуску', value: String(car.year) },
+              { label: 'Пробіг', value: formatMileage(car.mileage) },
+              { label: 'Кузов', value: labelOf('bodyTypes', car.bodyType) },
+              { label: 'Пальне', value: labelOf('fuelTypes', car.fuelType) },
+              { label: 'Коробка', value: labelOf('transmissions', car.transmission) },
+              { label: 'Привід', value: labelOf('driveTypes', car.drivetrain) },
+            ]}
+          />
+
+          <Panel title="Технічні дані">
+            <dl className="grid gap-x-10 sm:grid-cols-2">
               {/* Стан не входить у довідник перелічень — значень лише два. */}
               <Row label="Стан" value={car.condition === 'New' ? 'Новий' : 'Вживаний'} />
-              <Row label="Пробіг" value={formatMileage(car.mileage)} mono />
-              <Row label="Кузов" value={labelOf('bodyTypes', car.bodyType)} />
-              <Row label="Пальне" value={labelOf('fuelTypes', car.fuelType)} />
-              <Row label="Коробка" value={labelOf('transmissions', car.transmission)} />
-              <Row label="Привід" value={labelOf('driveTypes', car.drivetrain)} />
-              <Row label="Колір" value={`${labelOf('colors', car.color)}${car.isMetallic ? ', металік' : ''}`} />
-              <Row label="Двигун" value={engineLine(car)} />
-              <Row label="Потужність" value={car.enginePower ? `${car.enginePower} к.с.` : null} mono />
-              <Row label="Витрата, змішана" value={car.fuelConsumptionCombined ? `${car.fuelConsumptionCombined} л/100 км` : null} mono />
-              <Row label="Батарея" value={car.batteryCapacity ? `${car.batteryCapacity} кВт·год` : null} mono />
-              <Row label="Запас ходу" value={car.electricRange ? `${car.electricRange} км` : null} mono />
+              <Row
+                label="Колір"
+                value={`${labelOf('colors', car.color)}${car.isMetallic ? ', металік' : ''}`}
+              />
+              <Row label="Двигун" value={car.engineVolume ? `${car.engineVolume} л` : null} mono />
+              <Row
+                label="Потужність"
+                value={car.enginePower ? `${car.enginePower} к.с.` : null}
+                mono
+              />
+              <Row
+                label="Витрата, змішана"
+                value={
+                  car.fuelConsumptionCombined ? `${car.fuelConsumptionCombined} л/100 км` : null
+                }
+                mono
+              />
+              <Row
+                label="Батарея"
+                value={car.batteryCapacity ? `${car.batteryCapacity} кВт·год` : null}
+                mono
+              />
+              <Row
+                label="Запас ходу"
+                value={car.electricRange ? `${car.electricRange} км` : null}
+                mono
+              />
               <Row label="Місць" value={car.seatCount ? String(car.seatCount) : null} mono />
               <Row label="Дверей" value={car.doorCount ? String(car.doorCount) : null} mono />
               <Row label="Екостандарт" value={car.ecologyStandard} />
@@ -79,10 +110,16 @@ function Loaded({ listing }: { listing: ListingDetails }) {
           </Panel>
 
           <Panel title="Стан та історія">
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               <Fact ok={!car.wasInAccident} text={car.wasInAccident ? 'Був у ДТП' : 'Не був у ДТП'} />
-              <Fact ok={car.isCustomsCleared} text={car.isCustomsCleared ? 'Розмитнений' : 'Не розмитнений'} />
-              <Fact ok={car.isLocatedInUkraine} text={car.isLocatedInUkraine ? 'В Україні' : 'Під замовлення'} />
+              <Fact
+                ok={car.isCustomsCleared}
+                text={car.isCustomsCleared ? 'Розмитнений' : 'Не розмитнений'}
+              />
+              <Fact
+                ok={car.isLocatedInUkraine}
+                text={car.isLocatedInUkraine ? 'В Україні' : 'Під замовлення'}
+              />
               {car.hasServiceBook && <Fact ok text="Сервісна книжка" />}
               {car.isGarageKept && <Fact ok text="Гаражне зберігання" />}
               {car.isOnCredit && <Fact ok={false} text="У кредиті" />}
@@ -92,10 +129,10 @@ function Loaded({ listing }: { listing: ListingDetails }) {
 
           {car.features.length > 0 && (
             <Panel title={`Комплектація · ${car.features.length}`}>
-              <ul className="grid grid-cols-3 gap-x-6 gap-y-1.5">
+              <ul className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2 lg:grid-cols-3">
                 {car.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-sm">
-                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-faint" />
+                  <li key={feature} className="flex items-start gap-2 text-[13.5px]">
+                    <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-ink-3" />
                     <span>{feature}</span>
                   </li>
                 ))}
@@ -104,79 +141,81 @@ function Loaded({ listing }: { listing: ListingDetails }) {
           )}
 
           <Panel title="Опис">
-            <p className="text-sm leading-relaxed whitespace-pre-line text-muted">
+            <p className="text-sm leading-relaxed whitespace-pre-line text-ink-2">
               {listing.description}
             </p>
           </Panel>
         </div>
 
-        <aside className="flex w-[320px] shrink-0 flex-col gap-4 self-start">
-          <div
-            className={`rounded-md border bg-surface p-5 ${
-              isAuction ? 'border-lot-line border-t-[3px] border-t-lot' : 'border-line'
-            }`}
-          >
-            <h1 className="text-xl font-semibold tracking-tight">
-              {car.make} {car.model}
-            </h1>
-            <p className="mt-1 text-[13px] text-subtle">
-              {car.generation ? `${car.generation} · ` : ''}
-              {car.year}
-            </p>
+        <aside className="grid gap-4 lg:sticky lg:top-[74px]">
+          {/* У лота з торгами рамка сигнального кольору — блок ставки помітний одразу. */}
+          <div className={`card grid gap-3 p-4 ${isAuction ? 'border-signal' : ''}`}>
+            <div>
+              <h1 className="font-display text-xl font-bold">
+                {car.make} {car.model}
+              </h1>
+              <p className="text-[13px] text-ink-2">
+                {car.generation ? `${car.generation} · ` : ''}
+                {car.year}
+              </p>
+            </div>
 
-            <div className="mt-4">
-              {isAuction && (
-                <div className="text-[11px] tracking-wide text-lot-ink uppercase">Стартова ціна</div>
-              )}
+            <div>
+              {isAuction && <div className="eyebrow">Стартова ціна</div>}
               <div
-                className={`font-mono text-[30px] font-bold tracking-tight ${
-                  isAuction ? 'text-lot-ink' : ''
+                className={`font-display text-[30px] leading-tight font-bold tabular-nums ${
+                  isAuction ? 'text-signal' : ''
                 }`}
               >
                 {formatPrice(listing.price, listing.currency)}
               </div>
               {listing.currency !== 'Uah' && (
-                <div className="mt-0.5 font-mono text-sm text-subtle">
+                <div className="font-mono text-[13px] text-ink-2 tabular-nums">
                   {formatPrice(listing.priceUah, 'Uah')}
                 </div>
               )}
             </div>
 
             {(listing.isNegotiable || listing.acceptsTrade || listing.isUrgent) && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {listing.isNegotiable && <Tag text="Торг доречний" />}
-                {listing.acceptsTrade && <Tag text="Розглядаю обмін" />}
-                {listing.isUrgent && <Tag text="Терміновий продаж" />}
+              <div className="flex flex-wrap gap-1.5">
+                {listing.isNegotiable && <span className="pill pill-accent">Торг доречний</span>}
+                {listing.acceptsTrade && <span className="pill pill-accent">Розглядаю обмін</span>}
+                {listing.isUrgent && <span className="pill pill-accent">Терміновий продаж</span>}
               </div>
             )}
 
             <button
               type="button"
-              className={`mt-5 h-11 w-full rounded-sm text-sm font-semibold text-white ${
-                isAuction ? 'bg-lot' : 'bg-brand'
-              }`}
+              className={`btn w-full py-3 text-base ${isAuction ? 'btn-signal' : 'btn-primary'}`}
             >
               {isAuction ? 'Перейти до торгів' : 'Показати телефон'}
             </button>
           </div>
 
-          <div className="rounded-md border border-line bg-surface p-5">
-            <div className="text-xs font-semibold tracking-wider text-muted uppercase">Продавець</div>
-            <div className="mt-2.5 text-[15px] font-semibold">{listing.seller.displayName}</div>
-            <div className="mt-0.5 text-[13px] text-subtle">
-              {listing.seller.accountType === 'Dealer' ? 'Автосалон' : 'Приватна особа'}
+          <div className="card grid gap-3 p-4">
+            <span className="eyebrow">Продавець</span>
+
+            <div>
+              <div className="text-[15px] font-semibold">{listing.seller.displayName}</div>
+              <div className="text-[13px] text-ink-2">
+                {listing.seller.accountType === 'Dealer' ? 'Автосалон' : 'Приватна особа'}
+              </div>
             </div>
 
             {listing.location && (
-              <div className="mt-3 border-t border-line pt-3 text-[13px] text-muted">
-                {listing.location.cityName}
-                {listing.location.cityDistrictName ? `, ${listing.location.cityDistrictName}` : ''}
-                <div className="text-subtle">{listing.location.regionName}</div>
+              <div className="border-t border-line pt-3 text-[13px] text-ink-2">
+                <div className="text-ink">
+                  {listing.location.cityName}
+                  {listing.location.cityDistrictName
+                    ? `, ${listing.location.cityDistrictName}`
+                    : ''}
+                </div>
+                {listing.location.regionName}
               </div>
             )}
           </div>
 
-          <div className="px-1 text-[13px] text-subtle">
+          <div className="px-1 text-[13px] text-ink-3">
             {formatCount(listing.viewCount)}{' '}
             {plural(listing.viewCount, 'перегляд', 'перегляди', 'переглядів')}
           </div>
@@ -186,17 +225,28 @@ function Loaded({ listing }: { listing: ListingDetails }) {
   )
 }
 
-/** Збирає рядок про двигун із того, що заповнене: об'єм є не в кожного авто. */
-function engineLine(car: CarDetails): string | null {
-  const parts = [car.engineVolume ? `${car.engineVolume} л` : null].filter(Boolean)
-
-  return parts.length > 0 ? parts.join(' · ') : null
+/**
+ * Сітка з волосяними лініями: тло контейнера — колір лінії, клітинки — колір
+ * поверхні, а проміжок між ними рівно 1 px. Тло просвічує крізь проміжки й
+ * дає ідеально тонкі роздільники без жодної рамки.
+ */
+function KeySpecs({ items }: { items: { label: string; value: string }[] }) {
+  return (
+    <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-control border border-line bg-line sm:grid-cols-3">
+      {items.map((item) => (
+        <div key={item.label} className="grid gap-0.5 bg-surface px-3 py-2.5">
+          <dt className="text-[11.5px] text-ink-3">{item.label}</dt>
+          <dd className="text-[14.5px] font-semibold">{item.value}</dd>
+        </div>
+      ))}
+    </dl>
+  )
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-md border border-line bg-surface p-5">
-      <h2 className="mb-3.5 text-xs font-semibold tracking-wider text-muted uppercase">{title}</h2>
+    <section className="card p-4">
+      <h2 className="eyebrow mb-3">{title}</h2>
       {children}
     </section>
   )
@@ -207,35 +257,22 @@ function Row({ label, value, mono }: { label: string; value: string | null; mono
   if (!value) return null
 
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-[#eceff2] py-2 last:border-0">
-      <dt className="text-[13px] text-subtle">{label}</dt>
-      <dd className={`text-sm font-medium ${mono ? 'font-mono' : ''}`}>{value}</dd>
+    <div className="flex items-baseline justify-between gap-4 border-b border-line py-2 last:border-0">
+      <dt className="text-[13px] text-ink-2">{label}</dt>
+      <dd className={`text-sm font-medium ${mono ? 'font-mono tabular-nums' : ''}`}>{value}</dd>
     </div>
   )
 }
 
 function Fact({ ok, text }: { ok: boolean; text: string }) {
-  return (
-    <span
-      className={`rounded-sm px-2.5 py-1 text-[13px] ${
-        ok ? 'bg-ok-soft text-ok-ink' : 'bg-warn-soft text-warn-ink'
-      }`}
-    >
-      {text}
-    </span>
-  )
-}
-
-function Tag({ text }: { text: string }) {
-  return <span className="rounded-sm bg-brand-soft px-2 py-1 text-[11px] font-medium text-brand">{text}</span>
+  return <span className={`pill ${ok ? 'pill-good' : 'pill-danger'}`}>{text}</span>
 }
 
 function Notice({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto max-w-[1180px] px-10 py-16">
-      <p className="rounded-md border border-line bg-surface p-10 text-center text-sm text-subtle">
-        {children}
-      </p>
+    <div className="wrap py-16">
+      <p className="card p-10 text-center text-sm text-ink-2">{children}</p>
     </div>
   )
 }
+

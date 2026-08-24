@@ -7,7 +7,7 @@ import {
   type CatalogSort,
 } from '../api/catalog'
 import { FilterRail } from '../components/catalog/FilterRail'
-import { ListingRow } from '../components/catalog/ListingRow'
+import { ListingCard } from '../components/catalog/ListingCard'
 import { formatCount, plural } from '../format'
 
 const sortLabels: Record<CatalogSort, string> = {
@@ -38,7 +38,9 @@ export function CatalogPage() {
   const total = results.data?.totalCount ?? 0
 
   return (
-    <div className="flex gap-6 px-10 pt-6 pb-12">
+    // Дві колонки: вузька смуга фільтрів і видача. На екранах до 1024 px
+    // колонка одна — фільтри стають звичайним блоком над списком.
+    <div className="wrap grid items-start gap-[22px] py-[26px] lg:grid-cols-[258px_minmax(0,1fr)]">
       <FilterRail
         filters={filters}
         onChange={patchFilters}
@@ -46,29 +48,31 @@ export function CatalogPage() {
         totalCount={total}
       />
 
-      <main className="flex min-w-0 flex-grow flex-col gap-3">
-        <div className="flex items-end justify-between gap-6">
+      <main className="flex min-w-0 flex-col gap-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-[22px] font-semibold tracking-tight">Легкові автомобілі</h1>
-            <p className="mt-0.5 text-[13px] text-subtle">
+            <h1 className="font-display text-[25px] font-bold">Легкові автомобілі</h1>
+            <p className="text-[13px] text-ink-2">
               {results.isPending ? (
                 'Шукаємо…'
               ) : (
                 <>
                   Знайдено{' '}
-                  <span className="font-mono font-semibold text-ink">{formatCount(total)}</span>{' '}
+                  <span className="font-mono font-semibold text-ink tabular-nums">
+                    {formatCount(total)}
+                  </span>{' '}
                   {plural(total, 'оголошення', 'оголошення', 'оголошень')}
                 </>
               )}
             </p>
           </div>
 
-          <label className="flex items-center gap-2 text-[13px] text-subtle">
+          <label className="flex items-center gap-2 text-[13px] text-ink-2">
             <span>Сортувати</span>
             <select
               value={filters.sort}
               onChange={(event) => patchFilters({ sort: event.target.value as CatalogSort })}
-              className="h-[34px] rounded-sm border border-line-strong bg-surface px-2.5 text-[13px] font-medium text-ink"
+              className="control w-auto"
             >
               {Object.entries(sortLabels).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -80,20 +84,20 @@ export function CatalogPage() {
         </div>
 
         {results.isError && (
-          <p className="rounded-md border border-line bg-surface p-6 text-sm text-[#b3261e]">
+          <p className="card p-6 text-sm text-danger">
             Не вдалося отримати каталог. Перевірте, що AutoLot.Api запущено на порту 5080.
           </p>
         )}
 
         {results.data && results.data.items.length === 0 && (
-          <p className="rounded-md border border-line bg-surface p-10 text-center text-sm text-subtle">
+          <p className="card p-10 text-center text-sm text-ink-2">
             За такими фільтрами нічого немає. Спробуйте прибрати частину умов.
           </p>
         )}
 
-        <div className="flex flex-col gap-2">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {results.data?.items.map((listing) => (
-            <ListingRow key={listing.id} listing={listing} />
+            <ListingCard key={listing.id} listing={listing} />
           ))}
         </div>
 
@@ -124,7 +128,7 @@ function Pagination({
   const pages = Array.from({ length: Math.min(5, totalPages) }, (_, index) => from + index)
 
   return (
-    <nav className="mt-2 flex items-center justify-center gap-1 font-mono text-sm">
+    <nav className="mt-2 flex items-center justify-center gap-1.5">
       <PageButton label="←" disabled={page === 1} onClick={() => onPage(page - 1)} />
       {pages.map((value) => (
         <PageButton
@@ -155,11 +159,7 @@ function PageButton({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`h-[34px] min-w-[34px] rounded-sm px-2 ${
-        active
-          ? 'bg-brand font-semibold text-white'
-          : 'border border-line bg-surface text-muted disabled:opacity-40'
-      }`}
+      className={`btn min-w-[36px] px-2.5 tabular-nums ${active ? 'btn-primary' : ''}`}
     >
       {label}
     </button>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { AuthDialog } from './AuthDialog'
+import { ThemeToggle } from './ThemeToggle'
 
 /** Спільна шапка для всіх сторінок; вміст підставляє маршрутизатор. */
 export function SiteLayout() {
@@ -10,47 +11,32 @@ export function SiteLayout() {
 
   return (
     <div className="min-h-dvh">
-      <header className="flex h-15 items-center gap-8 border-b border-line bg-surface px-10">
-        <Link to="/" className="text-[19px] font-bold tracking-tight text-ink">
-          Auto<span className="text-brand">Lot</span>
-        </Link>
-        <nav className="flex gap-6 text-sm font-medium text-muted">
-          <Link to="/" className="text-ink">
-            Каталог
-          </Link>
-          <span>Аукціони</span>
-          <span>Дилери</span>
-        </nav>
+      {/*
+        sticky top-0 лишає шапку на екрані під час прокрутки. z-40 піднімає її
+        над вмістом, інакше картки проїжджали б поверх шапки.
+      */}
+      <header className="sticky top-0 z-40 border-b border-line bg-surface">
+        <div className="wrap flex min-h-[62px] flex-wrap items-center gap-x-7 gap-y-2 py-2">
+          <Brand />
 
-        <div className="flex-grow" />
+          {/* mr-auto відтісняє все наступне до правого краю. */}
+          <nav className="mr-auto hidden gap-5 text-[14.5px] sm:flex">
+            <Link
+              to="/"
+              aria-current="page"
+              className="border-b-2 border-accent pb-1 text-ink"
+            >
+              Купити авто
+            </Link>
+            {/* Розділи ще не написані, тож це не посилання, а просто написи. */}
+            <span className="pb-1 text-ink-3">Аукціони</span>
+            <span className="pb-1 text-ink-3">Автосалони</span>
+          </nav>
 
-        <div className="flex items-center gap-4 text-[13px] text-muted">
-          {/* Поки поновлюється сесія, не показуємо ні «Увійти», ні ім'я:
-              інакше на секунду блимнуло б «Увійти» вже залогіненому. */}
-          {auth.isRestoring ? null : auth.user ? (
-            <>
-              <span className="font-medium text-ink">{auth.user.displayName}</span>
-              <button type="button" onClick={() => void auth.logout()} className="hover:text-brand">
-                Вийти
-              </button>
-              <span className="rounded-sm bg-brand px-4 py-2 text-[13px] font-semibold text-white">
-                Подати оголошення
-              </span>
-            </>
-          ) : (
-            <>
-              <button type="button" onClick={() => setAuthOpen(true)} className="hover:text-brand">
-                Увійти
-              </button>
-              <button
-                type="button"
-                onClick={() => setAuthOpen(true)}
-                className="rounded-sm bg-brand px-4 py-2 text-[13px] font-semibold text-white"
-              >
-                Подати оголошення
-              </button>
-            </>
-          )}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <ThemeToggle />
+            <AccountTools auth={auth} onOpenAuth={() => setAuthOpen(true)} />
+          </div>
         </div>
       </header>
 
@@ -59,4 +45,77 @@ export function SiteLayout() {
       {authOpen && <AuthDialog onClose={() => setAuthOpen(false)} />}
     </div>
   )
+}
+
+function Brand() {
+  return (
+    <Link to="/" className="flex items-center gap-2.5">
+      <span className="font-display grid h-[30px] w-[30px] place-items-center rounded-control bg-accent text-sm font-bold tracking-wider text-accent-ink">
+        AL
+      </span>
+      <span className="font-display text-[21px] font-bold">
+        AUTO
+        {/*
+          Підкреслення сигнальним кольором — єдиний помаранчевий штрих у шапці.
+          not-italic скасовує курсив, який <em> дає за замовчуванням: тег тут
+          потрібен заради змісту (виділена частина назви), а не заради нахилу.
+        */}
+        <em className="border-b-[3px] border-signal pb-px text-accent not-italic">LOT</em>
+      </span>
+    </Link>
+  )
+}
+
+function AccountTools({
+  auth,
+  onOpenAuth,
+}: {
+  auth: ReturnType<typeof useAuth>
+  onOpenAuth: () => void
+}) {
+  // Поки поновлюється сесія, не показуємо ні «Увійти», ні ім'я: інакше
+  // на секунду блимнуло б «Увійти» вже залогіненому.
+  if (auth.isRestoring) return null
+
+  if (!auth.user) {
+    return (
+      <>
+        <button type="button" onClick={onOpenAuth} className="text-sm text-ink-2 hover:text-ink">
+          Увійти
+        </button>
+        <button type="button" onClick={onOpenAuth} className="btn btn-primary">
+          Продати авто
+        </button>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => void auth.logout()}
+        className="text-sm text-ink-2 hover:text-ink"
+      >
+        Вийти
+      </button>
+      <span className="btn btn-primary">Продати авто</span>
+      <span
+        title={auth.user.displayName}
+        className="font-display grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full bg-surface-3 text-[12.5px] font-bold text-ink-2"
+      >
+        {initialsOf(auth.user.displayName)}
+      </span>
+    </>
+  )
+}
+
+/** «Олена Мороз» → «ОМ». Двох літер вистачає, щоб кружечок не переповнився. */
+function initialsOf(displayName: string): string {
+  return displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0].toUpperCase())
+    .join('')
 }

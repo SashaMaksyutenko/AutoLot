@@ -109,6 +109,13 @@ internal sealed class ListingService(
             .Include(item => item.Car).ThenInclude(car => car.Generation)
             .Include(item => item.Car).ThenInclude(car => car.Features)
             .Include(item => item.Car).ThenInclude(car => car.Photos)
+
+            // Тут одразу ДВА списки — опції комплектації й фотографії. Одним
+            // запитом база повернула б їх усі можливі поєднання: 20 опцій ×
+            // 15 фото = 300 рядків замість 35, і кожне поле оголошення в них
+            // повторилося б 300 разів. AsSplitQuery розбиває це на кілька
+            // окремих запитів, які EF потім склеює в пам'яті.
+            .AsSplitQuery()
             .FirstOrDefaultAsync(item => item.Id == listingId, cancellationToken);
 
         if (listing is null)

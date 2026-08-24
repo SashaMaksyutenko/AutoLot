@@ -75,9 +75,13 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseHsts();
-}
 
-app.UseHttpsRedirection();
+    // Перенаправлення на HTTPS лише поза розробкою. У профілі "http" немає
+    // HTTPS-порту, тож ASP.NET не знав би, куди перенаправляти, і на кожному
+    // запуску попереджав про це. До того ж у розробці фронтенд ходить через
+    // проксі Vite звичайним HTTP — перенаправляти нікуди й не треба.
+    app.UseHttpsRedirection();
+}
 app.UseCors(CorsPolicy);
 app.UseRateLimiter();
 

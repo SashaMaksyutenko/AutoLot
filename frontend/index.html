@@ -4,13 +4,27 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
     <title>AutoLot — каталог автомобілів</title>
+    <!--
+      Шрифти більше не тягнемо з мережі: Bahnschrift, Segoe UI Variable і
+      Cascadia Mono вже стоять у Windows, а запасні варіанти для інших систем
+      перелічені в src/index.css. Сторінка від цього стартує швидше.
+
+      Скрипт нижче виконується ДО завантаження застосунку і ставить
+      data-theme, якщо людина раніше обрала тему вручну. Без нього браузер
+      устиг би намалювати світлу сторінку, і темна тема блимнула б білим.
+      Тому це саме звичайний вбудований скрипт, а не код усередині React.
+    -->
+    <script>
+      try {
+        var saved = localStorage.getItem('autolot.theme')
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.dataset.theme = saved
+        }
+      } catch (error) {
+        /* localStorage може бути заборонений — тоді просто діє тема системи. */
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
