@@ -1,4 +1,5 @@
 using System.Data.Common;
+using System.Text.Json.Serialization;
 using AutoLot.Api.Auth;
 using AutoLot.Api.Extensions;
 using AutoLot.Api.Filters;
@@ -26,7 +27,16 @@ builder.Services.AddAutoLotLocalization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
-builder.Services.AddControllers(options => options.Filters.Add<FluentValidationFilter>());
+builder.Services
+    .AddControllers(options => options.Filters.Add<FluentValidationFilter>())
+    .AddJsonOptions(options =>
+    {
+        // Перелічення віддаємо назвами, а не числами. По-перше, клієнт і так
+        // отримує назви з /api/cars/attributes — інакше він не зміг би
+        // зіставити «Petrol» зі списку з «1» в оголошенні. По-друге, у
+        // query-рядку вони теж приймаються назвами, тож напрямки збігаються.
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services.AddOpenApi();

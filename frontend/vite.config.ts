@@ -14,6 +14,9 @@ export default defineConfig({
     proxy: {
       '/api': { target: backendUrl, changeOrigin: true },
       '/health': { target: backendUrl, changeOrigin: true },
+
+      // Фото оголошень роздає бекенд із теки поза wwwroot.
+      '/media': { target: backendUrl, changeOrigin: true },
     },
   },
 })

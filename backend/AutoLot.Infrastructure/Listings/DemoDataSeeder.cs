@@ -125,7 +125,10 @@ public sealed partial class DemoDataSeeder(
             PriceUah = decimal.Round(
                 price * await exchangeRates.GetRateToUahAsync(currency, cancellationToken),
                 2),
-            Type = ListingType.FixedPrice,
+            // Приблизно кожне восьме — лот з торгами: у видачі має бути видно
+            // обидва типи. Самого аукціону з ставками ще немає, це буде
+            // пункт 6 плану; поки що тип оголошення несе лише позначку.
+            Type = random.Next(8) == 0 ? ListingType.Auction : ListingType.FixedPrice,
             Status = ListingStatus.Active,
             PublishedAt = now.AddDays(-random.Next(0, 45)),
             ExpiresAt = now.AddDays(random.Next(15, 60)),

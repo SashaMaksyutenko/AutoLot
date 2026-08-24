@@ -1,9 +1,44 @@
 @import 'tailwindcss';
 
+/*
+  Палітра й шрифти напрямку «Збірка»: холодний нейтральний фон, синій акцент
+  для дій, бурштиновий — виключно для лотів з торгами. Оголошено токенами
+  Tailwind, тож у розмітці це звичайні класи на кшталт bg-canvas чи text-ink,
+  а змінити відтінок можна в одному місці.
+*/
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+
+  --color-canvas: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-line: #dce1e6;
+  --color-line-strong: #c9d0d7;
+
+  --color-ink: #14181d;
+  --color-muted: #48535e;
+  --color-subtle: #6b757f;
+  --color-faint: #8a949e;
+
+  --color-brand: #16457e;
+  --color-brand-dark: #0f2f58;
+  --color-brand-soft: #eaf0f8;
+
+  /* Лот з торгами — єдине місце, де з'являється бурштин. */
+  --color-lot: #c7861a;
+  --color-lot-soft: #fbf2e3;
+  --color-lot-line: #e9d3a8;
+  --color-lot-ink: #8a5b12;
+
+  --color-ok-soft: #eaf4ec;
+  --color-ok-ink: #256b3e;
+  --color-warn-soft: #fbf0e6;
+  --color-warn-ink: #8a5220;
 }
 
-html {
-  color-scheme: light dark;
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
 }
