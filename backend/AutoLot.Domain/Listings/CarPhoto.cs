@@ -12,7 +12,11 @@ public sealed class CarPhoto : Entity
 
     public Car Car { get; set; } = null!;
 
+    /// <summary>Шлях до повнорозмірного зображення відносно кореня сховища.</summary>
     public string Path { get; set; } = string.Empty;
+
+    /// <summary>Зменшена копія для списків — щоб видача не тягнула мегабайти.</summary>
+    public string ThumbnailPath { get; set; } = string.Empty;
 
     /// <summary>Порядок у галереї; перше фото не обов'язково головне.</summary>
     public int SortOrder { get; set; }

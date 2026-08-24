@@ -110,6 +110,10 @@ internal sealed class CarPhotoConfiguration : IEntityTypeConfiguration<CarPhoto>
             .IsRequired()
             .HasMaxLength(300);
 
+        builder.Property(photo => photo.ThumbnailPath)
+            .IsRequired()
+            .HasMaxLength(300);
+
         builder.HasOne(photo => photo.Car)
             .WithMany(car => car.Photos)
             .HasForeignKey(photo => photo.CarId)

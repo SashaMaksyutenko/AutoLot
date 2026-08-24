@@ -74,6 +74,8 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseListingPhotos();
+
 app.MapControllers();
 
 app.MapHealthChecks("/health", new HealthCheckOptions

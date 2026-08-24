@@ -41,7 +41,11 @@ public static class DependencyInjection
     {
         services.Configure<ExchangeRateOptions>(configuration.GetSection(ExchangeRateOptions.SectionName));
 
+        services.Configure<PhotoStorageOptions>(configuration.GetSection(PhotoStorageOptions.SectionName));
+
         services.AddScoped<IExchangeRateProvider, ConfiguredExchangeRateProvider>();
+        services.AddScoped<IPhotoStorage, LocalPhotoStorage>();
+        services.AddScoped<IListingPhotoService, ListingPhotoService>();
         services.AddScoped<ListingMapper>();
         services.AddScoped<IListingService, ListingService>();
         services.AddScoped<IModerationService, ModerationService>();
