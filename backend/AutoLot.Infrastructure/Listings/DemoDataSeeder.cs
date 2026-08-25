@@ -1,4 +1,5 @@
 using AutoLot.Application.Common.Abstractions;
+using AutoLot.Domain.Auctions;
 using AutoLot.Domain.Cars;
 using AutoLot.Domain.Enums;
 using AutoLot.Domain.Geo;
@@ -126,8 +127,7 @@ public sealed partial class DemoDataSeeder(
                 price * await exchangeRates.GetRateToUahAsync(currency, cancellationToken),
                 2),
             // Приблизно кожне восьме — лот з торгами: у видачі має бути видно
-            // обидва типи. Самого аукціону з ставками ще немає, це буде
-            // пункт 6 плану; поки що тип оголошення несе лише позначку.
+            // обидва типи. Самі торги створюються нижче, разом з оголошенням.
             Type = random.Next(8) == 0 ? ListingType.Auction : ListingType.FixedPrice,
             Status = ListingStatus.Active,
             PublishedAt = now.AddDays(-random.Next(0, 45)),
@@ -140,7 +140,41 @@ public sealed partial class DemoDataSeeder(
 
         await AddPhotosAsync(listing, model, year, random, cancellationToken);
 
+        AddAuctionIfNeeded(listing, random, now);
+
         return listing;
+    }
+
+    /// <summary>
+    /// Демонстраційним лотам потрібні справжні торги, інакше сторінка лота
+    /// відкривалася б порожньою. У житті аукціон стартує при схваленні
+    /// модератором, але демо-дані модерацію оминають, тож створюємо тут.
+    ///
+    /// Строк розкидаємо: частина лотів має завершитися за кілька годин,
+    /// частина — за дні. Так на сторінці видно і майже дотліле, і свіже.
+    /// </summary>
+    private void AddAuctionIfNeeded(Listing listing, Random random, DateTimeOffset now)
+    {
+        if (listing.Type != ListingType.Auction)
+        {
+            return;
+        }
+
+        listing.ReservePrice = random.Next(3) == 0
+            ? decimal.Round(listing.Price * 1.2m, 2)
+            : null;
+
+        dbContext.Auctions.Add(new Auction
+        {
+            Listing = listing,
+            Currency = listing.Currency,
+            StartPrice = listing.Price,
+            CurrentPrice = listing.Price,
+            ReservePrice = listing.ReservePrice,
+            StartsAt = now,
+            EndsAt = now.AddHours(random.Next(3, 24 * 7)),
+            Status = AuctionStatus.Active,
+        });
     }
 
     private static Car BuildCar(

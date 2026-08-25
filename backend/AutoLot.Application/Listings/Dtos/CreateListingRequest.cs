@@ -20,6 +20,9 @@ public sealed record CreateListingRequest
 
     public Currency Currency { get; init; }
 
+    /// <summary>Лише для лота з торгами: нижня межа, за якою продавець згоден віддати авто.</summary>
+    public decimal? ReservePrice { get; init; }
+
     public ListingType Type { get; init; } = ListingType.FixedPrice;
 
     public bool IsNegotiable { get; init; }

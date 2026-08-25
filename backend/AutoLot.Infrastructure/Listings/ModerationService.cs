@@ -1,6 +1,7 @@
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Application.Listings;
 using AutoLot.Application.Listings.Dtos;
+using AutoLot.Domain.Auctions;
 using AutoLot.Domain.Enums;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,13 @@ internal sealed partial class ModerationService(
     /// <summary>Скільки живе схвалене оголошення до автоматичного завершення.</summary>
     private static readonly TimeSpan ListingLifetime = TimeSpan.FromDays(60);
 
+    /// <summary>
+    /// Скільки тривають торги (SPEC §4). Це НЕ той самий строк, що вище:
+    /// звичайне оголошення висить два місяці, а аукціон має бути подією
+    /// з відчутним фіналом, інакше ніхто не стежитиме за ним щодня.
+    /// </summary>
+    private static readonly TimeSpan AuctionDuration = TimeSpan.FromDays(7);
+
     public async Task<IReadOnlyList<ListingSummary>> GetQueueAsync(
         CancellationToken cancellationToken = default)
     {
@@ -40,7 +48,11 @@ internal sealed partial class ModerationService(
     {
         var listing = await LoadAsync(listingId, cancellationToken);
 
-        listing.Approve(clock.UtcNow, ListingLifetime);
+        var now = clock.UtcNow;
+
+        listing.Approve(now, ListingLifetime);
+
+        await StartAuctionIfNeededAsync(listing, now, cancellationToken);
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -60,6 +72,46 @@ internal sealed partial class ModerationService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         LogRejected(logger, listingId, moderatorId, reason);
+    }
+
+    /// <summary>
+    /// Торги стартують у момент схвалення — саме тому лот і проходить
+    /// модерацію перед стартом (SPEC §4). Стартова ціна береться з ціни
+    /// оголошення, резерв — із поля, яке заповнив продавець.
+    ///
+    /// Повторне схвалення (наприклад, лот повернули з архіву) нових торгів
+    /// не створює: інакше вже зроблені ставки лишилися б у старих.
+    /// </summary>
+    private async Task StartAuctionIfNeededAsync(
+        Domain.Listings.Listing listing,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        if (listing.Type != ListingType.Auction)
+        {
+            return;
+        }
+
+        var alreadyStarted = await dbContext.Auctions
+            .AsNoTracking()
+            .AnyAsync(auction => auction.ListingId == listing.Id, cancellationToken);
+
+        if (alreadyStarted)
+        {
+            return;
+        }
+
+        dbContext.Auctions.Add(new Auction
+        {
+            ListingId = listing.Id,
+            Currency = listing.Currency,
+            StartPrice = listing.Price,
+            CurrentPrice = listing.Price,
+            ReservePrice = listing.ReservePrice,
+            StartsAt = now,
+            EndsAt = now.Add(AuctionDuration),
+            Status = AuctionStatus.Active,
+        });
     }
 
     private async Task<Domain.Listings.Listing> LoadAsync(

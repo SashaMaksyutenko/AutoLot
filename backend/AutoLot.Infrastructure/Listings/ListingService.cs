@@ -47,7 +47,7 @@ internal sealed class ListingService(
             request.AcceptsTrade,
             request.IsUrgent);
 
-        await ApplyPriceAsync(listing, request.Price, request.Currency, cancellationToken);
+        await ApplyPriceAsync(listing, request.Price, request.Currency, request.ReservePrice, cancellationToken);
 
         listing.Car = new Car();
         ApplyCarSpecification(listing.Car, request.Car);
@@ -88,7 +88,7 @@ internal sealed class ListingService(
             request.AcceptsTrade,
             request.IsUrgent);
 
-        await ApplyPriceAsync(listing, request.Price, request.Currency, cancellationToken);
+        await ApplyPriceAsync(listing, request.Price, request.Currency, request.ReservePrice, cancellationToken);
 
         ApplyCarSpecification(listing.Car, request.Car);
 
@@ -375,12 +375,17 @@ internal sealed class ListingService(
         Listing listing,
         decimal price,
         Currency currency,
+        decimal? reservePrice,
         CancellationToken cancellationToken)
     {
         var rate = await exchangeRates.GetRateToUahAsync(currency, cancellationToken);
 
         listing.Price = price;
         listing.Currency = currency;
+
+        // Резерв має сенс лише для торгів. Якщо тип змінили на фіксовану ціну,
+        // раніше введена сума мусить зникнути, а не тихо лежати в базі.
+        listing.ReservePrice = listing.Type == ListingType.Auction ? reservePrice : null;
 
         // Знімок у гривні рахуємо на момент збереження; щоденна задача
         // перерахує його, коли зміниться курс.

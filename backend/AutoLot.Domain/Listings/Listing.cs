@@ -42,6 +42,16 @@ public sealed class Listing : AuditableEntity
     /// </summary>
     public decimal PriceUah { get; set; }
 
+    /// <summary>
+    /// Для лота з торгами <see cref="Price"/> — це стартова ціна, а це поле —
+    /// нижня межа, за якою продавець згоден віддати авто. Суму не бачить
+    /// ніхто: покупцям показують лише бейдж «резерв не досягнуто» (SPEC §4).
+    ///
+    /// null означає лот без резерву — і це перевага, яку показуємо окремо:
+    /// учасник знає, що торгується не намарно.
+    /// </summary>
+    public decimal? ReservePrice { get; set; }
+
     // ── Умови угоди ──────────────────────────────────────────────────
 
     public bool IsNegotiable { get; set; }

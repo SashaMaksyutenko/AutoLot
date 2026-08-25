@@ -1,4 +1,5 @@
 using AutoLot.Application.Listings.Dtos;
+using AutoLot.Domain.Enums;
 using FluentValidation;
 
 namespace AutoLot.Application.Listings.Validation;
@@ -62,6 +63,18 @@ public sealed class CreateListingRequestValidator : AbstractValidator<CreateList
         RuleFor(request => request.Currency).IsInEnum().WithMessage("Невідома валюта.");
         RuleFor(request => request.Type).IsInEnum().WithMessage("Невідомий тип оголошення.");
 
+        // Резерв нижчий за стартову ціну не має сенсу: він був би досягнутий
+        // першою ж ставкою, тобто нічого не захищав би.
+        RuleFor(request => request.ReservePrice)
+            .GreaterThanOrEqualTo(request => request.Price)
+            .WithMessage("Резервна ціна не може бути нижчою за стартову.")
+            .When(request => request.ReservePrice.HasValue);
+
+        RuleFor(request => request.ReservePrice)
+            .Null()
+            .WithMessage("Резервна ціна буває лише в лота з торгами.")
+            .When(request => request.Type != ListingType.Auction);
+
         RuleFor(request => request.Car).NotNull().SetValidator(carValidator);
     }
 }
@@ -79,6 +92,14 @@ public sealed class UpdateListingRequestValidator : AbstractValidator<UpdateList
             request => request.Price);
 
         RuleFor(request => request.Currency).IsInEnum().WithMessage("Невідома валюта.");
+
+        // Тип оголошення при редагуванні не змінюється, тож перевірити
+        // «резерв лише для торгів» тут нічим — це робить сервіс, коли знає
+        // справжній тип збереженого лота.
+        RuleFor(request => request.ReservePrice)
+            .GreaterThanOrEqualTo(request => request.Price)
+            .WithMessage("Резервна ціна не може бути нижчою за стартову.")
+            .When(request => request.ReservePrice.HasValue);
 
         RuleFor(request => request.Car).NotNull().SetValidator(carValidator);
     }

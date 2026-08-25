@@ -1,3 +1,4 @@
+using AutoLot.Application.Auctions;
 using AutoLot.Application.Auth;
 using AutoLot.Application.Cars;
 using AutoLot.Application.Catalog;
@@ -7,6 +8,7 @@ using AutoLot.Application.Geo;
 using AutoLot.Application.Listings;
 using AutoLot.Application.Users;
 using AutoLot.Domain.Identity;
+using AutoLot.Infrastructure.Auctions;
 using AutoLot.Infrastructure.Cars;
 using AutoLot.Infrastructure.Catalog;
 using AutoLot.Infrastructure.Favorites;
@@ -57,6 +59,7 @@ public static class DependencyInjection
         services.AddScoped<IListingService, ListingService>();
         services.AddScoped<IModerationService, ModerationService>();
         services.AddScoped<IFavoriteService, FavoriteService>();
+        services.AddScoped<IAuctionService, AuctionService>();
 
         return services;
     }

@@ -1,3 +1,4 @@
+using AutoLot.Domain.Auctions;
 using AutoLot.Domain.Cars;
 using AutoLot.Domain.Common;
 using AutoLot.Domain.Geo;
@@ -40,6 +41,10 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
     public DbSet<CarPhoto> CarPhotos => Set<CarPhoto>();
 
     public DbSet<Favorite> Favorites => Set<Favorite>();
+
+    public DbSet<Auction> Auctions => Set<Auction>();
+
+    public DbSet<Bid> Bids => Set<Bid>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

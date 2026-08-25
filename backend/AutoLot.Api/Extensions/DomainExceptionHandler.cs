@@ -1,3 +1,4 @@
+using AutoLot.Application.Auctions;
 using AutoLot.Application.Listings;
 using AutoLot.Application.Users;
 using AutoLot.Domain.Common;
@@ -27,6 +28,12 @@ internal sealed class DomainExceptionHandler(IProblemDetailsService problemDetai
             ListingNotFoundException => (StatusCodes.Status404NotFound, "Оголошення не знайдено"),
             ListingAccessException => (StatusCodes.Status403Forbidden, "Немає доступу"),
             ListingDataException => (StatusCodes.Status400BadRequest, "Некоректні дані"),
+
+            AuctionNotFoundException => (StatusCodes.Status404NotFound, "Торгів не знайдено"),
+
+            // Саме 403, а не 409: продавцю не «зараз не можна», а не можна
+            // взагалі — скільки б він не чекав, на власний лот не поставить.
+            BiddingNotAllowedException => (StatusCodes.Status403Forbidden, "Ставити не можна"),
             InvalidLocationException => (StatusCodes.Status400BadRequest, "Некоректне місцезнаходження"),
 
             // Порушення правила домену — саме конфлікт: запит коректний, але

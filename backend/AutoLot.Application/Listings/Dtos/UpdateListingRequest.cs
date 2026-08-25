@@ -20,6 +20,9 @@ public sealed record UpdateListingRequest
 
     public Currency Currency { get; init; }
 
+    /// <summary>Лише для лота з торгами: нижня межа, за якою продавець згоден віддати авто.</summary>
+    public decimal? ReservePrice { get; init; }
+
     public bool IsNegotiable { get; init; }
 
     public bool AcceptsTrade { get; init; }
