@@ -29,7 +29,10 @@ public sealed record ListingDetails(
     DateTimeOffset? ExpiresAt,
     /// <summary>Заповнена лише для автора та модератора.</summary>
     string? RejectionReason,
-    int ViewCount);
+    int ViewCount,
+
+    /// <summary>Чи відклав це оголошення той, хто зараз дивиться.</summary>
+    bool IsFavorite);
 
 public sealed record SellerSummary(long Id, string DisplayName, AccountType AccountType);
 

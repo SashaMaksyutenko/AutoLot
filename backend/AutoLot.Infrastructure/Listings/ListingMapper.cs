@@ -16,6 +16,7 @@ namespace AutoLot.Infrastructure.Listings;
 internal sealed class ListingMapper(
     AutoLotDbContext dbContext,
     ICurrentLanguage language,
+    ICurrentUser currentUser,
     IGeoCatalog geoCatalog)
 {
     public async Task<ListingDetails> ToDetailsAsync(
@@ -106,7 +107,26 @@ internal sealed class ListingMapper(
             // Причину відмови бачать лише автор і модератор: стороннім знати,
             // за що оголошення не пройшло, не треба.
             includePrivateFields ? listing.RejectionReason : null,
-            listing.ViewCount);
+            listing.ViewCount,
+            await IsFavoriteAsync(listing.Id, cancellationToken));
+    }
+
+    /// <summary>
+    /// Чи в обраному це оголошення в того, хто зараз дивиться. Гостю окремий
+    /// запит не робимо взагалі — відповідь відома наперед.
+    /// </summary>
+    private async Task<bool> IsFavoriteAsync(long listingId, CancellationToken cancellationToken)
+    {
+        if (currentUser.Id is not { } viewerId)
+        {
+            return false;
+        }
+
+        return await dbContext.Favorites
+            .AsNoTracking()
+            .AnyAsync(
+                favorite => favorite.UserId == viewerId && favorite.ListingId == listingId,
+                cancellationToken);
     }
 
     public async Task<IReadOnlyList<ListingSummary>> ToSummariesAsync(
@@ -116,6 +136,15 @@ internal sealed class ListingMapper(
         ArgumentNullException.ThrowIfNull(query);
 
         var code = language.Code;
+
+        // Значення виймаємо в локальні змінні ДО побудови запиту: усе, що
+        // всередині Select, EF перекладає в SQL, і виклик currentUser.Id там
+        // перекласти неможливо — а локальна змінна стає звичайним параметром.
+        //
+        // Для гостя viewerId дорівнює null, і умова user_id = NULL у SQL не
+        // збігається з жодним рядком. Тобто «не в обраному» виходить само
+        // собою, без окремої гілки в коді.
+        var viewerId = currentUser.Id;
 
         return await query
             .AsNoTracking()
@@ -140,7 +169,12 @@ internal sealed class ListingMapper(
                     .Where(photo => photo.IsPrimary)
                     .Select(photo => photo.Path)
                     .FirstOrDefault(),
-                listing.PublishedAt))
+                listing.PublishedAt,
+
+                // Підзапит EXISTS усередині тієї самої вибірки: жодного
+                // додаткового звернення до бази на кожну картку.
+                dbContext.Favorites.Any(favorite =>
+                    favorite.UserId == viewerId && favorite.ListingId == listing.Id)))
             .ToListAsync(cancellationToken);
     }
 

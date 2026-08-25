@@ -130,6 +130,21 @@ export async function apiPost<T>(path: string, body?: unknown, signal?: AbortSig
   return parse<T>(await send(path, init, true), path)
 }
 
+/**
+ * PUT означає «зроби так, щоб стало отак». На відміну від POST його можна
+ * повторювати скільки завгодно: додати оголошення в обране вдруге — це той
+ * самий стан, а не другий запис.
+ */
+export async function apiPut<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+  const init: RequestInit = { method: 'PUT', signal }
+
+  if (body !== undefined) {
+    init.body = JSON.stringify(body)
+  }
+
+  return parse<T>(await send(path, init, true), path)
+}
+
 export async function apiDelete<T>(path: string, signal?: AbortSignal): Promise<T> {
   return parse<T>(await send(path, { method: 'DELETE', signal }, true), path)
 }

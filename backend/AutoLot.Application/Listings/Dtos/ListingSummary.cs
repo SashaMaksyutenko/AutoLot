@@ -22,4 +22,10 @@ public sealed record ListingSummary(
     TransmissionType Transmission,
     string CityName,
     string? PrimaryPhotoPath,
-    DateTimeOffset? PublishedAt);
+    DateTimeOffset? PublishedAt,
+
+    /// <summary>
+    /// Чи відклав це оголошення той, хто зараз дивиться. Для гостя завжди
+    /// <c>false</c>: обране прив'язане до акаунта, а не до браузера.
+    /// </summary>
+    bool IsFavorite);

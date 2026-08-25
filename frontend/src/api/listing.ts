@@ -91,6 +91,9 @@ export interface ListingDetails {
   expiresAt: string | null
   rejectionReason: string | null
   viewCount: number
+
+  /** Чи відклав це оголошення той, хто зараз дивиться. */
+  isFavorite: boolean
 }
 
 export function fetchListing(id: number, signal?: AbortSignal): Promise<ListingDetails> {

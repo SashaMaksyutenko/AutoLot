@@ -2,12 +2,14 @@ using AutoLot.Application.Auth;
 using AutoLot.Application.Cars;
 using AutoLot.Application.Catalog;
 using AutoLot.Application.Common.Abstractions;
+using AutoLot.Application.Favorites;
 using AutoLot.Application.Geo;
 using AutoLot.Application.Listings;
 using AutoLot.Application.Users;
 using AutoLot.Domain.Identity;
 using AutoLot.Infrastructure.Cars;
 using AutoLot.Infrastructure.Catalog;
+using AutoLot.Infrastructure.Favorites;
 using AutoLot.Infrastructure.Geo;
 using AutoLot.Infrastructure.Identity;
 using AutoLot.Infrastructure.Listings;
@@ -54,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<ListingMapper>();
         services.AddScoped<IListingService, ListingService>();
         services.AddScoped<IModerationService, ModerationService>();
+        services.AddScoped<IFavoriteService, FavoriteService>();
 
         return services;
     }

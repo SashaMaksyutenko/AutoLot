@@ -25,6 +25,9 @@ export interface ListingSummary {
   cityName: string
   primaryPhotoPath: string | null
   publishedAt: string | null
+
+  /** Чи відклав це оголошення той, хто зараз дивиться. Гість завжди бачить false. */
+  isFavorite: boolean
 }
 
 export interface PagedResult<TItem> {

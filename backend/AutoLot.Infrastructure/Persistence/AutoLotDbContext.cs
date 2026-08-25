@@ -39,6 +39,8 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
 
     public DbSet<CarPhoto> CarPhotos => Set<CarPhoto>();
 
+    public DbSet<Favorite> Favorites => Set<Favorite>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchListing, type ListingDetails } from '../api/listing'
 import { useAttributeLabels } from '../api/useAttributeLabels'
+import { FavoriteButton } from '../components/FavoriteButton'
 import { Gallery } from '../components/listing/Gallery'
 import { formatCount, formatMileage, formatPrice, plural } from '../format'
 
@@ -150,14 +151,22 @@ function Loaded({ listing }: { listing: ListingDetails }) {
         <aside className="grid gap-4 lg:sticky lg:top-[74px]">
           {/* У лота з торгами рамка сигнального кольору — блок ставки помітний одразу. */}
           <div className={`card grid gap-3 p-4 ${isAuction ? 'border-signal' : ''}`}>
-            <div>
-              <h1 className="font-display text-xl font-bold">
-                {car.make} {car.model}
-              </h1>
-              <p className="text-[13px] text-ink-2">
-                {car.generation ? `${car.generation} · ` : ''}
-                {car.year}
-              </p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h1 className="font-display text-xl font-bold">
+                  {car.make} {car.model}
+                </h1>
+                <p className="text-[13px] text-ink-2">
+                  {car.generation ? `${car.generation} · ` : ''}
+                  {car.year}
+                </p>
+              </div>
+
+              <FavoriteButton
+                listingId={listing.id}
+                isFavorite={listing.isFavorite}
+                size="large"
+              />
             </div>
 
             <div>

@@ -1,13 +1,18 @@
-import { useState } from 'react'
-import { Link, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { fetchFavoriteCount } from '../api/favorites'
 import { useAuth } from '../auth/useAuth'
+import { closeSignIn, openSignIn, useSignInPrompt } from '../auth/signInPrompt'
 import { AuthDialog } from './AuthDialog'
 import { ThemeToggle } from './ThemeToggle'
 
 /** Спільна шапка для всіх сторінок; вміст підставляє маршрутизатор. */
 export function SiteLayout() {
   const auth = useAuth()
-  const [authOpen, setAuthOpen] = useState(false)
+
+  // Вікно входу відкриває не лише кнопка в шапці, а й, скажімо, сердечко
+  // на картці, яке натиснув гість. Тому його стан живе в спільному сховищі.
+  const authOpen = useSignInPrompt()
 
   return (
     <div className="min-h-dvh">
@@ -21,13 +26,8 @@ export function SiteLayout() {
 
           {/* mr-auto відтісняє все наступне до правого краю. */}
           <nav className="mr-auto hidden gap-5 text-[14.5px] sm:flex">
-            <Link
-              to="/"
-              aria-current="page"
-              className="border-b-2 border-accent pb-1 text-ink"
-            >
-              Купити авто
-            </Link>
+            <NavItem to="/" label="Купити авто" />
+            {auth.user && <NavItem to="/favorites" label="Обране" badge={<FavoriteBadge />} />}
             {/* Розділи ще не написані, тож це не посилання, а просто написи. */}
             <span className="pb-1 text-ink-3">Аукціони</span>
             <span className="pb-1 text-ink-3">Автосалони</span>
@@ -35,15 +35,53 @@ export function SiteLayout() {
 
           <div className="flex flex-wrap items-center gap-2.5">
             <ThemeToggle />
-            <AccountTools auth={auth} onOpenAuth={() => setAuthOpen(true)} />
+            <AccountTools auth={auth} />
           </div>
         </div>
       </header>
 
       <Outlet />
 
-      {authOpen && <AuthDialog onClose={() => setAuthOpen(false)} />}
+      {authOpen && <AuthDialog onClose={closeSignIn} />}
     </div>
+  )
+}
+
+/**
+ * NavLink від react-router сам знає, чи веде він на поточну сторінку, і
+ * передає це прапорцем isActive — інакше довелося б щоразу порівнювати
+ * адресу вручну.
+ */
+function NavItem({ to, label, badge }: { to: string; label: string; badge?: React.ReactNode }) {
+  return (
+    <NavLink
+      to={to}
+      end
+      className={({ isActive }) =>
+        `flex items-center gap-1.5 border-b-2 pb-1 ${
+          isActive ? 'border-accent text-ink' : 'border-transparent text-ink-2 hover:text-ink'
+        }`
+      }
+    >
+      {label}
+      {badge}
+    </NavLink>
+  )
+}
+
+/** Скільки оголошень у обраному. Порожній список не показуємо взагалі. */
+function FavoriteBadge() {
+  const count = useQuery({
+    queryKey: ['favorite-count'],
+    queryFn: ({ signal }) => fetchFavoriteCount(signal),
+  })
+
+  if (!count.data?.count) return null
+
+  return (
+    <span className="rounded-full bg-accent-soft px-1.5 font-mono text-[11px] font-semibold text-accent tabular-nums">
+      {count.data.count}
+    </span>
   )
 }
 
@@ -66,13 +104,7 @@ function Brand() {
   )
 }
 
-function AccountTools({
-  auth,
-  onOpenAuth,
-}: {
-  auth: ReturnType<typeof useAuth>
-  onOpenAuth: () => void
-}) {
+function AccountTools({ auth }: { auth: ReturnType<typeof useAuth> }) {
   // Поки поновлюється сесія, не показуємо ні «Увійти», ні ім'я: інакше
   // на секунду блимнуло б «Увійти» вже залогіненому.
   if (auth.isRestoring) return null
@@ -80,10 +112,10 @@ function AccountTools({
   if (!auth.user) {
     return (
       <>
-        <button type="button" onClick={onOpenAuth} className="text-sm text-ink-2 hover:text-ink">
+        <button type="button" onClick={openSignIn} className="text-sm text-ink-2 hover:text-ink">
           Увійти
         </button>
-        <button type="button" onClick={onOpenAuth} className="btn btn-primary">
+        <button type="button" onClick={openSignIn} className="btn btn-primary">
           Продати авто
         </button>
       </>

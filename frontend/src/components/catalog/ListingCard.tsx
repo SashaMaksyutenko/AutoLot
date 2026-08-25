@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import type { ListingSummary } from '../../api/catalog'
 import { useAttributeLabels } from '../../api/useAttributeLabels'
 import { formatMileage, formatPrice } from '../../format'
+import { FavoriteButton } from '../FavoriteButton'
 
 /**
  * Картка оголошення у видачі. Лот з торгами відрізняється сигнальною
@@ -92,6 +93,10 @@ function Photo({ listing, isAuction }: { listing: ListingSummary; isAuction: boo
           </span>
         </div>
       )}
+
+      <div className="absolute top-2 right-2">
+        <FavoriteButton listingId={listing.id} isFavorite={listing.isFavorite} />
+      </div>
     </div>
   )
 }
