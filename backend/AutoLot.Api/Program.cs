@@ -4,7 +4,9 @@ using AutoLot.Api.Auth;
 using AutoLot.Api.Extensions;
 using AutoLot.Api.Filters;
 using AutoLot.Api.Localization;
+using AutoLot.Api.Realtime;
 using AutoLot.Application;
+using AutoLot.Application.Auctions;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Infrastructure;
 using AutoLot.Infrastructure.Persistence;
@@ -37,6 +39,16 @@ builder.Services
         // query-рядку вони теж приймаються назвами, тож напрямки збігаються.
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+
+// Живий канал торгів. Той самий перетворювач перелічень, що й у контролерах:
+// інакше через хаб статус приїжджав би числом, а через HTTP — назвою.
+builder.Services
+    .AddSignalR()
+    .AddJsonProtocol(options =>
+        options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+builder.Services.AddScoped<IAuctionNotifier, SignalRAuctionNotifier>();
+
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services.AddOpenApi();
@@ -91,6 +103,9 @@ app.UseAuthorization();
 app.UseListingPhotos();
 
 app.MapControllers();
+
+// Адреса живого каналу. Фронтенд підключається сюди й підписується на лот.
+app.MapHub<AuctionHub>("/hubs/auction");
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {

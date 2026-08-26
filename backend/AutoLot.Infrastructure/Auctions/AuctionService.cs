@@ -5,6 +5,7 @@ using AutoLot.Domain.Auctions;
 using AutoLot.Domain.Enums;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AutoLot.Infrastructure.Auctions;
 
@@ -21,12 +22,23 @@ namespace AutoLot.Infrastructure.Auctions;
 /// гірша: ставки під кінець аукціону летять пачками, і половина з них
 /// відскакувала б із проханням спробувати ще раз.
 /// </summary>
-internal sealed class AuctionService(
+internal sealed partial class AuctionService(
     AutoLotDbContext dbContext,
-    IDateTimeProvider clock) : IAuctionService
+    IDateTimeProvider clock,
+    IAuctionNotifier notifier,
+    ILogger<AuctionService> logger) : IAuctionService
 {
     /// <summary>Антиснайпінг: ставка в останню хвилину продовжує торги на хвилину (SPEC §4).</summary>
     private static readonly TimeSpan Extension = TimeSpan.FromMinutes(1);
+
+    [LoggerMessage(
+        EventId = 1,
+        Level = LogLevel.Warning,
+        Message = "Не вдалося розіслати оновлення торгів для лота {ListingId}. Ставка збережена.")]
+    private static partial void LogBroadcastFailed(
+        ILogger logger,
+        long listingId,
+        Exception error);
 
     public async Task<AuctionDetails?> GetAsync(
         long listingId,
@@ -93,6 +105,8 @@ internal sealed class AuctionService(
         // Ім'я лідера могло щойно змінитися, тож читаємо його наново.
         var leaderName = await GetDisplayNameAsync(auction.LeaderId, cancellationToken);
 
+        await BroadcastAsync(auction, leaderName, bids, cancellationToken);
+
         return ToDetails(auction, bidderId, listing.SellerId, leaderName);
     }
 
@@ -139,6 +153,51 @@ internal sealed class AuctionService(
         return rows.Count > 0 ? rows[0] : null;
     }
 
+    /// <summary>
+    /// Повідомляє глядачів про нову ціну. Робиться ПІСЛЯ коміту: поки
+    /// транзакція не завершена, іншим ця ставка ще не видима, і розсилати
+    /// новину, якої немає в базі, було б брехнею.
+    ///
+    /// Збій розсилки не має скасовувати ставку — вона вже прийнята й
+    /// збережена. Тому виняток тут ловиться й лише пишеться в лог: гірше,
+    /// що станеться, — глядачі побачать нову ціну після наступної ставки
+    /// або оновлення сторінки.
+    /// </summary>
+    private async Task BroadcastAsync(
+        Auction auction,
+        string? leaderName,
+        IReadOnlyList<Bid> bids,
+        CancellationToken cancellationToken)
+    {
+        // У рядках може бути двоє різних людей — претендент і той, чия
+        // автоставка відбилася. Тягнемо імена обох одним запитом.
+        var bidderIds = bids.Select(bid => bid.BidderId).Distinct().ToList();
+
+        var names = await dbContext.Users
+            .AsNoTracking()
+            .Where(user => bidderIds.Contains(user.Id))
+            .ToDictionaryAsync(user => user.Id, user => user.DisplayName, cancellationToken);
+
+        var records = bids
+            .OrderByDescending(bid => bid.Id)
+            .Select(bid => new BidRecord(
+                bid.Id,
+                names.GetValueOrDefault(bid.BidderId, string.Empty),
+                bid.Amount,
+                bid.IsAutomatic,
+                bid.CreatedAt))
+            .ToList();
+
+        try
+        {
+            await notifier.BidPlacedAsync(ToUpdate(auction, leaderName, records), cancellationToken);
+        }
+        catch (Exception error)
+        {
+            LogBroadcastFailed(logger, auction.ListingId, error);
+        }
+    }
+
     private async Task<string?> GetDisplayNameAsync(long? userId, CancellationToken cancellationToken)
     {
         if (userId is not { } id)
@@ -159,12 +218,12 @@ internal sealed class AuctionService(
         return status is ListingStatus.Active or ListingStatus.Sold;
     }
 
-    private static AuctionDetails ToDetails(Auction auction, long? viewerId)
+    private AuctionDetails ToDetails(Auction auction, long? viewerId)
     {
         return ToDetails(auction, viewerId, auction.Listing.SellerId, auction.Leader?.DisplayName);
     }
 
-    private static AuctionDetails ToDetails(
+    private AuctionDetails ToDetails(
         Auction auction,
         long? viewerId,
         long sellerId,
@@ -189,6 +248,29 @@ internal sealed class AuctionService(
             auction.IsReserveMet,
             leaderName,
             viewerId is { } viewer && auction.LeaderId == viewer,
-            canBid);
+            canBid,
+            auction.LeaderId,
+            clock.UtcNow);
+    }
+
+    /// <summary>
+    /// Те саме, але без нічого особистого: розсилка йде всім глядачам одразу,
+    /// тож «чи лідирую я» кожен добудовує в себе сам.
+    /// </summary>
+    private AuctionUpdate ToUpdate(Auction auction, string? leaderName, IReadOnlyList<BidRecord> newBids)
+    {
+        return new AuctionUpdate(
+            auction.ListingId,
+            auction.CurrentPrice,
+            auction.MinimumNextBid,
+            BidStep.For(auction.CurrentPrice, auction.Currency),
+            auction.BidCount,
+            auction.EndsAt,
+            auction.Status,
+            auction.IsReserveMet,
+            auction.LeaderId,
+            leaderName,
+            newBids,
+            clock.UtcNow);
     }
 }

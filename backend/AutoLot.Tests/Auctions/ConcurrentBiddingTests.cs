@@ -10,6 +10,7 @@ using AutoLot.Infrastructure.Auctions;
 using AutoLot.Infrastructure.Persistence;
 using AutoLot.Tests.TestDoubles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AutoLot.Tests.Auctions;
 
@@ -33,6 +34,8 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     private PostgresTestDatabase database = null!;
 
     private long listingId;
+
+    private readonly RecordingNotifier notifier = new();
 
     public async Task InitializeAsync()
     {
@@ -103,10 +106,64 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_successful_bid_is_announced_to_everyone_watching()
+    {
+        await using var context = database.CreateContext();
+        var service = new AuctionService(context, new FixedClock(Now), notifier, NullLogger<AuctionService>.Instance);
+
+        await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
+
+        var update = Assert.Single(notifier.Updates);
+
+        Assert.Equal(listingId, update.ListingId);
+        Assert.Equal(StartPrice, update.CurrentPrice);
+        Assert.Equal(FirstBidderId, update.LeaderId);
+        Assert.Equal(1, update.BidCount);
+
+        // У розсилці — новий рядок історії з іменем, а не з голим номером.
+        var bid = Assert.Single(update.NewBids);
+        Assert.Equal("bidder0", bid.BidderName);
+        Assert.Equal(StartPrice, bid.Amount);
+    }
+
+    [Fact]
+    public async Task A_rejected_bid_is_not_announced()
+    {
+        await using var context = database.CreateContext();
+        var service = new AuctionService(context, new FixedClock(Now), notifier, NullLogger<AuctionService>.Instance);
+
+        await Assert.ThrowsAsync<DomainRuleException>(
+            () => service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 1m));
+
+        // Інакше глядачі побачили б ціну, якої в базі немає.
+        Assert.Empty(notifier.Updates);
+    }
+
+    [Fact]
+    public async Task A_broken_channel_does_not_undo_an_accepted_bid()
+    {
+        await using var context = database.CreateContext();
+        var service = new AuctionService(
+            context,
+            new FixedClock(Now),
+            new FailingNotifier(),
+            NullLogger<AuctionService>.Instance);
+
+        // Розсилка падає, але ставка вже збережена — скасовувати її через
+        // проблеми з каналом означало б покарати учасника за чужий збій.
+        var details = await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
+
+        Assert.Equal(StartPrice, details.CurrentPrice);
+
+        await using var fresh = database.CreateContext();
+        Assert.Equal(1, fresh.Auctions.Single().BidCount);
+    }
+
+    [Fact]
     public async Task The_seller_cannot_bid_on_their_own_lot()
     {
         await using var context = database.CreateContext();
-        var service = new AuctionService(context, new FixedClock(Now));
+        var service = new AuctionService(context, new FixedClock(Now), notifier, NullLogger<AuctionService>.Instance);
 
         await Assert.ThrowsAsync<BiddingNotAllowedException>(
             () => service.PlaceBidAsync(listingId, SellerId, StartPrice));
@@ -139,7 +196,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
             var maxAmount = maxAmountOf(index);
 
             await using var context = database.CreateContext();
-            var service = new AuctionService(context, new FixedClock(Now));
+            var service = new AuctionService(context, new FixedClock(Now), notifier, NullLogger<AuctionService>.Instance);
 
             // Відкриваємо з'єднання завчасно, щоб на старті лишилася сама ставка.
             await context.Database.OpenConnectionAsync();

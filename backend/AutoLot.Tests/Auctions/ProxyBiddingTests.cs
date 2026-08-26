@@ -57,6 +57,30 @@ public class ProxyBiddingTests
     }
 
     [Fact]
+    public void A_ceiling_just_short_of_the_leader_pushes_the_price_to_their_very_top()
+    {
+        var auction = Auction();
+        auction.PlaceBid(Anna, maxAmount: 8_000m, Now, Extension);
+
+        // Борис не дотягнув до Анниної стелі 50 доларів. Крок сотні переступив
+        // би через неї, тож автовідповідь спиняється рівно на стелі: платити
+        // більше, ніж вона погоджувалася, Анна не мусить.
+        var bids = auction.PlaceBid(Borys, maxAmount: 7_950m, Now, Extension);
+
+        Assert.Equal(Anna, auction.LeaderId);
+        Assert.Equal(8_000m, auction.CurrentPrice);
+        Assert.Equal(8_000m, auction.LeaderMaxAmount);
+
+        Assert.Equal(2, bids.Count);
+        Assert.Equal(7_950m, bids[0].Amount);
+        Assert.Equal(8_000m, bids[1].Amount);
+        Assert.True(bids[1].IsAutomatic);
+
+        // Анна вичерпала стелю, тож наступний крок уже виводить її з гри.
+        Assert.Equal(8_100m, auction.MinimumNextBid);
+    }
+
+    [Fact]
     public void A_higher_ceiling_wins_without_paying_it_all()
     {
         var auction = Auction();

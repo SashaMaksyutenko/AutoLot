@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchListing, type ListingDetails } from '../api/listing'
 import { useAttributeLabels } from '../api/useAttributeLabels'
 import { FavoriteButton } from '../components/FavoriteButton'
+import { AuctionPanel } from '../components/listing/AuctionPanel'
 import { Gallery } from '../components/listing/Gallery'
 import { formatCount, formatMileage, formatPrice, plural } from '../format'
 
@@ -149,8 +150,7 @@ function Loaded({ listing }: { listing: ListingDetails }) {
         </div>
 
         <aside className="grid gap-4 lg:sticky lg:top-[74px]">
-          {/* У лота з торгами рамка сигнального кольору — блок ставки помітний одразу. */}
-          <div className={`card grid gap-3 p-4 ${isAuction ? 'border-signal' : ''}`}>
+          <div className="card grid gap-3 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h1 className="font-display text-xl font-bold">
@@ -169,21 +169,19 @@ function Loaded({ listing }: { listing: ListingDetails }) {
               />
             </div>
 
-            <div>
-              {isAuction && <div className="eyebrow">Стартова ціна</div>}
-              <div
-                className={`font-display text-[30px] leading-tight font-bold tabular-nums ${
-                  isAuction ? 'text-signal' : ''
-                }`}
-              >
-                {formatPrice(listing.price, listing.currency)}
-              </div>
-              {listing.currency !== 'Uah' && (
-                <div className="font-mono text-[13px] text-ink-2 tabular-nums">
-                  {formatPrice(listing.priceUah, 'Uah')}
+            {/* У лота з торгами ціну показує панель торгів — вона жива. */}
+            {!isAuction && (
+              <div>
+                <div className="font-display text-[30px] leading-tight font-bold tabular-nums">
+                  {formatPrice(listing.price, listing.currency)}
                 </div>
-              )}
-            </div>
+                {listing.currency !== 'Uah' && (
+                  <div className="font-mono text-[13px] text-ink-2 tabular-nums">
+                    {formatPrice(listing.priceUah, 'Uah')}
+                  </div>
+                )}
+              </div>
+            )}
 
             {(listing.isNegotiable || listing.acceptsTrade || listing.isUrgent) && (
               <div className="flex flex-wrap gap-1.5">
@@ -193,13 +191,14 @@ function Loaded({ listing }: { listing: ListingDetails }) {
               </div>
             )}
 
-            <button
-              type="button"
-              className={`btn w-full py-3 text-base ${isAuction ? 'btn-signal' : 'btn-primary'}`}
-            >
-              {isAuction ? 'Перейти до торгів' : 'Показати телефон'}
-            </button>
+            {!isAuction && (
+              <button type="button" className="btn btn-primary w-full py-3 text-base">
+                Показати телефон
+              </button>
+            )}
           </div>
+
+          {isAuction && <AuctionPanel listingId={listing.id} />}
 
           <div className="card grid gap-3 p-4">
             <span className="eyebrow">Продавець</span>
