@@ -53,6 +53,22 @@ export interface AuctionUpdate {
   serverTime: string
 }
 
+/**
+ * Підсумок торгів. Переможця може й не бути: лот міг не зібрати жодної
+ * ставки або не дотягнути до резерву — тоді причину пояснює isReserveMet.
+ */
+export interface AuctionOutcome {
+  listingId: number
+  finalPrice: number
+  currency: Currency
+  bidCount: number
+  winnerId: number | null
+  winnerName: string | null
+  isReserveMet: boolean
+  endedAt: string
+  serverTime: string
+}
+
 export function fetchAuction(listingId: number, signal?: AbortSignal): Promise<AuctionDetails> {
   return apiGet<AuctionDetails>(`/api/listings/${listingId}/auction`, signal)
 }

@@ -13,4 +13,11 @@ namespace AutoLot.Application.Auctions;
 public interface IAuctionNotifier
 {
     Task BidPlacedAsync(AuctionUpdate update, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Торги скінчилися. Окрема подія, а не чергове оновлення ціни: сторінка
+    /// має не просто перемалювати число, а сховати форму ставки й показати
+    /// підсумок.
+    /// </summary>
+    Task AuctionEndedAsync(AuctionOutcome outcome, CancellationToken cancellationToken = default);
 }

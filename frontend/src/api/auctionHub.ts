@@ -1,6 +1,6 @@
 import { HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr'
 import type { HubConnection } from '@microsoft/signalr'
-import type { AuctionUpdate } from './auction'
+import type { AuctionOutcome, AuctionUpdate } from './auction'
 
 /**
  * Живий канал торгів.
@@ -38,7 +38,10 @@ function getConnection(): HubConnection {
  */
 export function watchAuction(
   listingId: number,
-  onUpdate: (update: AuctionUpdate) => void,
+  handlers: {
+    onUpdate: (update: AuctionUpdate) => void
+    onEnded: (outcome: AuctionOutcome) => void
+  },
 ): () => void {
   const hub = getConnection()
 
@@ -46,15 +49,22 @@ export function watchAuction(
   // швидше, ніж канал устигне відкритися, і тоді підписуватися вже нікуди.
   let cancelled = false
 
-  function handle(update: AuctionUpdate) {
+  function handleBid(update: AuctionUpdate) {
     // Група на сервері вже відсіює чуже, але перевірка дешева, а помилка
     // в назві групи інакше проявилася б як чужі ставки на своєму лоті.
     if (update.listingId === listingId) {
-      onUpdate(update)
+      handlers.onUpdate(update)
     }
   }
 
-  hub.on('bidPlaced', handle)
+  function handleEnd(outcome: AuctionOutcome) {
+    if (outcome.listingId === listingId) {
+      handlers.onEnded(outcome)
+    }
+  }
+
+  hub.on('bidPlaced', handleBid)
+  hub.on('auctionEnded', handleEnd)
 
   const ready =
     hub.state === HubConnectionState.Disconnected ? hub.start() : Promise.resolve()
@@ -72,7 +82,8 @@ export function watchAuction(
 
   return () => {
     cancelled = true
-    hub.off('bidPlaced', handle)
+    hub.off('bidPlaced', handleBid)
+    hub.off('auctionEnded', handleEnd)
 
     if (hub.state === HubConnectionState.Connected) {
       void hub.invoke('Unwatch', listingId).catch(() => {})

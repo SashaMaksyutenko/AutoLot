@@ -12,7 +12,11 @@ internal sealed class RecordingNotifier : IAuctionNotifier
 {
     private readonly List<AuctionUpdate> updates = [];
 
+    private readonly List<AuctionOutcome> outcomes = [];
+
     public IReadOnlyList<AuctionUpdate> Updates => updates;
+
+    public IReadOnlyList<AuctionOutcome> Outcomes => outcomes;
 
     public AuctionUpdate? Last => updates.Count > 0 ? updates[^1] : null;
 
@@ -27,6 +31,16 @@ internal sealed class RecordingNotifier : IAuctionNotifier
 
         return Task.CompletedTask;
     }
+
+    public Task AuctionEndedAsync(AuctionOutcome outcome, CancellationToken cancellationToken = default)
+    {
+        lock (outcomes)
+        {
+            outcomes.Add(outcome);
+        }
+
+        return Task.CompletedTask;
+    }
 }
 
 /// <summary>
@@ -36,6 +50,11 @@ internal sealed class RecordingNotifier : IAuctionNotifier
 internal sealed class FailingNotifier : IAuctionNotifier
 {
     public Task BidPlacedAsync(AuctionUpdate update, CancellationToken cancellationToken = default)
+    {
+        throw new InvalidOperationException("Канал недоступний.");
+    }
+
+    public Task AuctionEndedAsync(AuctionOutcome outcome, CancellationToken cancellationToken = default)
     {
         throw new InvalidOperationException("Канал недоступний.");
     }

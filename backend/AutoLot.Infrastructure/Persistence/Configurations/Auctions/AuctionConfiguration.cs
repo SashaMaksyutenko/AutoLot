@@ -35,6 +35,11 @@ internal sealed class AuctionConfiguration : IEntityTypeConfiguration<Auction>
             .HasForeignKey(auction => auction.LeaderId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(auction => auction.Winner)
+            .WithMany()
+            .HasForeignKey(auction => auction.WinnerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(auction => auction.ListingId).IsUnique();
 
         // Головний запит планувальника: «які торги пора закривати».

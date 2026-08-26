@@ -57,6 +57,14 @@ public sealed class Auction : AuditableEntity
 
     public AuctionStatus Status { get; set; } = AuctionStatus.Active;
 
+    /// <summary>
+    /// Хто забрав лот. Заповнюється лише при закритті й лише якщо резерв
+    /// узято: лідер за ставками й переможець — це різні речі.
+    /// </summary>
+    public long? WinnerId { get; set; }
+
+    public User? Winner { get; set; }
+
     public ICollection<Bid> Bids { get; } = [];
 
     /// <summary>Чи взагалі був хтось охочий.</summary>
@@ -242,14 +250,34 @@ public sealed class Auction : AuditableEntity
         };
     }
 
-    /// <summary>Закриває торги. Викликається задачею планувальника, коли вийшов час.</summary>
-    public void Close()
+    /// <summary>
+    /// Закриває торги й підбиває підсумок. Викликається задачею планувальника,
+    /// коли вийшов час.
+    ///
+    /// Повертає <c>false</c>, якщо торги вже були закриті. Це НЕ помилка:
+    /// задача може спрацювати двічі — планувальник перезапустився, інстансів
+    /// кілька, — і повторний виклик має просто нічого не робити. Виняток тут
+    /// означав би, що звичайний перезапуск сервера сиплеться помилками.
+    /// </summary>
+    public bool Close(DateTimeOffset now)
     {
         if (Status != AuctionStatus.Active)
         {
-            throw new DomainRuleException("Торги вже не активні.");
+            return false;
+        }
+
+        if (now < EndsAt)
+        {
+            throw new DomainRuleException("Торги ще тривають — закривати зарано.");
         }
 
         Status = AuctionStatus.Ended;
+
+        // Переможець є лише тоді, коли ставки були І ціна дотягнула до
+        // резерву. Найвища ставка сама собою угоди не робить: продавець від
+        // початку сказав, за скільки згоден віддати (SPEC §4).
+        WinnerId = HasBids && IsReserveMet ? LeaderId : null;
+
+        return true;
     }
 }

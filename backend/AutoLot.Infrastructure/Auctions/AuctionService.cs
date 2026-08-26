@@ -26,6 +26,7 @@ internal sealed partial class AuctionService(
     AutoLotDbContext dbContext,
     IDateTimeProvider clock,
     IAuctionNotifier notifier,
+    IAuctionScheduler scheduler,
     ILogger<AuctionService> logger) : IAuctionService
 {
     /// <summary>Антиснайпінг: ставка в останню хвилину продовжує торги на хвилину (SPEC §4).</summary>
@@ -89,6 +90,8 @@ internal sealed partial class AuctionService(
             throw new BiddingNotAllowedException("Ставити на власний лот не можна.");
         }
 
+        var endsAtBefore = auction.EndsAt;
+
         // Правила самих торгів живуть у сутності: скільки треба поставити,
         // хто лідирує, чи продовжувати час. Сервіс лише забезпечує їм
         // безпечне оточення — блокування й транзакцію.
@@ -101,6 +104,15 @@ internal sealed partial class AuctionService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+
+        // Антиснайпінг відсунув фінал — задачу закриття треба переставити,
+        // інакше вона спрацювала б за старим часом і обірвала торги посеред
+        // продовження. Саме заради цього планувальник уміє переписувати
+        // замовлення для того самого лота.
+        if (auction.EndsAt != endsAtBefore)
+        {
+            await scheduler.ScheduleCloseAsync(listingId, auction.EndsAt, cancellationToken);
+        }
 
         // Ім'я лідера могло щойно змінитися, тож читаємо його наново.
         var leaderName = await GetDisplayNameAsync(auction.LeaderId, cancellationToken);

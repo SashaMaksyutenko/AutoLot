@@ -21,6 +21,7 @@ using AutoLot.Infrastructure.Time;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Quartz;
 
 namespace AutoLot.Infrastructure;
 
@@ -60,6 +61,35 @@ public static class DependencyInjection
         services.AddScoped<IModerationService, ModerationService>();
         services.AddScoped<IFavoriteService, FavoriteService>();
         services.AddScoped<IAuctionService, AuctionService>();
+        services.AddScoped<IAuctionCloser, AuctionCloser>();
+
+        services.AddAuctionScheduling();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Планувальник закриття торгів (SPEC §5).
+    ///
+    /// Сховище розкладу — у пам'яті, і це свідомо: єдине, що там лежить, —
+    /// «закрити лот N о такій-то годині», а цю інформацію завжди можна
+    /// відновити з бази. Саме це й робить <see cref="AuctionScheduleRecovery"/>
+    /// на старті, тож окрема база розкладу лише додала б таблиць і шансів
+    /// розійтися з правдою.
+    /// </summary>
+    private static IServiceCollection AddAuctionScheduling(this IServiceCollection services)
+    {
+        services.AddQuartz(quartz => quartz.UseInMemoryStore());
+
+        services.AddQuartzHostedService(options =>
+        {
+            // Не гасити застосунок, поки задача не доробила: обірване посеред
+            // транзакції закриття лишило б торги в невизначеному стані.
+            options.WaitForJobsToComplete = true;
+        });
+
+        services.AddScoped<IAuctionScheduler, QuartzAuctionScheduler>();
+        services.AddHostedService<AuctionScheduleRecovery>();
 
         return services;
     }

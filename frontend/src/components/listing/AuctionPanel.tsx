@@ -5,6 +5,7 @@ import {
   fetchBidHistory,
   placeBid,
   type AuctionDetails,
+  type AuctionOutcome,
   type AuctionUpdate,
   type BidRecord,
 } from '../../api/auction'
@@ -48,13 +49,27 @@ export function AuctionPanel({ listingId }: { listingId: number }) {
     if (initialHistory.data) setHistory(initialHistory.data)
   }, [initialHistory.data])
 
-  useEffect(() => {
-    return watchAuction(listingId, (update: AuctionUpdate) => {
-      setAuction((current) => (current ? merge(current, update, auth.user?.id) : current))
+  const [outcome, setOutcome] = useState<AuctionOutcome | null>(null)
 
-      // Нові рядки приходять найновішим першим — саме так вони й лежать
-      // у списку, тож просто додаємо їх на початок.
-      setHistory((current) => [...update.newBids, ...current])
+  useEffect(() => {
+    return watchAuction(listingId, {
+      onUpdate: (update: AuctionUpdate) => {
+        setAuction((current) => (current ? merge(current, update, auth.user?.id) : current))
+
+        // Нові рядки приходять найновішим першим — саме так вони й лежать
+        // у списку, тож просто додаємо їх на початок.
+        setHistory((current) => [...update.newBids, ...current])
+      },
+
+      onEnded: (ended: AuctionOutcome) => {
+        setOutcome(ended)
+
+        // Статус міняємо й у самому стані: інакше форма ставки лишилася б
+        // на екрані, хоч приймати їх уже нікому.
+        setAuction((current) =>
+          current ? { ...current, status: 'Ended', canViewerBid: false } : current,
+        )
+      },
     })
   }, [listingId, auth.user?.id])
 
@@ -69,8 +84,59 @@ export function AuctionPanel({ listingId }: { listingId: number }) {
   return (
     <>
       <Panel auction={auction} onSignIn={openSignIn} isAuthenticated={auth.user !== null} />
+      {outcome && <Outcome outcome={outcome} isViewerWinner={outcome.winnerId === auth.user?.id} />}
       <History bids={history} currency={auction.currency} />
     </>
+  )
+}
+
+/**
+ * Підсумок торгів. З'являється в мить закриття — щоб людина не гадала, чому
+ * таймер завмер на нулях, а одразу побачила, чим усе скінчилося.
+ */
+function Outcome({
+  outcome,
+  isViewerWinner,
+}: {
+  outcome: AuctionOutcome
+  isViewerWinner: boolean
+}) {
+  if (isViewerWinner) {
+    return (
+      <div className="card border-good p-4">
+        <h2 className="eyebrow mb-1">Торги завершено</h2>
+        <p className="text-[15px] font-semibold text-good">
+          Ви виграли лот за {formatPrice(outcome.finalPrice, outcome.currency)}
+        </p>
+        <p className="mt-1 text-[13px] text-ink-2">Зв'яжіться з продавцем, щоб домовитися про огляд і оплату.</p>
+      </div>
+    )
+  }
+
+  if (outcome.winnerId !== null) {
+    return (
+      <div className="card p-4">
+        <h2 className="eyebrow mb-1">Торги завершено</h2>
+        <p className="text-[14px]">
+          Лот забрав {outcome.winnerName} за{' '}
+          <span className="font-mono font-semibold tabular-nums">
+            {formatPrice(outcome.finalPrice, outcome.currency)}
+          </span>
+        </p>
+      </div>
+    )
+  }
+
+  // Переможця немає — і причини рівно дві.
+  return (
+    <div className="card p-4">
+      <h2 className="eyebrow mb-1">Торги завершено</h2>
+      <p className="text-[14px] text-ink-2">
+        {outcome.bidCount === 0
+          ? 'Лот не отримав жодної ставки.'
+          : 'Ціна не дотягнула до резервної, тож лот лишився непроданим.'}
+      </p>
+    </div>
   )
 }
 

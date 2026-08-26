@@ -1,3 +1,4 @@
+using AutoLot.Application.Auctions;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Application.Listings;
 using AutoLot.Application.Listings.Dtos;
@@ -18,6 +19,7 @@ internal sealed partial class ModerationService(
     AutoLotDbContext dbContext,
     IDateTimeProvider clock,
     ListingMapper mapper,
+    IAuctionScheduler scheduler,
     ILogger<ModerationService> logger) : IModerationService
 {
     /// <summary>Скільки живе схвалене оголошення до автоматичного завершення.</summary>
@@ -52,9 +54,17 @@ internal sealed partial class ModerationService(
 
         listing.Approve(now, ListingLifetime);
 
-        await StartAuctionIfNeededAsync(listing, now, cancellationToken);
+        var auctionEndsAt = await StartAuctionIfNeededAsync(listing, now, cancellationToken);
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Задачу закриття замовляємо ПІСЛЯ збереження: до коміту торгів
+        // у базі ще немає, і задача, яка встигла б спрацювати, нічого б
+        // не знайшла.
+        if (auctionEndsAt is { } endsAt)
+        {
+            await scheduler.ScheduleCloseAsync(listing.Id, endsAt, cancellationToken);
+        }
 
         LogApproved(logger, listingId, moderatorId);
     }
@@ -82,14 +92,15 @@ internal sealed partial class ModerationService(
     /// Повторне схвалення (наприклад, лот повернули з архіву) нових торгів
     /// не створює: інакше вже зроблені ставки лишилися б у старих.
     /// </summary>
-    private async Task StartAuctionIfNeededAsync(
+    /// <returns>Час завершення нових торгів або null, якщо створювати не було чого.</returns>
+    private async Task<DateTimeOffset?> StartAuctionIfNeededAsync(
         Domain.Listings.Listing listing,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
         if (listing.Type != ListingType.Auction)
         {
-            return;
+            return null;
         }
 
         var alreadyStarted = await dbContext.Auctions
@@ -98,8 +109,10 @@ internal sealed partial class ModerationService(
 
         if (alreadyStarted)
         {
-            return;
+            return null;
         }
+
+        var endsAt = now.Add(AuctionDuration);
 
         dbContext.Auctions.Add(new Auction
         {
@@ -109,9 +122,11 @@ internal sealed partial class ModerationService(
             CurrentPrice = listing.Price,
             ReservePrice = listing.ReservePrice,
             StartsAt = now,
-            EndsAt = now.Add(AuctionDuration),
+            EndsAt = endsAt,
             Status = AuctionStatus.Active,
         });
+
+        return endsAt;
     }
 
     private async Task<Domain.Listings.Listing> LoadAsync(

@@ -257,7 +257,7 @@ public class ProxyBiddingTests
     public void Bidding_on_a_closed_auction_is_refused()
     {
         var auction = Auction();
-        auction.Close();
+        auction.Close(auction.EndsAt);
 
         Assert.Throws<DomainRuleException>(
             () => auction.PlaceBid(Anna, maxAmount: 8_000m, Now, Extension));

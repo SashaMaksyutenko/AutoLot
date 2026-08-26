@@ -37,6 +37,8 @@ public class ConcurrentBiddingTests : IAsyncLifetime
 
     private readonly RecordingNotifier notifier = new();
 
+    private readonly RecordingScheduler scheduler = new();
+
     public async Task InitializeAsync()
     {
         database = await PostgresTestDatabase.CreateAsync();
@@ -109,7 +111,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     public async Task A_successful_bid_is_announced_to_everyone_watching()
     {
         await using var context = database.CreateContext();
-        var service = new AuctionService(context, new FixedClock(Now), notifier, NullLogger<AuctionService>.Instance);
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
 
         await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
 
@@ -130,7 +132,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     public async Task A_rejected_bid_is_not_announced()
     {
         await using var context = database.CreateContext();
-        var service = new AuctionService(context, new FixedClock(Now), notifier, NullLogger<AuctionService>.Instance);
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
 
         await Assert.ThrowsAsync<DomainRuleException>(
             () => service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 1m));
@@ -147,6 +149,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
             context,
             new FixedClock(Now),
             new FailingNotifier(),
+            scheduler,
             NullLogger<AuctionService>.Instance);
 
         // Розсилка падає, але ставка вже збережена — скасовувати її через
@@ -160,10 +163,142 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task An_extension_reschedules_the_closing()
+    {
+        await using var context = database.CreateContext();
+
+        // Присуваємо фінал упритул, щоб ставка потрапила в останню хвилину.
+        var auction = context.Auctions.Single();
+        auction.EndsAt = Now.AddSeconds(30);
+        await context.SaveChangesAsync();
+
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
+
+        await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
+
+        // Антиснайпінг відсунув фінал, тож задачу закриття треба переставити:
+        // стара спрацювала б за старим часом і обірвала торги посеред
+        // продовження.
+        var order = Assert.Single(scheduler.Orders);
+        Assert.Equal(listingId, order.ListingId);
+        Assert.Equal(Now.AddMinutes(1), order.EndsAt);
+    }
+
+    [Fact]
+    public async Task An_ordinary_bid_does_not_touch_the_schedule()
+    {
+        await using var context = database.CreateContext();
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
+
+        // До фіналу ще тиждень — переставляти нічого.
+        await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
+
+        Assert.Empty(scheduler.Orders);
+    }
+
+    [Fact]
+    public async Task Closing_ends_the_auction_and_marks_the_listing_sold()
+    {
+        await using var context = database.CreateContext();
+        var bidding = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
+
+        await bidding.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
+
+        // Час вийшов — саме тоді планувальник і кличе закриття.
+        var afterFinish = Now.AddDays(8);
+        var closer = new AuctionCloser(context, new FixedClock(afterFinish), notifier, NullLogger<AuctionCloser>.Instance);
+
+        Assert.True(await closer.CloseAsync(listingId));
+
+        await using var fresh = database.CreateContext();
+        var auction = fresh.Auctions.Single();
+
+        Assert.Equal(AuctionStatus.Ended, auction.Status);
+        Assert.Equal(FirstBidderId, auction.WinnerId);
+        Assert.Equal(ListingStatus.Sold, fresh.Listings.Single().Status);
+
+        // Глядачі мають дізнатися підсумок, а не гадати, чому таймер завмер.
+        var outcome = Assert.Single(notifier.Outcomes);
+        Assert.Equal(FirstBidderId, outcome.WinnerId);
+        Assert.Equal("bidder0", outcome.WinnerName);
+    }
+
+    [Fact]
+    public async Task A_lot_that_nobody_wanted_goes_to_the_archive()
+    {
+        await using var context = database.CreateContext();
+        var closer = new AuctionCloser(
+            context,
+            new FixedClock(Now.AddDays(8)),
+            notifier,
+            NullLogger<AuctionCloser>.Instance);
+
+        Assert.True(await closer.CloseAsync(listingId));
+
+        await using var fresh = database.CreateContext();
+
+        Assert.Null(fresh.Auctions.Single().WinnerId);
+
+        // Активним у каталозі лот лишатися не може: поставити на нього вже
+        // неможливо.
+        Assert.Equal(ListingStatus.Archived, fresh.Listings.Single().Status);
+    }
+
+    [Fact]
+    public async Task Closing_twice_is_harmless()
+    {
+        await using var context = database.CreateContext();
+        var closer = new AuctionCloser(
+            context,
+            new FixedClock(Now.AddDays(8)),
+            notifier,
+            NullLogger<AuctionCloser>.Instance);
+
+        Assert.True(await closer.CloseAsync(listingId));
+
+        // Задача планувальника може спрацювати двічі — після перезапуску або
+        // на другому сервері. Це має бути тихо й безпечно.
+        Assert.False(await closer.CloseAsync(listingId));
+        Assert.Single(notifier.Outcomes);
+    }
+
+    [Fact]
+    public async Task Closing_before_the_finish_does_nothing()
+    {
+        await using var context = database.CreateContext();
+        var closer = new AuctionCloser(context, new FixedClock(Now), notifier, NullLogger<AuctionCloser>.Instance);
+
+        Assert.False(await closer.CloseAsync(listingId));
+
+        await using var fresh = database.CreateContext();
+        Assert.Equal(AuctionStatus.Active, fresh.Auctions.Single().Status);
+    }
+
+    [Fact]
+    public async Task Startup_recovery_closes_the_overdue_and_lists_the_rest()
+    {
+        await using var context = database.CreateContext();
+        var closer = new AuctionCloser(
+            context,
+            new FixedClock(Now.AddDays(8)),
+            notifier,
+            NullLogger<AuctionCloser>.Instance);
+
+        // Розклад Quartz живе в пам'яті: після перезапуску торги, яким вийшов
+        // час, треба закрити, а решту — запланувати наново.
+        var pending = await closer.CloseOverdueAndListPendingAsync();
+
+        Assert.Empty(pending);
+
+        await using var fresh = database.CreateContext();
+        Assert.Equal(AuctionStatus.Ended, fresh.Auctions.Single().Status);
+    }
+
+    [Fact]
     public async Task The_seller_cannot_bid_on_their_own_lot()
     {
         await using var context = database.CreateContext();
-        var service = new AuctionService(context, new FixedClock(Now), notifier, NullLogger<AuctionService>.Instance);
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
 
         await Assert.ThrowsAsync<BiddingNotAllowedException>(
             () => service.PlaceBidAsync(listingId, SellerId, StartPrice));
@@ -196,7 +331,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
             var maxAmount = maxAmountOf(index);
 
             await using var context = database.CreateContext();
-            var service = new AuctionService(context, new FixedClock(Now), notifier, NullLogger<AuctionService>.Instance);
+            var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
 
             // Відкриваємо з'єднання завчасно, щоб на старті лишилася сама ставка.
             await context.Database.OpenConnectionAsync();
