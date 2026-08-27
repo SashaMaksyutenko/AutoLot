@@ -59,6 +59,7 @@ public static class DependencyInjection
         services.AddScoped<ListingMapper>();
         services.AddScoped<IListingService, ListingService>();
         services.AddScoped<IModerationService, ModerationService>();
+        services.AddScoped<IListingQuestionService, ListingQuestionService>();
         services.AddScoped<IFavoriteService, FavoriteService>();
         services.AddScoped<IAuctionService, AuctionService>();
         services.AddScoped<IAuctionCloser, AuctionCloser>();

@@ -42,6 +42,8 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
 
     public DbSet<Favorite> Favorites => Set<Favorite>();
 
+    public DbSet<ListingQuestion> ListingQuestions => Set<ListingQuestion>();
+
     public DbSet<Auction> Auctions => Set<Auction>();
 
     public DbSet<Bid> Bids => Set<Bid>();

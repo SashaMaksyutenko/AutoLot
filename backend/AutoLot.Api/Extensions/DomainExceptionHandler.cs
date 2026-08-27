@@ -26,6 +26,7 @@ internal sealed class DomainExceptionHandler(IProblemDetailsService problemDetai
         var (statusCode, title) = exception switch
         {
             ListingNotFoundException => (StatusCodes.Status404NotFound, "Оголошення не знайдено"),
+            QuestionNotFoundException => (StatusCodes.Status404NotFound, "Питання не знайдено"),
             ListingAccessException => (StatusCodes.Status403Forbidden, "Немає доступу"),
             ListingDataException => (StatusCodes.Status400BadRequest, "Некоректні дані"),
 

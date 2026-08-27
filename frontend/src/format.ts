@@ -25,6 +25,22 @@ export function formatCount(count: number): string {
 }
 
 /**
+ * Дата й час у місцевому поясі того, хто дивиться. Сервер віддає час із
+ * поясом, а Intl сам переводить його в той, що на пристрої, — тож писати
+ * «17:04» киянину й «16:04» варшав'янину не доводиться вручну.
+ */
+const dateTime = new Intl.DateTimeFormat('uk-UA', {
+  day: 'numeric',
+  month: 'long',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
+export function formatDateTime(iso: string): string {
+  return dateTime.format(new Date(iso))
+}
+
+/**
  * Українська форма множини: 1 оголошення, 2 оголошення, 5 оголошень.
  * Без цього видача писала б «знайдено 5 оголошення».
  */

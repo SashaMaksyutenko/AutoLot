@@ -2,9 +2,11 @@ import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchListing, type ListingDetails } from '../api/listing'
 import { useAttributeLabels } from '../api/useAttributeLabels'
+import { useAuth } from '../auth/useAuth'
 import { FavoriteButton } from '../components/FavoriteButton'
 import { AuctionPanel } from '../components/listing/AuctionPanel'
 import { Gallery } from '../components/listing/Gallery'
+import { Questions } from '../components/listing/Questions'
 import { formatCount, formatMileage, formatPrice, plural } from '../format'
 
 export function ListingPage() {
@@ -36,6 +38,7 @@ export function ListingPage() {
 }
 
 function Loaded({ listing }: { listing: ListingDetails }) {
+  const auth = useAuth()
   const labelOf = useAttributeLabels()
   const car = listing.car
   const isAuction = listing.type === 'Auction'
@@ -147,6 +150,8 @@ function Loaded({ listing }: { listing: ListingDetails }) {
               {listing.description}
             </p>
           </Panel>
+
+          <Questions listingId={listing.id} isSeller={auth.user?.id === listing.seller.id} />
         </div>
 
         <aside className="grid gap-4 lg:sticky lg:top-[74px]">
