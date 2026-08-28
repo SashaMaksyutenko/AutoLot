@@ -1,4 +1,5 @@
 using AutoLot.Application.Auctions;
+using AutoLot.Application.Dealers;
 using AutoLot.Application.Listings;
 using AutoLot.Application.Users;
 using AutoLot.Domain.Common;
@@ -28,6 +29,8 @@ internal sealed class DomainExceptionHandler(IProblemDetailsService problemDetai
             ListingNotFoundException => (StatusCodes.Status404NotFound, "Оголошення не знайдено"),
             QuestionNotFoundException => (StatusCodes.Status404NotFound, "Питання не знайдено"),
             ListingAccessException => (StatusCodes.Status403Forbidden, "Немає доступу"),
+            DealershipAccessException => (StatusCodes.Status403Forbidden, "Немає доступу"),
+            DealershipNotFoundException => (StatusCodes.Status404NotFound, "Салон не знайдено"),
             ListingDataException => (StatusCodes.Status400BadRequest, "Некоректні дані"),
 
             AuctionNotFoundException => (StatusCodes.Status404NotFound, "Торгів не знайдено"),

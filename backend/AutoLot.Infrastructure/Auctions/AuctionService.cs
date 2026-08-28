@@ -3,6 +3,7 @@ using AutoLot.Application.Auctions.Dtos;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Domain.Auctions;
 using AutoLot.Domain.Enums;
+using AutoLot.Infrastructure.Listings;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -27,6 +28,7 @@ internal sealed partial class AuctionService(
     IDateTimeProvider clock,
     IAuctionNotifier notifier,
     IAuctionScheduler scheduler,
+    ListingAccess access,
     ILogger<AuctionService> logger) : IAuctionService
 {
     /// <summary>Антиснайпінг: ставка в останню хвилину продовжує торги на хвилину (SPEC §4).</summary>
@@ -85,7 +87,10 @@ internal sealed partial class AuctionService(
             throw new AuctionNotFoundException(listingId);
         }
 
-        if (listing.SellerId == bidderId)
+        // Не лише продавець: менеджер салону теж не має права ставити на лот
+        // власного салону. Інакше персонал міг би накручувати ціну зсередини,
+        // і вся публічність торгів утратила б сенс.
+        if (await access.CanManageAsync(listing, bidderId, cancellationToken))
         {
             throw new BiddingNotAllowedException("Ставити на власний лот не можна.");
         }

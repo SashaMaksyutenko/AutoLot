@@ -7,6 +7,7 @@ using AutoLot.Domain.Geo;
 using AutoLot.Domain.Identity;
 using AutoLot.Domain.Listings;
 using AutoLot.Infrastructure.Auctions;
+using AutoLot.Infrastructure.Listings;
 using AutoLot.Infrastructure.Persistence;
 using AutoLot.Tests.TestDoubles;
 using Microsoft.EntityFrameworkCore;
@@ -111,7 +112,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     public async Task A_successful_bid_is_announced_to_everyone_watching()
     {
         await using var context = database.CreateContext();
-        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
 
         await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
 
@@ -132,7 +133,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     public async Task A_rejected_bid_is_not_announced()
     {
         await using var context = database.CreateContext();
-        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
 
         await Assert.ThrowsAsync<DomainRuleException>(
             () => service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 1m));
@@ -150,6 +151,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
             new FixedClock(Now),
             new FailingNotifier(),
             scheduler,
+            new ListingAccess(context),
             NullLogger<AuctionService>.Instance);
 
         // Розсилка падає, але ставка вже збережена — скасовувати її через
@@ -172,7 +174,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
         auction.EndsAt = Now.AddSeconds(30);
         await context.SaveChangesAsync();
 
-        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
 
         await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
 
@@ -188,7 +190,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     public async Task An_ordinary_bid_does_not_touch_the_schedule()
     {
         await using var context = database.CreateContext();
-        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
 
         // До фіналу ще тиждень — переставляти нічого.
         await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
@@ -200,7 +202,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     public async Task Closing_ends_the_auction_and_marks_the_listing_sold()
     {
         await using var context = database.CreateContext();
-        var bidding = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
+        var bidding = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
 
         await bidding.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
 
@@ -298,7 +300,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     public async Task The_seller_cannot_bid_on_their_own_lot()
     {
         await using var context = database.CreateContext();
-        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
 
         await Assert.ThrowsAsync<BiddingNotAllowedException>(
             () => service.PlaceBidAsync(listingId, SellerId, StartPrice));
@@ -331,7 +333,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
             var maxAmount = maxAmountOf(index);
 
             await using var context = database.CreateContext();
-            var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, NullLogger<AuctionService>.Instance);
+            var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
 
             // Відкриваємо з'єднання завчасно, щоб на старті лишилася сама ставка.
             await context.Database.OpenConnectionAsync();

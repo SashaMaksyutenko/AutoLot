@@ -13,7 +13,8 @@ internal sealed class ListingService(
     AutoLotDbContext dbContext,
     IGeoCatalog geoCatalog,
     IExchangeRateProvider exchangeRates,
-    ListingMapper mapper) : IListingService
+    ListingMapper mapper,
+    ListingAccess access) : IListingService
 {
     /// <summary>Приватній особі — п'ять активних оголошень, дилеру — без ліміту (SPEC §3).</summary>
     private const int PrivateSellerLimit = 5;
@@ -30,9 +31,19 @@ internal sealed class ListingService(
         await EnsureLocationExistsAsync(request.CityId, request.CityDistrictId, cancellationToken);
         await EnsureCarReferencesExistAsync(request.Car, cancellationToken);
 
+        // Подати від імені салону може лише той, хто в ньому працює. Перевірка
+        // саме тут, а не у валідаторі: валідатор бачить лише тіло запиту, а
+        // відповідь на це питання лежить у базі (SPEC §8).
+        if (request.DealershipId is { } dealershipId
+            && !await access.IsMemberAsync(dealershipId, sellerId, cancellationToken))
+        {
+            throw new ListingAccessException("Ви не працюєте в цьому салоні.");
+        }
+
         var listing = new Listing
         {
             SellerId = sellerId,
+            DealershipId = request.DealershipId,
             Type = request.Type,
             Status = ListingStatus.Draft,
         };
@@ -67,7 +78,7 @@ internal sealed class ListingService(
         ArgumentNullException.ThrowIfNull(request);
 
         var listing = await LoadForWriteAsync(listingId, cancellationToken);
-        EnsureOwner(listing, actorId);
+        await EnsureCanManageAsync(listing, actorId, cancellationToken);
 
         if (!listing.IsEditable)
         {
@@ -126,7 +137,11 @@ internal sealed class ListingService(
         // Чуже неопубліковане оголошення не просто закрите — його «немає».
         // Інакше за кодом відповіді можна було б перебрати чернетки інших.
         var isPublic = listing.Status is ListingStatus.Active or ListingStatus.Sold;
-        var isOwner = actorId is { } id && id == listing.SellerId;
+
+        // «Свій» тепер означає і «мого салону»: менеджер має бачити чернетку
+        // колеги так само, як власну.
+        var isOwner = actorId is { } id
+            && await access.CanManageAsync(listing, id, cancellationToken);
 
         if (!isPublic && !isOwner && !actorIsModerator)
         {
@@ -156,9 +171,14 @@ internal sealed class ListingService(
         ListingStatus? status,
         CancellationToken cancellationToken = default)
     {
-        var query = dbContext.Listings
-            .AsNoTracking()
-            .Where(listing => listing.SellerId == sellerId);
+        // «Мої оголошення» для менеджера салону — це і його власні, і всі
+        // салонні: він відповідає за них нарівні з колегами.
+        var dealershipIds = await access.DealershipIdsOfAsync(sellerId, cancellationToken);
+
+        var query = ListingAccess.ManagedBy(
+            dbContext.Listings.AsNoTracking(),
+            sellerId,
+            dealershipIds);
 
         if (status is { } wanted)
         {
@@ -176,7 +196,7 @@ internal sealed class ListingService(
         CancellationToken cancellationToken = default)
     {
         var listing = await LoadForWriteAsync(listingId, cancellationToken);
-        EnsureOwner(listing, actorId);
+        await EnsureCanManageAsync(listing, actorId, cancellationToken);
 
         // Ліміт перевіряємо саме тут: чернеток може бути скільки завгодно,
         // місце в ліміті займає лише те, що йде у видачу.
@@ -193,7 +213,7 @@ internal sealed class ListingService(
         CancellationToken cancellationToken = default)
     {
         var listing = await LoadForWriteAsync(listingId, cancellationToken);
-        EnsureOwner(listing, actorId);
+        await EnsureCanManageAsync(listing, actorId, cancellationToken);
 
         listing.MarkSold();
 
@@ -206,7 +226,7 @@ internal sealed class ListingService(
         CancellationToken cancellationToken = default)
     {
         var listing = await LoadForWriteAsync(listingId, cancellationToken);
-        EnsureOwner(listing, actorId);
+        await EnsureCanManageAsync(listing, actorId, cancellationToken);
 
         listing.Archive();
 
@@ -219,7 +239,7 @@ internal sealed class ListingService(
         CancellationToken cancellationToken = default)
     {
         var listing = await LoadForWriteAsync(listingId, cancellationToken);
-        EnsureOwner(listing, actorId);
+        await EnsureCanManageAsync(listing, actorId, cancellationToken);
 
         if (listing.Status is not ListingStatus.Draft)
         {
@@ -240,11 +260,19 @@ internal sealed class ListingService(
         return listing ?? throw new ListingNotFoundException(listingId);
     }
 
-    private static void EnsureOwner(Listing listing, long actorId)
+    /// <summary>
+    /// «Це моє?» — питання, на яке з появою салонів відповідає не лише
+    /// SellerId. Саме правило живе в <see cref="ListingAccess"/>, тут лише
+    /// перетворення відповіді на виняток.
+    /// </summary>
+    private async Task EnsureCanManageAsync(
+        Listing listing,
+        long actorId,
+        CancellationToken cancellationToken)
     {
-        if (listing.SellerId != actorId)
+        if (!await access.CanManageAsync(listing, actorId, cancellationToken))
         {
-            throw new ListingAccessException("Це оголошення належить іншому користувачеві.");
+            throw new ListingAccessException("Це оголошення належить іншому продавцеві.");
         }
     }
 
@@ -263,8 +291,13 @@ internal sealed class ListingService(
             return;
         }
 
+        // Рахуємо лише ОСОБИСТІ оголошення. Салонні належать салону, і їх
+        // обмежуватиме тарифний план салону (пункт 13 плану) — інакше
+        // менеджер вичерпав би власний ліміт роботою, а приватні оголошення
+        // подавати вже не міг.
         var active = await dbContext.Listings
             .Where(listing => listing.SellerId == sellerId
+                && listing.DealershipId == null
                 && listing.Id != ignoreListingId
                 && (listing.Status == ListingStatus.Active
                     || listing.Status == ListingStatus.PendingModeration))

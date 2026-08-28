@@ -11,7 +11,8 @@ namespace AutoLot.Infrastructure.Listings;
 internal sealed class ListingPhotoService(
     AutoLotDbContext dbContext,
     IPhotoStorage storage,
-    IOptions<PhotoStorageOptions> options) : IListingPhotoService
+    IOptions<PhotoStorageOptions> options,
+    ListingAccess access) : IListingPhotoService
 {
     private readonly PhotoStorageOptions settings = options.Value;
 
@@ -168,9 +169,9 @@ internal sealed class ListingPhotoService(
             .FirstOrDefaultAsync(item => item.Id == listingId, cancellationToken)
             ?? throw new ListingNotFoundException(listingId);
 
-        if (listing.SellerId != actorId)
+        if (!await access.CanManageAsync(listing, actorId, cancellationToken))
         {
-            throw new ListingAccessException("Це оголошення належить іншому користувачеві.");
+            throw new ListingAccessException("Це оголошення належить іншому продавцеві.");
         }
 
         return listing.Car;

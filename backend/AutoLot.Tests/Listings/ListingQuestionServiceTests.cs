@@ -135,7 +135,7 @@ public class ListingQuestionServiceTests : IDisposable
     private ListingQuestionService Service() => ServiceAt(Now);
 
     private ListingQuestionService ServiceAt(DateTimeOffset now) =>
-        new(context, new FixedClock(now));
+        new(context, new FixedClock(now), new ListingAccess(context));
 
     private long Seed(ListingStatus status = ListingStatus.Active)
     {

@@ -49,6 +49,13 @@ internal sealed class ListingConfiguration : IEntityTypeConfiguration<Listing>
             .HasForeignKey(listing => listing.CityId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Салон теж не видаляють каскадом: якщо він зникає, оголошення мають
+        // лишитися й перейти під відповідальність того, хто їх подав.
+        builder.HasOne(listing => listing.Dealership)
+            .WithMany()
+            .HasForeignKey(listing => listing.DealershipId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(listing => listing.CityDistrict)
             .WithMany()
             .HasForeignKey(listing => listing.CityDistrictId)
@@ -62,6 +69,9 @@ internal sealed class ListingConfiguration : IEntityTypeConfiguration<Listing>
         builder.HasIndex(listing => new { listing.Status, listing.PriceUah });
 
         builder.HasIndex(listing => new { listing.SellerId, listing.Status });
+
+        // Вітрина салону: «усі його активні оголошення».
+        builder.HasIndex(listing => new { listing.DealershipId, listing.Status });
         builder.HasIndex(listing => listing.CityId);
     }
 }

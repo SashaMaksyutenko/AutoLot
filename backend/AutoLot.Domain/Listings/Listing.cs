@@ -1,4 +1,5 @@
 using AutoLot.Domain.Common;
+using AutoLot.Domain.Dealers;
 using AutoLot.Domain.Enums;
 using AutoLot.Domain.Geo;
 using AutoLot.Domain.Identity;
@@ -15,9 +16,27 @@ public sealed class Listing : AuditableEntity
 
     public string Description { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Хто фізично подав оголошення. Завжди людина — навіть коли лот
+    /// належить салону: там його подає конкретний менеджер, і слід про це
+    /// має лишатися.
+    /// </summary>
     public long SellerId { get; set; }
 
     public User Seller { get; set; } = null!;
+
+    /// <summary>
+    /// Чий це лот, якщо продає салон. Порожній у приватної особи.
+    ///
+    /// Поле ДОДАНЕ до <see cref="SellerId"/>, а не замість нього. Спокуса
+    /// зробити продавцем салон хибна: тоді SellerId перестав би бути людиною,
+    /// і кожна перевірка прав у проєкті вимагала б переписування. А так
+    /// правило лише розширюється: «моє, якщо я подав АБО я працюю в салоні,
+    /// якому воно належить».
+    /// </summary>
+    public long? DealershipId { get; set; }
+
+    public Dealership? Dealership { get; set; }
 
     // ── Де продають ──────────────────────────────────────────────────
 

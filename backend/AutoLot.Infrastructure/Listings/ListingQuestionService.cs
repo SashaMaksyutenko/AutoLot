@@ -14,7 +14,8 @@ namespace AutoLot.Infrastructure.Listings;
 /// </summary>
 internal sealed class ListingQuestionService(
     AutoLotDbContext dbContext,
-    IDateTimeProvider clock) : IListingQuestionService
+    IDateTimeProvider clock,
+    ListingAccess access) : IListingQuestionService
 {
     /// <summary>Стани, у яких оголошення видно всім, — ті самі, що й у каталозі.</summary>
     private static readonly ListingStatus[] PubliclyVisible =
@@ -48,7 +49,7 @@ internal sealed class ListingQuestionService(
         var listing = await dbContext.Listings
             .AsNoTracking()
             .Where(item => item.Id == listingId)
-            .Select(item => new { item.Id, item.SellerId, item.Status })
+            .Select(item => new { item.Id, item.SellerId, item.DealershipId, item.Status })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (listing is null || !PubliclyVisible.Contains(listing.Status))
@@ -56,7 +57,9 @@ internal sealed class ListingQuestionService(
             throw new ListingNotFoundException(listingId);
         }
 
-        if (listing.SellerId == askerId)
+        // Менеджерові салону теж немає сенсу питати під власним лотом —
+        // саме тому перевірка йде через спільне правило, а не через SellerId.
+        if (await IsOursAsync(listing.SellerId, listing.DealershipId, askerId, cancellationToken))
         {
             throw new ListingAccessException("Питати самого себе не можна — відповідайте на чужі.");
         }
@@ -88,9 +91,10 @@ internal sealed class ListingQuestionService(
             .FirstOrDefaultAsync(item => item.Id == questionId, cancellationToken)
             ?? throw new QuestionNotFoundException(questionId);
 
-        // Відповідати може лише продавець. Це саме 403, а не 404: питання
-        // публічне, його існування ні для кого не таємниця.
-        if (question.Listing.SellerId != sellerId)
+        // Відповідати може лише продавець — або будь-хто з персоналу салону,
+        // якому належить лот. Це саме 403, а не 404: питання публічне, його
+        // існування ні для кого не таємниця.
+        if (!await access.CanManageAsync(question.Listing, sellerId, cancellationToken))
         {
             throw new ListingAccessException("Відповідати на питання може лише продавець.");
         }
@@ -102,6 +106,25 @@ internal sealed class ListingQuestionService(
         var askerName = await GetDisplayNameAsync(question.AskerId, cancellationToken);
 
         return ToRecord(question, askerName);
+    }
+
+    /// <summary>
+    /// Чи цей лот «наш» для вказаної людини. Окремий метод, бо тут немає
+    /// завантаженого оголошення — лише його поля з полегшеної вибірки.
+    /// </summary>
+    private async Task<bool> IsOursAsync(
+        long sellerId,
+        long? dealershipId,
+        long userId,
+        CancellationToken cancellationToken)
+    {
+        if (sellerId == userId)
+        {
+            return true;
+        }
+
+        return dealershipId is { } id
+            && await access.IsMemberAsync(id, userId, cancellationToken);
     }
 
     private async Task<string> GetDisplayNameAsync(long userId, CancellationToken cancellationToken)

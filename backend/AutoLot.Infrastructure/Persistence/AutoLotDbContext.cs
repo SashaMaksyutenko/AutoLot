@@ -1,6 +1,7 @@
 using AutoLot.Domain.Auctions;
 using AutoLot.Domain.Cars;
 using AutoLot.Domain.Common;
+using AutoLot.Domain.Dealers;
 using AutoLot.Domain.Geo;
 using AutoLot.Domain.Identity;
 using AutoLot.Domain.Listings;
@@ -43,6 +44,10 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
     public DbSet<Favorite> Favorites => Set<Favorite>();
 
     public DbSet<ListingQuestion> ListingQuestions => Set<ListingQuestion>();
+
+    public DbSet<Dealership> Dealerships => Set<Dealership>();
+
+    public DbSet<DealershipMember> DealershipMembers => Set<DealershipMember>();
 
     public DbSet<Auction> Auctions => Set<Auction>();
 

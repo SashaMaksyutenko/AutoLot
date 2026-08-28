@@ -14,6 +14,16 @@ public sealed record CreateListingRequest
 
     public long CityId { get; init; }
 
+    /// <summary>
+    /// Від імені якого салону подається оголошення. Порожнє означає «від себе
+    /// особисто» — так подають і приватні особи, і працівник салону, коли
+    /// продає власне авто.
+    ///
+    /// Належність до салону перевіряє сервіс: підставити чужий номер сюди
+    /// не вийде.
+    /// </summary>
+    public long? DealershipId { get; init; }
+
     public long? CityDistrictId { get; init; }
 
     public decimal Price { get; init; }
