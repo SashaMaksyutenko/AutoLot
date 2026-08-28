@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { ListingSummary } from '../../api/catalog'
+import type { DealerBadge } from '../../api/dealership'
 import { useAttributeLabels } from '../../api/useAttributeLabels'
 import { formatMileage, formatPrice } from '../../format'
 import { FavoriteButton } from '../FavoriteButton'
@@ -37,6 +38,8 @@ export function ListingCard({ listing }: { listing: ListingSummary }) {
             ].join(' · ')}
           </p>
 
+          {listing.dealer && <DealerLine dealer={listing.dealer} />}
+
           <div className="flex items-end justify-between gap-2 border-t border-line pt-2">
             <div>
               {isAuction && <div className="eyebrow">Стартова ціна</div>}
@@ -59,6 +62,40 @@ export function ListingCard({ listing }: { listing: ListingSummary }) {
         </div>
       </article>
     </Link>
+  )
+}
+
+/**
+ * Рядок «продає салон». Це не посилання, хоч і хочеться: картка сама вже
+ * посилання на оголошення, а посилання всередині посилання браузер малює
+ * непередбачувано. На вітрину салону веде його сторінка авто.
+ */
+function DealerLine({ dealer }: { dealer: DealerBadge }) {
+  return (
+    <span className="flex items-center gap-1 truncate text-[12px] text-ink-2">
+      {dealer.isVerified && <VerifiedMark />}
+      <span className="truncate">{dealer.name}</span>
+    </span>
+  )
+}
+
+/**
+ * Позначка перевіреного салону — галочка в колі. currentColor бере колір
+ * тексту навколо, тож окремих правил для теми не треба.
+ */
+export function VerifiedMark({ size = 13 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className="shrink-0 text-accent"
+      aria-label="Перевірений салон"
+      role="img"
+    >
+      <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.3 14.2-4-4 1.5-1.5 2.5 2.5 5.6-5.6 1.5 1.5z" />
+    </svg>
   )
 }
 

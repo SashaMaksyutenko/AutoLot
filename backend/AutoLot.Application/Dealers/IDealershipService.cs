@@ -16,6 +16,17 @@ public interface IDealershipService
     Task<DealershipDetails?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Каталог салонів. Перевірені йдуть першими — саме заради цього бейдж
+    /// і потрібен; далі за кількістю активних оголошень, бо порожня вітрина
+    /// покупцеві ні до чого.
+    /// </summary>
+    Task<IReadOnlyList<DealershipCard>> SearchAsync(
+        string? text,
+        long? cityId,
+        bool verifiedOnly,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Створює салон. Той, хто створив, автоматично стає власником — інакше
     /// новий салон лишився б без нікого, хто може додати персонал.
     /// </summary>

@@ -95,6 +95,46 @@ export function FilterRail({ filters, onChange, onReset, totalCount }: Props) {
         </div>
       </Group>
 
+      <Group title="Хто продає">
+        {/*
+          Тризначний вибір, а не прапорець: обидва боки однаково потрібні.
+          Одні шукають гарантію салону, інші свідомо йдуть до приватника,
+          щоб не переплачувати.
+        */}
+        <div className="flex overflow-hidden rounded-control border border-line">
+          <SaleType
+            label="Усі"
+            active={filters.fromDealer === undefined}
+            onClick={() => onChange({ fromDealer: undefined, verifiedDealerOnly: undefined })}
+          />
+          <SaleType
+            label="Салони"
+            active={filters.fromDealer === true}
+            onClick={() => onChange({ fromDealer: true })}
+          />
+          <SaleType
+            label="Приватні"
+            active={filters.fromDealer === false}
+            onClick={() => onChange({ fromDealer: false, verifiedDealerOnly: undefined })}
+          />
+        </div>
+
+        {/* Уточнення має сенс лише коли обрано салони. */}
+        {filters.fromDealer === true && (
+          <label className="flex cursor-pointer items-center gap-2 text-[13.5px]">
+            <input
+              type="checkbox"
+              checked={filters.verifiedDealerOnly === true}
+              onChange={(event) =>
+                onChange({ verifiedDealerOnly: event.target.checked ? true : undefined })
+              }
+              className="h-[15px] w-[15px] accent-accent"
+            />
+            <span>Лише перевірені</span>
+          </label>
+        )}
+      </Group>
+
       <Group title="Марка і модель">
         <Select
           value={filters.makeId}

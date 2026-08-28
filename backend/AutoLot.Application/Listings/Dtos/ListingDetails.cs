@@ -32,7 +32,14 @@ public sealed record ListingDetails(
     int ViewCount,
 
     /// <summary>Чи відклав це оголошення той, хто зараз дивиться.</summary>
-    bool IsFavorite);
+    bool IsFavorite,
+
+    /// <summary>
+    /// Салон, якщо продає він. У блоці продавця тоді показуємо салон із
+    /// посиланням на вітрину, а не приватну особу: покупцеві важливо, з ким
+    /// він має справу.
+    /// </summary>
+    DealerBadge? Dealer);
 
 public sealed record SellerSummary(long Id, string DisplayName, AccountType AccountType);
 

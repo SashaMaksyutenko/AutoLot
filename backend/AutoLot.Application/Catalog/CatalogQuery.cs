@@ -99,6 +99,22 @@ public sealed record CatalogQuery
     /// <summary>Оголошення без жодного фото зазвичай пропускають.</summary>
     public bool? HasPhotos { get; init; }
 
+    // ── Продавець ────────────────────────────────────────────────────
+
+    /// <summary>Вітрина конкретного салону: всі його оголошення й тільки вони.</summary>
+    public long? DealershipId { get; init; }
+
+    /// <summary>
+    /// Хто продає. <c>true</c> — лише салони, <c>false</c> — лише приватні
+    /// особи, порожньо — усі. Саме тризначний вибір, а не прапорець: обидва
+    /// боки цього фільтра однаково потрібні. Одні шукають гарантію салону,
+    /// інші свідомо йдуть до приватника, щоб не переплачувати.
+    /// </summary>
+    public bool? FromDealer { get; init; }
+
+    /// <summary>Лише салони з бейджем перевіреного.</summary>
+    public bool? VerifiedDealerOnly { get; init; }
+
     public CatalogSort Sort { get; init; } = CatalogSort.Newest;
 
     public int Page { get; init; } = 1;

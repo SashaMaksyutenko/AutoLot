@@ -115,6 +115,7 @@ internal sealed class ListingService(
         var listing = await dbContext.Listings
             .AsNoTracking()
             .Include(item => item.Seller)
+            .Include(item => item.Dealership)
             .Include(item => item.Car).ThenInclude(car => car.Make)
             .Include(item => item.Car).ThenInclude(car => car.Model)
             .Include(item => item.Car).ThenInclude(car => car.Generation)

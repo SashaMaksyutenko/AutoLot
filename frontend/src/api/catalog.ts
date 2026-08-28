@@ -1,4 +1,5 @@
 import { apiGet } from './client'
+import type { DealerBadge } from './dealership'
 
 /**
  * Типи, які приходять з бекенду назвами, а не числами: сервер налаштований
@@ -28,6 +29,9 @@ export interface ListingSummary {
 
   /** Чи відклав це оголошення той, хто зараз дивиться. Гість завжди бачить false. */
   isFavorite: boolean
+
+  /** Салон, якщо продає він. Порожнє в приватної особи. */
+  dealer: DealerBadge | null
 }
 
 export interface PagedResult<TItem> {
@@ -64,6 +68,20 @@ export interface CatalogFilters {
   cityId?: number
   type?: ListingType
   wasInAccident?: boolean
+
+  /**
+   * Хто продає: true — лише салони, false — лише приватні особи,
+   * порожньо — усі. Обидва боки потрібні: одні шукають гарантію салону,
+   * інші свідомо йдуть до приватника, щоб не переплачувати.
+   */
+  fromDealer?: boolean
+
+  /** Лише салони з бейджем перевіреного. */
+  verifiedDealerOnly?: boolean
+
+  /** Вітрина конкретного салону. */
+  dealershipId?: number
+
   sort: CatalogSort
   page: number
 }
@@ -98,6 +116,9 @@ export function toSearchParams(filters: CatalogFilters): URLSearchParams {
     CityId: filters.cityId,
     Type: filters.type,
     WasInAccident: filters.wasInAccident,
+    FromDealer: filters.fromDealer,
+    VerifiedDealerOnly: filters.verifiedDealerOnly,
+    DealershipId: filters.dealershipId,
     Sort: filters.sort,
     Page: filters.page,
   }

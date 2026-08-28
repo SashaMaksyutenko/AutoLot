@@ -40,6 +40,7 @@ internal sealed class CatalogService(
         listings = ApplySets(listings, query);
         listings = ApplyFlags(listings, query);
         listings = ApplyLocation(listings, query);
+        listings = ApplySeller(listings, query);
         listings = ApplyFeatures(listings, query);
 
         var totalCount = await listings.CountAsync(cancellationToken);
@@ -245,6 +246,36 @@ internal sealed class CatalogService(
             listings = hasPhotos
                 ? listings.Where(listing => listing.Car.Photos.Count > 0)
                 : listings.Where(listing => listing.Car.Photos.Count == 0);
+        }
+
+        return listings;
+    }
+
+    /// <summary>
+    /// Хто продає. Належність до салону визначається наявністю зв'язку, а не
+    /// типом акаунта продавця: людина може працювати в салоні й водночас
+    /// продавати власне авто від себе — такий лот салонним не є.
+    /// </summary>
+    private static IQueryable<Listing> ApplySeller(IQueryable<Listing> listings, CatalogQuery query)
+    {
+        // Вітрина конкретного салону перекриває решту умов про продавця:
+        // питання «чий це лот» уже вирішено.
+        if (query.DealershipId is { } dealershipId)
+        {
+            return listings.Where(listing => listing.DealershipId == dealershipId);
+        }
+
+        if (query.FromDealer is { } fromDealer)
+        {
+            listings = fromDealer
+                ? listings.Where(listing => listing.DealershipId != null)
+                : listings.Where(listing => listing.DealershipId == null);
+        }
+
+        if (query.VerifiedDealerOnly == true)
+        {
+            listings = listings.Where(listing =>
+                listing.Dealership != null && listing.Dealership.IsVerified);
         }
 
         return listings;

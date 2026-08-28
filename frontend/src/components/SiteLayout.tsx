@@ -28,9 +28,9 @@ export function SiteLayout() {
           <nav className="mr-auto hidden gap-5 text-[14.5px] sm:flex">
             <NavItem to="/" label="Купити авто" />
             {auth.user && <NavItem to="/favorites" label="Обране" badge={<FavoriteBadge />} />}
-            {/* Розділи ще не написані, тож це не посилання, а просто написи. */}
+            <NavItem to="/dealers" label="Автосалони" />
+            {/* Окремої сторінки аукціонів ще немає — поки що це фільтр у каталозі. */}
             <span className="pb-1 text-ink-3">Аукціони</span>
-            <span className="pb-1 text-ink-3">Автосалони</span>
           </nav>
 
           <div className="flex flex-wrap items-center gap-2.5">

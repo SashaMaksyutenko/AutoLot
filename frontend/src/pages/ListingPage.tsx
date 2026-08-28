@@ -4,6 +4,7 @@ import { fetchListing, type ListingDetails } from '../api/listing'
 import { useAttributeLabels } from '../api/useAttributeLabels'
 import { useAuth } from '../auth/useAuth'
 import { FavoriteButton } from '../components/FavoriteButton'
+import { VerifiedMark } from '../components/catalog/ListingCard'
 import { AuctionPanel } from '../components/listing/AuctionPanel'
 import { Gallery } from '../components/listing/Gallery'
 import { Questions } from '../components/listing/Questions'
@@ -208,12 +209,30 @@ function Loaded({ listing }: { listing: ListingDetails }) {
           <div className="card grid gap-3 p-4">
             <span className="eyebrow">Продавець</span>
 
-            <div>
-              <div className="text-[15px] font-semibold">{listing.seller.displayName}</div>
-              <div className="text-[13px] text-ink-2">
-                {listing.seller.accountType === 'Dealer' ? 'Автосалон' : 'Приватна особа'}
+            {/*
+              Коли продає салон, показуємо салон із посиланням на вітрину, а не
+              менеджера: покупцеві важливо, з ким він має справу, а не хто саме
+              зі співробітників заповнював форму.
+            */}
+            {listing.dealer ? (
+              <div>
+                <Link
+                  to={`/dealers/${listing.dealer.slug}`}
+                  className="flex items-center gap-1.5 text-[15px] font-semibold hover:text-accent"
+                >
+                  {listing.dealer.isVerified && <VerifiedMark size={15} />}
+                  {listing.dealer.name}
+                </Link>
+                <div className="text-[13px] text-ink-2">
+                  {listing.dealer.isVerified ? 'Перевірений автосалон' : 'Автосалон'}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <div className="text-[15px] font-semibold">{listing.seller.displayName}</div>
+                <div className="text-[13px] text-ink-2">Приватна особа</div>
+              </div>
+            )}
 
             {listing.location && (
               <div className="border-t border-line pt-3 text-[13px] text-ink-2">

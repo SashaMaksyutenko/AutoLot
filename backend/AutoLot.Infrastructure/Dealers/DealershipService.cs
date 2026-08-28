@@ -37,6 +37,51 @@ internal sealed class DealershipService(
         return await ToDetailsAsync(dealership, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<DealershipCard>> SearchAsync(
+        string? text,
+        long? cityId,
+        bool verifiedOnly,
+        CancellationToken cancellationToken = default)
+    {
+        var dealerships = dbContext.Dealerships.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            var pattern = $"%{text.Trim()}%";
+            dealerships = dealerships.Where(item => EF.Functions.ILike(item.Name, pattern));
+        }
+
+        if (cityId is { } city)
+        {
+            dealerships = dealerships.Where(item => item.CityId == city);
+        }
+
+        if (verifiedOnly)
+        {
+            dealerships = dealerships.Where(item => item.IsVerified);
+        }
+
+        var code = language.Code;
+
+        return await dealerships
+            // Перевірені зверху — саме заради цього бейдж і потрібен. Далі за
+            // кількістю активних оголошень: порожня вітрина покупцеві ні до чого.
+            .OrderByDescending(item => item.IsVerified)
+            .ThenByDescending(item => dbContext.Listings.Count(listing => listing.DealershipId == item.Id && listing.Status == ListingStatus.Active))
+            .ThenBy(item => item.Name)
+            .Select(item => new DealershipCard(
+                item.Id,
+                item.Name,
+                item.Slug,
+                item.LogoPath,
+                item.City.Translations.Where(t => t.Language == code).Select(t => t.Name).FirstOrDefault()
+                    ?? item.City.Translations.Where(t => t.Language == LanguageCodes.Default).Select(t => t.Name).FirstOrDefault()
+                    ?? item.City.Code,
+                item.IsVerified,
+                dbContext.Listings.Count(listing => listing.DealershipId == item.Id && listing.Status == ListingStatus.Active)))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<DealershipDetails> CreateAsync(
         long founderId,
         CreateDealershipRequest request,

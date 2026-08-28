@@ -108,7 +108,10 @@ internal sealed class ListingMapper(
             // за що оголошення не пройшло, не треба.
             includePrivateFields ? listing.RejectionReason : null,
             listing.ViewCount,
-            await IsFavoriteAsync(listing.Id, cancellationToken));
+            await IsFavoriteAsync(listing.Id, cancellationToken),
+            listing.Dealership is { } dealership
+                ? new DealerBadge(dealership.Name, dealership.Slug, dealership.IsVerified)
+                : null);
     }
 
     /// <summary>
@@ -174,7 +177,17 @@ internal sealed class ListingMapper(
                 // Підзапит EXISTS усередині тієї самої вибірки: жодного
                 // додаткового звернення до бази на кожну картку.
                 dbContext.Favorites.Any(favorite =>
-                    favorite.UserId == viewerId && favorite.ListingId == listing.Id)))
+                    favorite.UserId == viewerId && favorite.ListingId == listing.Id),
+
+                // Дані салону їдуть тим самим запитом через зв'язок. Умова
+                // потрібна, бо в приватної особи салону немає, і без неї EF
+                // повернув би запис із порожніми полями замість null.
+                listing.Dealership == null
+                    ? null
+                    : new DealerBadge(
+                        listing.Dealership.Name,
+                        listing.Dealership.Slug,
+                        listing.Dealership.IsVerified)))
             .ToListAsync(cancellationToken);
     }
 

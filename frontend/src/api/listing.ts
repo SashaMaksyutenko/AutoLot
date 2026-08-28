@@ -1,3 +1,4 @@
+import type { DealerBadge } from './dealership'
 import { apiGet } from './client'
 import type { Currency, ListingType } from './catalog'
 
@@ -94,6 +95,9 @@ export interface ListingDetails {
 
   /** Чи відклав це оголошення той, хто зараз дивиться. */
   isFavorite: boolean
+
+  /** Салон, якщо продає він. */
+  dealer: DealerBadge | null
 }
 
 export function fetchListing(id: number, signal?: AbortSignal): Promise<ListingDetails> {

@@ -16,6 +16,16 @@ public sealed record DealershipDetails(
     /// <summary>Скільки в салоні активних оголошень — перше, що цікавить покупця.</summary>
     int ActiveListingCount);
 
+/// <summary>Рядок каталогу салонів — усе, що потрібно намалювати плитку.</summary>
+public sealed record DealershipCard(
+    long Id,
+    string Name,
+    string Slug,
+    string? LogoPath,
+    string CityName,
+    bool IsVerified,
+    int ActiveListingCount);
+
 /// <summary>Салон, у якому працює користувач, і його роль там.</summary>
 public sealed record DealershipMembership(
     long DealershipId,

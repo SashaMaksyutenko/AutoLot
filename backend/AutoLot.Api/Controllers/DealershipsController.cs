@@ -17,6 +17,19 @@ public sealed class DealershipsController(
     IDealershipService dealerships,
     ICurrentUser currentUser) : ControllerBase
 {
+    /// <summary>Каталог салонів. Перевірені першими, далі — за наповненістю вітрини.</summary>
+    [HttpGet]
+    [AllowAnonymous]
+    [ProducesResponseType<IReadOnlyList<DealershipCard>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Search(
+        [FromQuery] string? text,
+        [FromQuery] long? cityId,
+        [FromQuery] bool verifiedOnly = false,
+        CancellationToken cancellationToken = default)
+    {
+        return Ok(await dealerships.SearchAsync(text, cityId, verifiedOnly, cancellationToken));
+    }
+
     [HttpGet("{slug}")]
     [AllowAnonymous]
     [ProducesResponseType<DealershipDetails>(StatusCodes.Status200OK)]
