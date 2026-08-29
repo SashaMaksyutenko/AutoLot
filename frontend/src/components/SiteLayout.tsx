@@ -29,6 +29,8 @@ export function SiteLayout() {
             <NavItem to="/" label="Купити авто" />
             {auth.user && <NavItem to="/favorites" label="Обране" badge={<FavoriteBadge />} />}
             <NavItem to="/dealers" label="Автосалони" />
+            {/* Адмінку показуємо лише тим, кого туди пустять. */}
+            {isStaff(auth) && <NavItem to="/admin" label="Адмінка" />}
             {/* Окремої сторінки аукціонів ще немає — поки що це фільтр у каталозі. */}
             <span className="pb-1 text-ink-3">Аукціони</span>
           </nav>
@@ -140,6 +142,13 @@ function AccountTools({ auth }: { auth: ReturnType<typeof useAuth> }) {
       </span>
     </>
   )
+}
+
+/** Чи має людина доступ до адмінки — модератор або адміністратор. */
+function isStaff(auth: ReturnType<typeof useAuth>): boolean {
+  const roles = auth.user?.roles ?? []
+
+  return roles.includes('Moderator') || roles.includes('Admin')
 }
 
 /** «Олена Мороз» → «ОМ». Двох літер вистачає, щоб кружечок не переповнився. */

@@ -2,6 +2,10 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthProvider'
 import { SiteLayout } from './components/SiteLayout'
 import { CatalogPage } from './pages/CatalogPage'
+import { AdminLayout } from './pages/admin/AdminLayout'
+import { AdminOverviewPage } from './pages/admin/AdminOverviewPage'
+import { AdminUsersPage } from './pages/admin/AdminUsersPage'
+import { ModerationQueuePage } from './pages/admin/ModerationQueuePage'
 import { DealershipPage } from './pages/DealershipPage'
 import { DealershipsPage } from './pages/DealershipsPage'
 import { ConfirmEmailPage } from './pages/ConfirmEmailPage'
@@ -22,6 +26,12 @@ export default function App() {
             <Route path="dealers/:slug" element={<DealershipPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
             <Route path="confirm-email" element={<ConfirmEmailPage />} />
+
+            <Route path="admin" element={<AdminLayout />}>
+              <Route index element={<AdminOverviewPage />} />
+              <Route path="queue" element={<ModerationQueuePage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>

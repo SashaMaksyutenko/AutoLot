@@ -1,3 +1,4 @@
+using AutoLot.Application.Admin;
 using AutoLot.Application.Auctions;
 using AutoLot.Application.Auth;
 using AutoLot.Application.Cars;
@@ -9,6 +10,7 @@ using AutoLot.Application.Geo;
 using AutoLot.Application.Listings;
 using AutoLot.Application.Users;
 using AutoLot.Domain.Identity;
+using AutoLot.Infrastructure.Admin;
 using AutoLot.Infrastructure.Auctions;
 using AutoLot.Infrastructure.Cars;
 using AutoLot.Infrastructure.Catalog;
@@ -208,6 +210,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAccountRecoveryService, AccountRecoveryService>();
         services.AddScoped<IUserProfileService, UserProfileService>();
+        services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<IDataSeeder, IdentitySeeder>();
 
         return services;
