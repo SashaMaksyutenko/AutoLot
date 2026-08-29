@@ -52,3 +52,27 @@ export function logout(): Promise<void> {
 export function fetchProfile(signal?: AbortSignal): Promise<UserProfile> {
   return apiGet<UserProfile>('/api/auth/me', signal)
 }
+
+/**
+ * Відновлення пароля й підтвердження пошти.
+ *
+ * Прохання про лист завжди завершується успіхом — навіть для незареєстрованої
+ * адреси. Це не помилка: інакше форма «забув пароль» перетворилася б на
+ * спосіб перевіряти, хто є на майданчику.
+ */
+
+export function requestPasswordReset(email: string): Promise<void> {
+  return apiPost<void>('/api/auth/forgot-password', { email })
+}
+
+export function resetPassword(
+  email: string,
+  token: string,
+  newPassword: string,
+): Promise<void> {
+  return apiPost<void>('/api/auth/reset-password', { email, token, newPassword })
+}
+
+export function confirmEmail(email: string, token: string): Promise<void> {
+  return apiPost<void>('/api/auth/confirm-email', { email, token })
+}

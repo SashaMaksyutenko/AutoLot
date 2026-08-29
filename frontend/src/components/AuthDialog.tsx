@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { ApiError } from '../api/client'
-import type { AccountType } from '../api/auth'
+import { requestPasswordReset, type AccountType } from '../api/auth'
 import { useAuth } from '../auth/useAuth'
 
-type Mode = 'login' | 'register'
+type Mode = 'login' | 'register' | 'forgot'
 
 /**
  * Вікно входу й реєстрації. Обидві форми живуть тут разом, бо різняться
@@ -62,11 +62,17 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
         className="card w-full max-w-[420px] p-6"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mb-5 flex gap-0.5 rounded-control border border-line bg-surface-2 p-0.5">
-          <Tab active={mode === 'login'} onClick={() => setMode('login')} label="Вхід" />
-          <Tab active={mode === 'register'} onClick={() => setMode('register')} label="Реєстрація" />
-        </div>
+        {/* У режимі відновлення вкладки ховаємо: там інша задача. */}
+        {mode !== 'forgot' && (
+          <div className="mb-5 flex gap-0.5 rounded-control border border-line bg-surface-2 p-0.5">
+            <Tab active={mode === 'login'} onClick={() => setMode('login')} label="Вхід" />
+            <Tab active={mode === 'register'} onClick={() => setMode('register')} label="Реєстрація" />
+          </div>
+        )}
 
+        {mode === 'forgot' ? (
+          <ForgotPassword onBack={() => setMode('login')} />
+        ) : (
         <form onSubmit={submit} className="flex flex-col gap-3.5">
           {mode === 'register' && (
             <Field label="Як до вас звертатися" errors={fieldErrors.DisplayName}>
@@ -136,9 +142,96 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
           <button type="submit" disabled={busy} className="btn btn-primary mt-1 w-full py-2.5">
             {busy ? 'Хвилинку…' : mode === 'login' ? 'Увійти' : 'Зареєструватися'}
           </button>
+
+          {mode === 'login' && (
+            <button
+              type="button"
+              onClick={() => setMode('forgot')}
+              className="text-[13px] text-ink-2 hover:text-accent"
+            >
+              Забули пароль?
+            </button>
+          )}
         </form>
+        )}
       </div>
     </div>
+  )
+}
+
+/**
+ * Прохання надіслати лист для відновлення пароля.
+ *
+ * Успіх показуємо однаково для будь-якої адреси — і зареєстрованої, і ні.
+ * Так вирішив бекенд, і фронтенд не має права бути відвертішим: інакше
+ * форма перетворилася б на спосіб перевіряти, хто є на майданчику.
+ */
+function ForgotPassword({ onBack }: { onBack: () => void }) {
+  const [email, setEmail] = useState('')
+  const [sent, setSent] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  if (sent) {
+    return (
+      <div className="grid gap-3 text-center">
+        <h2 className="font-display text-lg font-bold">Перевірте пошту</h2>
+        <p className="text-[13px] text-ink-2">
+          Якщо {email} зареєстрована в AutoLot, ми надіслали туди посилання для зміни пароля.
+        </p>
+        <button type="button" onClick={onBack} className="btn w-full">
+          Повернутися до входу
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <form
+      className="grid gap-3.5"
+      onSubmit={async (event) => {
+        event.preventDefault()
+        setBusy(true)
+        setError(null)
+
+        try {
+          await requestPasswordReset(email)
+          setSent(true)
+        } catch (caught) {
+          setError(
+            caught instanceof ApiError ? caught.message : 'Не вдалося зв’язатися з сервером.',
+          )
+        } finally {
+          setBusy(false)
+        }
+      }}
+    >
+      <h2 className="font-display text-lg font-bold">Відновлення пароля</h2>
+      <p className="text-[13px] text-ink-2">Надішлемо посилання на вашу пошту.</p>
+
+      <Field label="Email">
+        <input
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          autoComplete="email"
+          required
+          className="control"
+        />
+      </Field>
+
+      {error && (
+        <p className="rounded-control bg-danger-soft px-3 py-2 text-[13px] text-danger">{error}</p>
+      )}
+
+      <button type="submit" disabled={busy} className="btn btn-primary w-full py-2.5">
+        {busy ? 'Надсилаємо…' : 'Надіслати посилання'}
+      </button>
+
+      <button type="button" onClick={onBack} className="text-[13px] text-ink-2 hover:text-accent">
+        Згадав пароль
+      </button>
+    </form>
   )
 }
 

@@ -40,6 +40,8 @@ public class ConcurrentBiddingTests : IAsyncLifetime
 
     private readonly RecordingScheduler scheduler = new();
 
+    private readonly RecordingEmailSender mailer = new();
+
     public async Task InitializeAsync()
     {
         database = await PostgresTestDatabase.CreateAsync();
@@ -112,7 +114,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     public async Task A_successful_bid_is_announced_to_everyone_watching()
     {
         await using var context = database.CreateContext();
-        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), mailer, TestEmails.Create(), NullLogger<AuctionService>.Instance);
 
         await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
 
@@ -133,7 +135,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     public async Task A_rejected_bid_is_not_announced()
     {
         await using var context = database.CreateContext();
-        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), mailer, TestEmails.Create(), NullLogger<AuctionService>.Instance);
 
         await Assert.ThrowsAsync<DomainRuleException>(
             () => service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 1m));
@@ -152,6 +154,8 @@ public class ConcurrentBiddingTests : IAsyncLifetime
             new FailingNotifier(),
             scheduler,
             new ListingAccess(context),
+            mailer,
+            TestEmails.Create(),
             NullLogger<AuctionService>.Instance);
 
         // Розсилка падає, але ставка вже збережена — скасовувати її через
@@ -174,7 +178,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
         auction.EndsAt = Now.AddSeconds(30);
         await context.SaveChangesAsync();
 
-        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), mailer, TestEmails.Create(), NullLogger<AuctionService>.Instance);
 
         await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
 
@@ -190,7 +194,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     public async Task An_ordinary_bid_does_not_touch_the_schedule()
     {
         await using var context = database.CreateContext();
-        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), mailer, TestEmails.Create(), NullLogger<AuctionService>.Instance);
 
         // До фіналу ще тиждень — переставляти нічого.
         await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
@@ -202,7 +206,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     public async Task Closing_ends_the_auction_and_marks_the_listing_sold()
     {
         await using var context = database.CreateContext();
-        var bidding = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
+        var bidding = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), mailer, TestEmails.Create(), NullLogger<AuctionService>.Instance);
 
         await bidding.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 8_000m);
 
@@ -297,10 +301,80 @@ public class ConcurrentBiddingTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_displaced_leader_gets_a_letter()
+    {
+        await using var context = database.CreateContext();
+        await ConfirmEmailAsync(context, FirstBidderId);
+
+        var service = Bidding(context);
+
+        await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 6_000m);
+        await service.PlaceBidAsync(listingId, FirstBidderId + 1, maxAmount: 9_000m);
+
+        // Сидіти біля екрана сім днів ніхто не буде — саме тому лист і потрібен.
+        var letter = Assert.Single(mailer.Messages);
+        Assert.Equal("bidder0@example.com", letter.To);
+        Assert.Contains("перебили", letter.Subject, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_leader_who_held_their_ground_gets_nothing()
+    {
+        await using var context = database.CreateContext();
+        await ConfirmEmailAsync(context, FirstBidderId);
+
+        var service = Bidding(context);
+
+        await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 9_000m);
+
+        // Претендент програв, лідер утримався — втрачати нема чого, писати нема про що.
+        await service.PlaceBidAsync(listingId, FirstBidderId + 1, maxAmount: 6_000m);
+
+        Assert.Empty(mailer.Messages);
+    }
+
+    [Fact]
+    public async Task Nothing_is_sent_to_an_unconfirmed_address()
+    {
+        await using var context = database.CreateContext();
+        var service = Bidding(context);
+
+        await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 6_000m);
+        await service.PlaceBidAsync(listingId, FirstBidderId + 1, maxAmount: 9_000m);
+
+        // Непідтверджену адресу міг вписати хто завгодно — писати туди
+        // означає засипати чужу скриньку.
+        Assert.Empty(mailer.Messages);
+    }
+
+    [Fact]
+    public async Task A_broken_mail_server_does_not_undo_a_bid()
+    {
+        await using var context = database.CreateContext();
+        await ConfirmEmailAsync(context, FirstBidderId);
+
+        var service = new AuctionService(
+            context,
+            new FixedClock(Now),
+            notifier,
+            scheduler,
+            new ListingAccess(context),
+            new FailingEmailSender(),
+            TestEmails.Create(),
+            NullLogger<AuctionService>.Instance);
+
+        await service.PlaceBidAsync(listingId, FirstBidderId, maxAmount: 6_000m);
+        await service.PlaceBidAsync(listingId, FirstBidderId + 1, maxAmount: 9_000m);
+
+        await using var fresh = database.CreateContext();
+        Assert.Equal(FirstBidderId + 1, fresh.Auctions.Single().LeaderId);
+    }
+
+    [Fact]
     public async Task The_seller_cannot_bid_on_their_own_lot()
     {
         await using var context = database.CreateContext();
-        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
+        var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), mailer, TestEmails.Create(), NullLogger<AuctionService>.Instance);
 
         await Assert.ThrowsAsync<BiddingNotAllowedException>(
             () => service.PlaceBidAsync(listingId, SellerId, StartPrice));
@@ -333,7 +407,7 @@ public class ConcurrentBiddingTests : IAsyncLifetime
             var maxAmount = maxAmountOf(index);
 
             await using var context = database.CreateContext();
-            var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), NullLogger<AuctionService>.Instance);
+            var service = new AuctionService(context, new FixedClock(Now), notifier, scheduler, new ListingAccess(context), mailer, TestEmails.Create(), NullLogger<AuctionService>.Instance);
 
             // Відкриваємо з'єднання завчасно, щоб на старті лишилася сама ставка.
             await context.Database.OpenConnectionAsync();
@@ -358,6 +432,30 @@ public class ConcurrentBiddingTests : IAsyncLifetime
         start.SetResult();
 
         return await Task.WhenAll(tasks);
+    }
+
+    /// <summary>Сервіс торгів із записувальними заглушками замість пошти й розсилки.</summary>
+    private AuctionService Bidding(AutoLotDbContext context) => new(
+        context,
+        new FixedClock(Now),
+        notifier,
+        scheduler,
+        new ListingAccess(context),
+        mailer,
+        TestEmails.Create(),
+        NullLogger<AuctionService>.Instance);
+
+    /// <summary>
+    /// Позначає пошту підтвердженою. У житті це робить перехід за посиланням
+    /// із листа; тут потрібен лише результат.
+    /// </summary>
+    private static async Task ConfirmEmailAsync(AutoLotDbContext context, long userId)
+    {
+        var user = await context.Users.FindAsync(userId)
+            ?? throw new InvalidOperationException($"Користувача {userId} немає.");
+
+        user.EmailConfirmed = true;
+        await context.SaveChangesAsync();
     }
 
     private const long SellerId = 1;

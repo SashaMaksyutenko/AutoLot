@@ -28,3 +28,6 @@ TestResults/
 
 # Local uploads
 uploads/
+
+# Листи, збережені файлами в розробці замість надсилання.
+mail-drop/

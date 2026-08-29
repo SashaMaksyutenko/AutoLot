@@ -19,6 +19,7 @@ internal sealed class AuthService(
     IOptions<JwtOptions> jwtOptions,
     IGeoCatalog geoCatalog,
     IDateTimeProvider clock,
+    IAccountRecoveryService recovery,
     ILogger<AuthService> logger) : IAuthService
 {
     /// <summary>
@@ -68,6 +69,22 @@ internal sealed class AuthService(
                 RoleNames.User,
                 user.Id,
                 string.Join("; ", roleAssigned.Errors.Select(error => error.Description)));
+        }
+
+        // Лист із підтвердженням надсилаємо, але вхід не блокуємо: людина має
+        // одразу потрапити на сайт, а підтвердження — умова для сповіщень,
+        // а не для перегляду каталогу. Збій пошти теж не повинен ламати
+        // реєстрацію: акаунт уже створено, і повторний лист можна попросити.
+        try
+        {
+            await recovery.SendEmailConfirmationAsync(user.Id, cancellationToken);
+        }
+        catch (Exception error)
+        {
+            logger.LogWarning(
+                error,
+                "Не вдалося надіслати лист підтвердження користувачу {UserId}. Реєстрація пройшла.",
+                user.Id);
         }
 
         return AuthResult.Success(await IssueTokensAsync(user, familyId: null, ipAddress, cancellationToken));

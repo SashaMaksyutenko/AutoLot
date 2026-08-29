@@ -4,8 +4,10 @@ import { SiteLayout } from './components/SiteLayout'
 import { CatalogPage } from './pages/CatalogPage'
 import { DealershipPage } from './pages/DealershipPage'
 import { DealershipsPage } from './pages/DealershipsPage'
+import { ConfirmEmailPage } from './pages/ConfirmEmailPage'
 import { FavoritesPage } from './pages/FavoritesPage'
 import { ListingPage } from './pages/ListingPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
 
 export default function App() {
   return (
@@ -18,6 +20,8 @@ export default function App() {
             <Route path="favorites" element={<FavoritesPage />} />
             <Route path="dealers" element={<DealershipsPage />} />
             <Route path="dealers/:slug" element={<DealershipPage />} />
+            <Route path="reset-password" element={<ResetPasswordPage />} />
+            <Route path="confirm-email" element={<ConfirmEmailPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

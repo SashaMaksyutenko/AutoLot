@@ -22,6 +22,7 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddAutoLotAuthentication(builder.Configuration);
+builder.Services.AddAutoLotTokenProviders();
 builder.Services.AddAutoLotRateLimiting();
 
 builder.Services.AddAutoLotLocalization();

@@ -3,6 +3,7 @@ using AutoLot.Application.Auctions.Dtos;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Domain.Auctions;
 using AutoLot.Domain.Enums;
+using AutoLot.Infrastructure.Email;
 using AutoLot.Infrastructure.Listings;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,8 @@ internal sealed partial class AuctionService(
     IAuctionNotifier notifier,
     IAuctionScheduler scheduler,
     ListingAccess access,
+    IEmailSender emailSender,
+    AccountEmails emails,
     ILogger<AuctionService> logger) : IAuctionService
 {
     /// <summary>Антиснайпінг: ставка в останню хвилину продовжує торги на хвилину (SPEC §4).</summary>
@@ -42,6 +45,12 @@ internal sealed partial class AuctionService(
         ILogger logger,
         long listingId,
         Exception error);
+
+    [LoggerMessage(
+        EventId = 2,
+        Level = LogLevel.Warning,
+        Message = "Не вдалося надіслати лист про перебиту ставку користувачу {UserId}.")]
+    private static partial void LogOutbidMailFailed(ILogger logger, long userId, Exception error);
 
     public async Task<AuctionDetails?> GetAsync(
         long listingId,
@@ -96,6 +105,7 @@ internal sealed partial class AuctionService(
         }
 
         var endsAtBefore = auction.EndsAt;
+        var leaderBefore = auction.LeaderId;
 
         // Правила самих торгів живуть у сутності: скільки треба поставити,
         // хто лідирує, чи продовжувати час. Сервіс лише забезпечує їм
@@ -123,6 +133,14 @@ internal sealed partial class AuctionService(
         var leaderName = await GetDisplayNameAsync(auction.LeaderId, cancellationToken);
 
         await BroadcastAsync(auction, leaderName, bids, cancellationToken);
+
+        // Лідер змінився — попередньому треба сказати, бо сидіти біля екрана
+        // сім днів ніхто не буде. Листа шлемо лише при справжній зміні: коли
+        // лідер утримався, він нічого не втратив.
+        if (leaderBefore is { } displaced && displaced != auction.LeaderId)
+        {
+            await NotifyOutbidAsync(displaced, auction, listing, cancellationToken);
+        }
 
         return ToDetails(auction, bidderId, listing.SellerId, leaderName);
     }
@@ -212,6 +230,46 @@ internal sealed partial class AuctionService(
         catch (Exception error)
         {
             LogBroadcastFailed(logger, auction.ListingId, error);
+        }
+    }
+
+    /// <summary>
+    /// Пише тому, чию ставку щойно перебили.
+    ///
+    /// Лист іде лише на підтверджену пошту: надсилати на непідтверджену
+    /// адресу означає ризикувати чужою скринькою, яку хтось вписав помилково
+    /// чи навмисне.
+    ///
+    /// Збій пошти не має скасовувати ставку — вона вже прийнята.
+    /// </summary>
+    private async Task NotifyOutbidAsync(
+        long displacedUserId,
+        Auction auction,
+        Domain.Listings.Listing listing,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var recipient = await dbContext.Users
+                .AsNoTracking()
+                .Where(user => user.Id == displacedUserId && user.EmailConfirmed && user.Email != null)
+                .Select(user => user.Email)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (recipient is null)
+            {
+                return;
+            }
+
+            var price = $"{auction.CurrentPrice:0.##} {auction.Currency}";
+
+            await emailSender.SendAsync(
+                emails.Outbid(recipient, listing.Title, price, listing.Id),
+                cancellationToken);
+        }
+        catch (Exception error)
+        {
+            LogOutbidMailFailed(logger, displacedUserId, error);
         }
     }
 

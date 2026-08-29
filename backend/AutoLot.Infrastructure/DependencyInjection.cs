@@ -12,6 +12,7 @@ using AutoLot.Domain.Identity;
 using AutoLot.Infrastructure.Auctions;
 using AutoLot.Infrastructure.Cars;
 using AutoLot.Infrastructure.Catalog;
+using AutoLot.Infrastructure.Email;
 using AutoLot.Infrastructure.Dealers;
 using AutoLot.Infrastructure.Favorites;
 using AutoLot.Infrastructure.Geo;
@@ -35,6 +36,7 @@ public static class DependencyInjection
     {
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
+        services.AddEmail(configuration);
         services.AddPersistence(configuration);
         services.AddIdentity(configuration);
         services.AddGeography();
@@ -95,6 +97,24 @@ public static class DependencyInjection
 
         services.AddScoped<IAuctionScheduler, QuartzAuctionScheduler>();
         services.AddHostedService<AuctionScheduleRecovery>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Пошта. Один відправник на обидва режими: у розробці листи лягають
+    /// файлами в теку, у продакшені йдуть через SMTP — див. EmailOptions.
+    /// </summary>
+    private static IServiceCollection AddEmail(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddOptions<EmailOptions>()
+            .Bind(configuration.GetSection(EmailOptions.SectionName))
+            .ValidateDataAnnotations();
+
+        services.AddScoped<AccountEmails>();
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
 
         return services;
     }
@@ -177,12 +197,16 @@ public static class DependencyInjection
             .AddRoles<Role>()
             .AddEntityFrameworkStores<AutoLotDbContext>();
 
-        // Провайдери токенів (AddDefaultTokenProviders) поки не підключаємо:
-        // вони потрібні для підтвердження пошти та скидання пароля, а це
-        // приходить разом із поштовою інфраструктурою.
+        // Провайдери токенів для відновлення пароля й підтвердження пошти
+        // реєструються в шарі Api — див. AddAutoLotTokenProviders. Причина
+        // технічна: AddDefaultTokenProviders живе у фреймворку ASP.NET Core,
+        // якого тут немає й не має бути. Тягнути сюди весь вебфреймворк
+        // заради одного виклику означало б відкрити Infrastructure доступ до
+        // контролерів і SignalR — рівно те, чого ми уникали в пункті 7.
 
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IAccountRecoveryService, AccountRecoveryService>();
         services.AddScoped<IUserProfileService, UserProfileService>();
         services.AddScoped<IDataSeeder, IdentitySeeder>();
 
