@@ -134,12 +134,15 @@ function AccountTools({ auth }: { auth: ReturnType<typeof useAuth> }) {
         Вийти
       </button>
       <span className="btn btn-primary">Продати авто</span>
-      <span
-        title={auth.user.displayName}
-        className="font-display grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full bg-surface-3 text-[12.5px] font-bold text-ink-2"
+
+      {/* Кружечок з ініціалами — найзвичніший вхід у кабінет. */}
+      <Link
+        to="/account"
+        title={`${auth.user.displayName} — кабінет`}
+        className="font-display grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full bg-surface-3 text-[12.5px] font-bold text-ink-2 hover:bg-accent-soft hover:text-accent"
       >
         {initialsOf(auth.user.displayName)}
-      </span>
+      </Link>
     </>
   )
 }

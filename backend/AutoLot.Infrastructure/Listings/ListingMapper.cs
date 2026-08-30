@@ -50,7 +50,12 @@ internal sealed class ListingMapper(
             new SellerSummary(
                 listing.Seller.Id,
                 listing.Seller.DisplayName,
-                listing.Seller.AccountType),
+                listing.Seller.AccountType,
+
+                // Гостю номер не віддаємо взагалі — не ховаємо на клієнті,
+                // а не кладемо у відповідь. Сховане на клієнті знаходять
+                // за секунду, переглянувши те, що прийшло з сервера.
+                currentUser.IsAuthenticated ? listing.Seller.PhoneNumber : null),
             new CarDetails(
                 car.Vin,
                 car.Year,

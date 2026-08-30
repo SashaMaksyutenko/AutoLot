@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { fetchListing, type ListingDetails } from '../api/listing'
+import { fetchListing, type ListingDetails, type SellerSummary } from '../api/listing'
 import { useAttributeLabels } from '../api/useAttributeLabels'
 import { useAuth } from '../auth/useAuth'
+import { openSignIn } from '../auth/signInPrompt'
 import { FavoriteButton } from '../components/FavoriteButton'
 import { VerifiedMark } from '../components/catalog/ListingCard'
 import { AuctionPanel } from '../components/listing/AuctionPanel'
@@ -197,11 +199,7 @@ function Loaded({ listing }: { listing: ListingDetails }) {
               </div>
             )}
 
-            {!isAuction && (
-              <button type="button" className="btn btn-primary w-full py-3 text-base">
-                Показати телефон
-              </button>
-            )}
+            {!isAuction && <PhoneButton seller={listing.seller} />}
           </div>
 
           {isAuction && <AuctionPanel listingId={listing.id} />}
@@ -262,6 +260,63 @@ function Loaded({ listing }: { listing: ListingDetails }) {
  * поверхні, а проміжок між ними рівно 1 px. Тло просвічує крізь проміжки й
  * дає ідеально тонкі роздільники без жодної рамки.
  */
+/**
+ * Кнопка «Показати телефон». Досі вона нічого не робила — номер не доходив
+ * до сторінки.
+ *
+ * Гостю номер не показуємо, і не приховуванням на клієнті: сервер його
+ * взагалі не віддає. Відкритий номер у публічній відповіді збирають роботи
+ * за години, і продавець потім роками отримує дзвінки посередників.
+ *
+ * Номер відкривається натисканням, а не одразу: так його не видно тим, хто
+ * просто гортає сторінки, і збирати номери стає дорожче.
+ */
+function PhoneButton({ seller }: { seller: SellerSummary }) {
+  const [shown, setShown] = useState(false)
+  const auth = useAuth()
+
+  if (!auth.user) {
+    return (
+      <button
+        type="button"
+        onClick={openSignIn}
+        className="btn btn-primary w-full py-3 text-base"
+      >
+        Увійдіть, щоб побачити телефон
+      </button>
+    )
+  }
+
+  if (seller.phoneNumber === null) {
+    return (
+      <p className="rounded-control bg-surface-2 px-3 py-2 text-center text-[13px] text-ink-2">
+        Продавець не вказав телефон
+      </p>
+    )
+  }
+
+  if (!shown) {
+    return (
+      <button
+        type="button"
+        onClick={() => setShown(true)}
+        className="btn btn-primary w-full py-3 text-base"
+      >
+        Показати телефон
+      </button>
+    )
+  }
+
+  return (
+    <a
+      href={`tel:${seller.phoneNumber}`}
+      className="btn btn-primary w-full py-3 font-mono text-base tracking-wide"
+    >
+      {seller.phoneNumber}
+    </a>
+  )
+}
+
 function KeySpecs({ items }: { items: { label: string; value: string }[] }) {
   return (
     <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-control border border-line bg-line sm:grid-cols-3">

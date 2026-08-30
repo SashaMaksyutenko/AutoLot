@@ -76,10 +76,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  /**
+   * Перечитує профіль із сервера. Потрібен після змін у кабінеті: шапка й
+   * решта сторінок беруть ім'я саме звідси, і без цього вони показували б
+   * старе, доки людина не перезайде.
+   *
+   * Помилку ковтаємо навмисно: профіль уже збережено на сервері, а невдале
+   * перечитування — не привід лякати людину повідомленням.
+   */
+  const refreshProfile = useCallback(async () => {
+    try {
+      setUser(await fetchProfile());
+    } catch {
+      // Лишаємо те, що вже показано.
+    }
+  }, []);
+
   const value = useMemo<AuthState>(
-    () => ({ user, isRestoring, login, register, logout }),
-    [user, isRestoring, login, register, logout],
-  )
+    () => ({ user, isRestoring, login, register, logout, refreshProfile }),
+    [user, isRestoring, login, register, logout, refreshProfile],
+  );
 
   return <AuthContext value={value}>{children}</AuthContext>
 }

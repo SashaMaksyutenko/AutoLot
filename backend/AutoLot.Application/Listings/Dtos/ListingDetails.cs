@@ -41,7 +41,21 @@ public sealed record ListingDetails(
     /// </summary>
     DealerBadge? Dealer);
 
-public sealed record SellerSummary(long Id, string DisplayName, AccountType AccountType);
+public sealed record SellerSummary(
+    long Id,
+    string DisplayName,
+    AccountType AccountType,
+
+    /// <summary>
+    /// Телефон продавця — **лише для автентифікованих**. Гість бачить
+    /// порожнє поле й кнопку «увійдіть, щоб побачити».
+    ///
+    /// Це не примха: відкритий номер у публічному JSON збирається роботами
+    /// за години, і продавець потім роками отримує дзвінки від посередників.
+    /// Реєстрація не зупинить зловмисника, але робить збір номерів помітним
+    /// і обмежуваним.
+    /// </summary>
+    string? PhoneNumber);
 
 /// <summary>
 /// Характеристики для показу. На відміну від CarSpecification тут не

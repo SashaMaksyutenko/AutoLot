@@ -14,6 +14,40 @@ internal sealed class UserProfileService(
     IGeoCatalog geoCatalog,
     IAuthService authService) : IUserProfileService
 {
+    public async Task<UserProfile?> UpdateAsync(
+        long userId,
+        UpdateProfileRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var user = await userManager.Users
+            .FirstOrDefaultAsync(candidate => candidate.Id == userId, cancellationToken);
+
+        if (user is null)
+        {
+            return null;
+        }
+
+        user.DisplayName = request.DisplayName.Trim();
+
+        var phone = request.PhoneNumber?.Trim();
+        var newPhone = string.IsNullOrEmpty(phone) ? null : phone;
+
+        // Змінили номер — підтвердження старого до нового не стосується.
+        // Поки підтвердження телефону не реалізоване, прапорець просто
+        // скидається; коли з'явиться SMS, ця гілка вже буде на місці.
+        if (user.PhoneNumber != newPhone)
+        {
+            user.PhoneNumber = newPhone;
+            user.PhoneNumberConfirmed = false;
+        }
+
+        await userManager.UpdateAsync(user);
+
+        return await authService.GetProfileAsync(userId, cancellationToken);
+    }
+
     public async Task<UserProfile?> UpdateLocationAsync(
         long userId,
         UpdateLocationRequest request,

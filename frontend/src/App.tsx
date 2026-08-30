@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthProvider'
 import { SiteLayout } from './components/SiteLayout'
+import { AccountPage } from './pages/AccountPage'
 import { CatalogPage } from './pages/CatalogPage'
 import { AdminLayout } from './pages/admin/AdminLayout'
 import { AdminOverviewPage } from './pages/admin/AdminOverviewPage'
@@ -22,6 +23,7 @@ export default function App() {
             <Route index element={<CatalogPage />} />
             <Route path="listing/:id" element={<ListingPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
+            <Route path="account" element={<AccountPage />} />
             <Route path="dealers" element={<DealershipsPage />} />
             <Route path="dealers/:slug" element={<DealershipPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />

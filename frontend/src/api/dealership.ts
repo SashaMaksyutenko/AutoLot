@@ -42,3 +42,16 @@ export function fetchDealerships(
 export function fetchDealership(slug: string, signal?: AbortSignal): Promise<DealershipDetails> {
   return apiGet<DealershipDetails>(`/api/dealerships/${slug}`, signal)
 }
+
+/** Салон, у якому працює користувач, і його роль там. */
+export interface DealershipMembership {
+  dealershipId: number
+  name: string
+  slug: string
+  role: 'Owner' | 'Manager'
+  isVerified: boolean
+}
+
+export function fetchMyDealerships(signal?: AbortSignal): Promise<DealershipMembership[]> {
+  return apiGet<DealershipMembership[]>('/api/dealerships/mine', signal)
+}

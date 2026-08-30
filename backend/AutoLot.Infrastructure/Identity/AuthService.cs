@@ -365,6 +365,7 @@ internal sealed class AuthService(
             user.DisplayName,
             user.AccountType,
             user.EmailConfirmed,
+            user.PhoneNumber,
             user.PhoneNumberConfirmed,
             [.. roles],
             location);

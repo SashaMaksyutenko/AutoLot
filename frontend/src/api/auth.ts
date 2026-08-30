@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from './client'
+import { apiGet, apiPost, apiPut } from './client'
 import type { UserLocation } from './listing'
 
 export type AccountType = 'Private' | 'Dealer'
@@ -9,6 +9,9 @@ export interface UserProfile {
   displayName: string
   accountType: AccountType
   emailConfirmed: boolean
+
+  /** Порожній, поки не вказали. Гість чужого номера не бачить узагалі. */
+  phoneNumber: string | null
   phoneNumberConfirmed: boolean
   roles: string[]
   location: UserLocation | null
@@ -75,4 +78,17 @@ export function resetPassword(
 
 export function confirmEmail(email: string, token: string): Promise<void> {
   return apiPost<void>('/api/auth/confirm-email', { email, token })
+}
+
+/** Зміна імені й телефону. Пошта тут не міняється — це окремий сценарій. */
+export function updateProfile(request: {
+  displayName: string
+  phoneNumber: string | null
+}): Promise<UserProfile> {
+  return apiPut<UserProfile>('/api/profile', request)
+}
+
+/** Надіслати лист підтвердження ще раз — для того, хто вже увійшов. */
+export function resendConfirmation(): Promise<void> {
+  return apiPost<void>('/api/auth/resend-confirmation')
 }

@@ -18,6 +18,24 @@ public sealed class ProfileController(
     IUserProfileService profileService,
     ICurrentUser currentUser) : ControllerBase
 {
+    [HttpPut]
+    [ProducesResponseType<UserProfile>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Update(
+        UpdateProfileRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.Id is not { } userId)
+        {
+            return Unauthorized();
+        }
+
+        var profile = await profileService.UpdateAsync(userId, request, cancellationToken);
+
+        return profile is null ? NotFound() : Ok(profile);
+    }
+
     [HttpPut("location")]
     [ProducesResponseType<UserProfile>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

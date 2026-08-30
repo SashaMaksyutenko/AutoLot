@@ -10,6 +10,9 @@ export interface AuthState {
   login: (request: LoginRequest) => Promise<void>
   register: (request: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
+
+  /** Перечитує профіль із сервера — після того, як його змінили в кабінеті. */
+  refreshProfile: () => Promise<void>
 }
 
 /**

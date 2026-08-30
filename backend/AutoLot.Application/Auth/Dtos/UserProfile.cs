@@ -9,6 +9,9 @@ public sealed record UserProfile(
     string DisplayName,
     AccountType AccountType,
     bool EmailConfirmed,
+
+    /// <summary>Порожній, поки не вказали. Показується лише автентифікованим.</summary>
+    string? PhoneNumber,
     bool PhoneNumberConfirmed,
     IReadOnlyList<string> Roles,
     /// <summary>Порожнє, поки користувач не вказав, звідки він.</summary>

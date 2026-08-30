@@ -27,6 +27,9 @@ export interface SellerSummary {
   id: number
   displayName: string
   accountType: 'Private' | 'Dealer'
+
+  /** Гість чужого номера не бачить: сервер його просто не віддає. */
+  phoneNumber: string | null
 }
 
 /**
