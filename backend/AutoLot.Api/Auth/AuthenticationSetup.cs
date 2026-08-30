@@ -58,6 +58,33 @@ public static class AuthenticationSetup
                 NameClaimType = AutoLotClaims.Name,
                 RoleClaimType = AutoLotClaims.Role,
             };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    // Вебсокет не вміє надсилати заголовок Authorization —
+                    // браузерний API його просто не має. Тому для хабів токен
+                    // приймається з адреси.
+                    //
+                    // Обмеження шляхом обов'язкове: інакше токен можна було б
+                    // передавати в адресі будь-якого запиту, а адреси
+                    // потрапляють у логи проксі та історію браузера.
+                    var path = context.HttpContext.Request.Path;
+
+                    if (path.StartsWithSegments("/hubs"))
+                    {
+                        var token = context.Request.Query["access_token"];
+
+                        if (!string.IsNullOrEmpty(token))
+                        {
+                            context.Token = token;
+                        }
+                    }
+
+                    return Task.CompletedTask;
+                },
+            };
         });
 
         var googleClientId = configuration["Authentication:Google:ClientId"];

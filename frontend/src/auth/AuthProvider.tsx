@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { closeChat } from '../api/chatHub'
 import { refreshSession } from '../api/client'
 import {
   fetchProfile,
@@ -73,6 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setAccessToken(null)
       setUser(null)
+
+      // Канал листування треба розірвати саме тут: він тримає з'єднання
+      // зі старим токеном, і наступний користувач у цьому ж браузері
+      // отримував би чужі повідомлення.
+      await closeChat()
     }
   }, [])
 

@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { fetchListing, type ListingDetails, type SellerSummary } from '../api/listing'
+import { startConversation } from '../api/chat'
+import { ApiError } from '../api/client'
 import { useAttributeLabels } from '../api/useAttributeLabels'
 import { useAuth } from '../auth/useAuth'
 import { openSignIn } from '../auth/signInPrompt'
@@ -200,6 +202,9 @@ function Loaded({ listing }: { listing: ListingDetails }) {
             )}
 
             {!isAuction && <PhoneButton seller={listing.seller} />}
+
+            {/* Продавцю власного лота писати нема кому. */}
+            {auth.user?.id !== listing.seller.id && <WriteButton listingId={listing.id} />}
           </div>
 
           {isAuction && <AuctionPanel listingId={listing.id} />}
@@ -314,6 +319,49 @@ function PhoneButton({ seller }: { seller: SellerSummary }) {
     >
       {seller.phoneNumber}
     </a>
+  )
+}
+
+/**
+ * «Написати продавцю» — приватне листування, на відміну від питань під лотом.
+ *
+ * Розмову починає сервер: він знаходить наявну гілку про це оголошення або
+ * створює нову. Тому натискати можна скільки завгодно — другої гілки про те
+ * саме авто не з'явиться.
+ */
+function WriteButton({ listingId }: { listingId: number }) {
+  const auth = useAuth()
+  const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
+
+  const start = useMutation({
+    mutationFn: () => startConversation(listingId),
+    onSuccess: (conversation) => navigate(`/chat?id=${conversation.id}`),
+    onError: (caught) =>
+      setError(caught instanceof ApiError ? caught.message : 'Не вдалося почати розмову.'),
+  })
+
+  if (!auth.user) {
+    return (
+      <button type="button" onClick={openSignIn} className="btn w-full py-3">
+        Увійдіть, щоб написати
+      </button>
+    )
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => start.mutate()}
+        disabled={start.isPending}
+        className="btn w-full py-3"
+      >
+        {start.isPending ? 'Відкриваємо…' : 'Написати продавцю'}
+      </button>
+
+      {error && <p className="text-[12px] text-danger">{error}</p>}
+    </>
   )
 }
 

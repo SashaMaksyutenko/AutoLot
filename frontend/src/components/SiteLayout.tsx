@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { fetchUnreadCount } from '../api/chat'
 import { fetchFavoriteCount } from '../api/favorites'
 import { useAuth } from '../auth/useAuth'
 import { closeSignIn, openSignIn, useSignInPrompt } from '../auth/signInPrompt'
@@ -28,6 +29,7 @@ export function SiteLayout() {
           <nav className="mr-auto hidden gap-5 text-[14.5px] sm:flex">
             <NavItem to="/" label="Купити авто" />
             {auth.user && <NavItem to="/favorites" label="Обране" badge={<FavoriteBadge />} />}
+            {auth.user && <NavItem to="/chat" label="Повідомлення" badge={<ChatBadge />} />}
             <NavItem to="/dealers" label="Автосалони" />
             {/* Адмінку показуємо лише тим, кого туди пустять. */}
             {isStaff(auth) && <NavItem to="/admin" label="Адмінка" />}
@@ -68,6 +70,20 @@ function NavItem({ to, label, badge }: { to: string; label: string; badge?: Reac
       {label}
       {badge}
     </NavLink>
+  )
+}
+
+/** Скільки непрочитаних повідомлень. Нуль не показуємо взагалі. */
+function ChatBadge() {
+  const count = useQuery({
+    queryKey: ['chat-unread'],
+    queryFn: ({ signal }) => fetchUnreadCount(signal),
+  })
+
+  if (!count.data?.count) return null
+
+  return (
+    <span className="pill pill-live tabular-nums">{count.data.count}</span>
   )
 }
 

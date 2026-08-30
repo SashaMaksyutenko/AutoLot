@@ -7,6 +7,7 @@ using AutoLot.Api.Localization;
 using AutoLot.Api.Realtime;
 using AutoLot.Application;
 using AutoLot.Application.Auctions;
+using AutoLot.Application.Chat;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Infrastructure;
 using AutoLot.Infrastructure.Persistence;
@@ -49,6 +50,7 @@ builder.Services
         options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddScoped<IAuctionNotifier, SignalRAuctionNotifier>();
+builder.Services.AddScoped<IChatNotifier, SignalRChatNotifier>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<DomainExceptionHandler>();
@@ -107,6 +109,7 @@ app.MapControllers();
 
 // Адреса живого каналу. Фронтенд підключається сюди й підписується на лот.
 app.MapHub<AuctionHub>("/hubs/auction");
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {

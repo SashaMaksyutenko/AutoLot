@@ -3,6 +3,7 @@ import { AuthProvider } from './auth/AuthProvider'
 import { SiteLayout } from './components/SiteLayout'
 import { AccountPage } from './pages/AccountPage'
 import { CatalogPage } from './pages/CatalogPage'
+import { ChatPage } from './pages/ChatPage'
 import { AdminLayout } from './pages/admin/AdminLayout'
 import { AdminOverviewPage } from './pages/admin/AdminOverviewPage'
 import { AdminUsersPage } from './pages/admin/AdminUsersPage'
@@ -24,6 +25,7 @@ export default function App() {
             <Route path="listing/:id" element={<ListingPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
             <Route path="account" element={<AccountPage />} />
+            <Route path="chat" element={<ChatPage />} />
             <Route path="dealers" element={<DealershipsPage />} />
             <Route path="dealers/:slug" element={<DealershipPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
