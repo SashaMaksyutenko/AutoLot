@@ -69,6 +69,8 @@ public static class DependencyInjection
         services.AddScoped<IListingService, ListingService>();
         services.AddScoped<IModerationService, ModerationService>();
         services.AddScoped<IListingQuestionService, ListingQuestionService>();
+        services.AddScoped<IListingReportService, ListingReportService>();
+        services.AddScoped<IDataSeeder, ModerationSeeder>();
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IDealershipService, DealershipService>();
         services.AddScoped<IFavoriteService, FavoriteService>();

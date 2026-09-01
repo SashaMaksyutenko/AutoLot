@@ -1,0 +1,13 @@
+{
+  "$comment": "Назви значень перелічень модерації. Самі значення живуть у коді (AutoLot.Domain.Enums), тут лише переклади. Порядок елементів у масиві стає порядком у випадаючому списку, тож найчастіші причини йдуть першими, а «інше» — останнім.",
+  "enums": {
+    "ListingReportReason": [
+      { "value": "Fraud", "names": { "uk": "Схоже на шахрайство", "en": "Looks like a scam" } },
+      { "value": "WrongInformation", "names": { "uk": "Недостовірні дані про авто", "en": "Inaccurate car details" } },
+      { "value": "AlreadySold", "names": { "uk": "Авто вже продано", "en": "Already sold" } },
+      { "value": "Duplicate", "names": { "uk": "Повтор іншого оголошення", "en": "Duplicate listing" } },
+      { "value": "Offensive", "names": { "uk": "Образливий вміст або реклама", "en": "Offensive content or spam" } },
+      { "value": "Other", "names": { "uk": "Інше", "en": "Something else" } }
+    ]
+  }
+}

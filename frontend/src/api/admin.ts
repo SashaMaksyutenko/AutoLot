@@ -15,6 +15,8 @@ export interface PlatformStats {
   bannedUsers: number
   activeListings: number
   pendingModeration: number
+  /** Скарги, що чекають розгляду. Черга окрема від модерації. */
+  pendingReports: number
   activeAuctions: number
   dealerships: number
   unverifiedDealerships: number

@@ -169,6 +169,9 @@ internal sealed partial class AdminService(
             await dbContext.Listings.CountAsync(
                 listing => listing.Status == ListingStatus.PendingModeration,
                 cancellationToken),
+            await dbContext.ListingReports.CountAsync(
+                report => report.Status == ListingReportStatus.Pending,
+                cancellationToken),
             await dbContext.Auctions.CountAsync(
                 auction => auction.Status == AuctionStatus.Active,
                 cancellationToken),

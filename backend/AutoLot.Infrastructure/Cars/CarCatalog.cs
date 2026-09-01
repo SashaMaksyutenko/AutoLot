@@ -16,24 +16,24 @@ internal sealed class CarCatalog(AutoLotDbContext dbContext, ICurrentLanguage la
 
         // Усіх значень тут менше сотні на дві мови, тож тягнемо одним запитом
         // і розкладаємо в пам'яті — це дешевше за п'ять окремих звернень.
-        var rows = await dbContext.EnumTranslations
-            .AsNoTracking()
-            .Where(translation => translation.Language == code
-                || translation.Language == LanguageCodes.Default)
-            .Select(translation => new TranslationRow(
-                translation.EnumName,
-                translation.Value,
-                translation.Language,
-                translation.Name,
-                translation.SortOrder))
-            .ToListAsync(cancellationToken);
+        var rows = await EnumTranslationLookup.LoadAsync(
+            dbContext,
+            [
+                nameof(BodyType),
+                nameof(FuelType),
+                nameof(TransmissionType),
+                nameof(DrivetrainType),
+                nameof(CarColor),
+            ],
+            code,
+            cancellationToken);
 
         return new CarAttributes(
-            Pick(rows, nameof(BodyType), code),
-            Pick(rows, nameof(FuelType), code),
-            Pick(rows, nameof(TransmissionType), code),
-            Pick(rows, nameof(DrivetrainType), code),
-            Pick(rows, nameof(CarColor), code));
+            EnumTranslationLookup.Pick(rows, nameof(BodyType), code),
+            EnumTranslationLookup.Pick(rows, nameof(FuelType), code),
+            EnumTranslationLookup.Pick(rows, nameof(TransmissionType), code),
+            EnumTranslationLookup.Pick(rows, nameof(DrivetrainType), code),
+            EnumTranslationLookup.Pick(rows, nameof(CarColor), code));
     }
 
     public async Task<IReadOnlyList<MakeItem>> GetMakesAsync(
@@ -118,32 +118,4 @@ internal sealed class CarCatalog(AutoLotDbContext dbContext, ICurrentLanguage la
                     [.. group.Select(feature => new FeatureItem(feature.Id, feature.Code, feature.Name))])),
         ];
     }
-
-    /// <summary>
-    /// Вибирає значення одного перелічення потрібною мовою. Якщо перекладу
-    /// немає, лишається той, що знайшовся — тобто українська.
-    /// </summary>
-    private static IReadOnlyList<LookupItem> Pick(
-        List<TranslationRow> rows,
-        string enumName,
-        string language)
-    {
-        return
-        [
-            .. rows
-                .Where(row => row.EnumName == enumName)
-                .GroupBy(row => row.Value)
-                .Select(group => group.FirstOrDefault(row => row.Language == language) ?? group.First())
-                .OrderBy(row => row.SortOrder)
-                .ThenBy(row => row.Name, StringComparer.CurrentCulture)
-                .Select(row => new LookupItem(row.Value, row.Name)),
-        ];
-    }
-
-    private sealed record TranslationRow(
-        string EnumName,
-        string Value,
-        string Language,
-        string Name,
-        int SortOrder);
 }

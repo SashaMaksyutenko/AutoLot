@@ -30,6 +30,8 @@ internal sealed class DomainExceptionHandler(IProblemDetailsService problemDetai
         {
             ListingNotFoundException => (StatusCodes.Status404NotFound, "Оголошення не знайдено"),
             QuestionNotFoundException => (StatusCodes.Status404NotFound, "Питання не знайдено"),
+            ReportNotFoundException => (StatusCodes.Status404NotFound, "Скаргу не знайдено"),
+            ReportNotAllowedException => (StatusCodes.Status403Forbidden, "Скаржитися не можна"),
             ListingAccessException => (StatusCodes.Status403Forbidden, "Немає доступу"),
             DealershipAccessException => (StatusCodes.Status403Forbidden, "Немає доступу"),
             DealershipNotFoundException => (StatusCodes.Status404NotFound, "Салон не знайдено"),

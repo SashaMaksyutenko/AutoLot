@@ -28,6 +28,7 @@ export function AdminLayout() {
       <nav className="card grid gap-0.5 self-start p-2 lg:sticky lg:top-[74px]">
         <Item to="/admin" label="Огляд" end />
         {isModerator && <Item to="/admin/queue" label="Черга модерації" />}
+        {isModerator && <Item to="/admin/reports" label="Скарги" />}
         {isAdmin && <Item to="/admin/users" label="Користувачі" />}
       </nav>
 

@@ -48,6 +48,12 @@ export function AdminOverviewPage() {
           hint="Що більше, то довша черга"
           urgent={data.pendingModeration > 0}
         />
+        <Tile
+          label="Скарги на розгляді"
+          value={data.pendingReports}
+          hint="Опубліковане, на що поскаржилися"
+          urgent={data.pendingReports > 0}
+        />
         <Tile label="Активні оголошення" value={data.activeListings} />
         <Tile label="Активні торги" value={data.activeAuctions} />
         <Tile label="Користувачі" value={data.totalUsers} />

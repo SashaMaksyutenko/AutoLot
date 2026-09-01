@@ -8,6 +8,7 @@ import { AdminLayout } from './pages/admin/AdminLayout'
 import { AdminOverviewPage } from './pages/admin/AdminOverviewPage'
 import { AdminUsersPage } from './pages/admin/AdminUsersPage'
 import { ModerationQueuePage } from './pages/admin/ModerationQueuePage'
+import { ReportQueuePage } from './pages/admin/ReportQueuePage'
 import { DealershipPage } from './pages/DealershipPage'
 import { DealershipsPage } from './pages/DealershipsPage'
 import { ConfirmEmailPage } from './pages/ConfirmEmailPage'
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<AdminOverviewPage />} />
               <Route path="queue" element={<ModerationQueuePage />} />
+              <Route path="reports" element={<ReportQueuePage />} />
               <Route path="users" element={<AdminUsersPage />} />
             </Route>
           </Route>

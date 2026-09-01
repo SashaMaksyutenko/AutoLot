@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Domain.Common;
 using AutoLot.Domain.Geo;
@@ -21,10 +20,6 @@ public sealed partial class GeographySeeder(
     private const string ResourceName = "AutoLot.Infrastructure.Persistence.SeedData.geography.json";
     private const string CountriesResourceName = "AutoLot.Infrastructure.Persistence.SeedData.countries.json";
 
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-    };
 
     /// <summary>Географія не залежить ні від чого, тож іде першою.</summary>
     public int Order => 1;
@@ -137,7 +132,7 @@ public sealed partial class GeographySeeder(
     /// </summary>
     private async Task SeedCountriesAsync(CancellationToken cancellationToken)
     {
-        var document = await ReadAsync<CountriesSeedDocument>(CountriesResourceName, cancellationToken);
+        var document = await SeedResource.ReadAsync<CountriesSeedDocument>(CountriesResourceName, cancellationToken);
 
         var countries = await dbContext.Countries
             .Include(country => country.Translations)
@@ -158,20 +153,8 @@ public sealed partial class GeographySeeder(
     }
 
     private static Task<GeographySeedDocument> ReadDocumentAsync(CancellationToken cancellationToken) =>
-        ReadAsync<GeographySeedDocument>(ResourceName, cancellationToken);
+        SeedResource.ReadAsync<GeographySeedDocument>(ResourceName, cancellationToken);
 
-    private static async Task<TDocument> ReadAsync<TDocument>(
-        string resourceName,
-        CancellationToken cancellationToken)
-        where TDocument : new()
-    {
-        await using var stream = typeof(GeographySeeder).Assembly.GetManifestResourceStream(resourceName)
-            ?? throw new InvalidOperationException(
-                $"Вбудований ресурс '{resourceName}' не знайдено. Перевірте, що файл додано як EmbeddedResource.");
-
-        return await JsonSerializer.DeserializeAsync<TDocument>(stream, SerializerOptions, cancellationToken)
-            ?? new TDocument();
-    }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Країн у довіднику: {Countries}")]
     private static partial void LogCountriesSeeded(ILogger logger, int countries);

@@ -46,6 +46,8 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
 
     public DbSet<ListingQuestion> ListingQuestions => Set<ListingQuestion>();
 
+    public DbSet<ListingReport> ListingReports => Set<ListingReport>();
+
     public DbSet<Conversation> Conversations => Set<Conversation>();
 
     public DbSet<Message> Messages => Set<Message>();

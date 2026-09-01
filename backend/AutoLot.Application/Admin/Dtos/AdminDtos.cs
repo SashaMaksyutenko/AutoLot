@@ -43,6 +43,9 @@ public sealed record PlatformStats(
     int BannedUsers,
     int ActiveListings,
     int PendingModeration,
+
+    /// <summary>Скарги, що чекають розгляду. Черга окрема від модерації.</summary>
+    int PendingReports,
     int ActiveAuctions,
     int Dealerships,
     int UnverifiedDealerships);

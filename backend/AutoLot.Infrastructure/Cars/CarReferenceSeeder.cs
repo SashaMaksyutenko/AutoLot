@@ -1,7 +1,5 @@
-using System.Text.Json;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Domain.Cars;
-using AutoLot.Domain.Common;
 using AutoLot.Domain.Enums;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -22,10 +20,6 @@ public sealed partial class CarReferenceSeeder(
     private const string MakesResource = "AutoLot.Infrastructure.Persistence.SeedData.car-makes.json";
     private const string FeaturesResource = "AutoLot.Infrastructure.Persistence.SeedData.car-features.json";
 
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-    };
 
     /// <summary>Після географії — залежності між ними немає, порядок лише для передбачуваності логів.</summary>
     public int Order => 3;
@@ -44,7 +38,7 @@ public sealed partial class CarReferenceSeeder(
     /// </summary>
     private async Task SeedFeaturesAsync(CancellationToken cancellationToken)
     {
-        var document = await ReadAsync<CarFeaturesSeedDocument>(FeaturesResource, cancellationToken);
+        var document = await SeedResource.ReadAsync<CarFeaturesSeedDocument>(FeaturesResource, cancellationToken);
 
         var features = await dbContext.Features
             .Include(feature => feature.Translations)
@@ -74,51 +68,14 @@ public sealed partial class CarReferenceSeeder(
 
     private async Task SeedAttributesAsync(CancellationToken cancellationToken)
     {
-        var document = await ReadAsync<CarAttributesSeedDocument>(AttributesResource, cancellationToken);
+        var document = await SeedResource.ReadAsync<CarAttributesSeedDocument>(AttributesResource, cancellationToken);
 
-        var existing = await dbContext.EnumTranslations
-            .ToDictionaryAsync(
-                translation => (translation.EnumName, translation.Value, translation.Language),
-                cancellationToken);
-
-        foreach (var (enumName, values) in document.Enums)
-        {
-            for (var sortOrder = 0; sortOrder < values.Count; sortOrder++)
-            {
-                // Порядок у файлі і є порядком у списку: перший кузов у JSON
-                // буде першим у випадаючому списку.
-                var value = values[sortOrder].Value;
-
-                foreach (var (rawLanguage, name) in values[sortOrder].Names)
-                {
-                    var languageCode = LanguageCodes.Normalize(rawLanguage);
-                    var key = (enumName, value, languageCode);
-
-                    if (!existing.TryGetValue(key, out var translation))
-                    {
-                        translation = new EnumTranslation
-                        {
-                            EnumName = enumName,
-                            Value = value,
-                            Language = languageCode,
-                        };
-
-                        dbContext.EnumTranslations.Add(translation);
-                        existing[key] = translation;
-                    }
-
-                    translation.Name = name;
-                    translation.SortOrder = sortOrder;
-                }
-            }
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await EnumTranslationSeeding.ApplyAsync(dbContext, document.Enums, cancellationToken);
     }
 
     private async Task SeedMakesAsync(CancellationToken cancellationToken)
     {
-        var document = await ReadAsync<CarMakesSeedDocument>(MakesResource, cancellationToken);
+        var document = await SeedResource.ReadAsync<CarMakesSeedDocument>(MakesResource, cancellationToken);
 
         var makes = await dbContext.Makes.ToDictionaryAsync(make => make.Slug, cancellationToken);
         var models = await dbContext.Models.ToDictionaryAsync(model => model.Slug, cancellationToken);
@@ -174,18 +131,6 @@ public sealed partial class CarReferenceSeeder(
         LogSeeded(logger, makes.Count, models.Count, generations.Count, changed);
     }
 
-    private static async Task<TDocument> ReadAsync<TDocument>(
-        string resourceName,
-        CancellationToken cancellationToken)
-        where TDocument : new()
-    {
-        await using var stream = typeof(CarReferenceSeeder).Assembly.GetManifestResourceStream(resourceName)
-            ?? throw new InvalidOperationException(
-                $"Вбудований ресурс '{resourceName}' не знайдено. Перевірте, що файл додано як EmbeddedResource.");
-
-        return await JsonSerializer.DeserializeAsync<TDocument>(stream, SerializerOptions, cancellationToken)
-            ?? new TDocument();
-    }
 
     [LoggerMessage(
         Level = LogLevel.Information,

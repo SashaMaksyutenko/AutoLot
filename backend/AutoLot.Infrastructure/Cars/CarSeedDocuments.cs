@@ -1,21 +1,13 @@
+using AutoLot.Infrastructure.Persistence;
+
 namespace AutoLot.Infrastructure.Cars;
 
 /// <summary>
-/// Форма файла car-attributes.json. Значення кожного перелічення — масив,
-/// а не об'єкт: порядок елементів масиву визначений, і саме він стає порядком
-/// у випадаючому списку.
+/// Форма файла car-attributes.json. Власних полів не має: файл нічим не
+/// відрізняється від будь-якого іншого переліку назв перелічень. Окремий тип
+/// лишається заради назви — вона каже, який саме файл читають.
 /// </summary>
-internal sealed record CarAttributesSeedDocument
-{
-    public Dictionary<string, IReadOnlyList<EnumValueSeed>> Enums { get; init; } = [];
-}
-
-internal sealed record EnumValueSeed
-{
-    public string Value { get; init; } = string.Empty;
-
-    public Dictionary<string, string> Names { get; init; } = [];
-}
+internal sealed record CarAttributesSeedDocument : EnumSeedDocument;
 
 /// <summary>Форма файла car-makes.json.</summary>
 internal sealed record CarMakesSeedDocument

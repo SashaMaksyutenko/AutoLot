@@ -111,6 +111,13 @@ public sealed class Listing : AuditableEntity
     public bool CountsTowardsLimit =>
         Status is ListingStatus.Active or ListingStatus.PendingModeration;
 
+    /// <summary>
+    /// Чи бачить оголошення сторонній. Продане лишається на видноті навмисно:
+    /// за ним ходять із закладок і посилань, а ціна проданого — найкорисніше,
+    /// що є на майданчику.
+    /// </summary>
+    public bool IsPublic => Status is ListingStatus.Active or ListingStatus.Sold;
+
     /// <summary>Автор подає чернетку або виправлене оголошення на розгляд.</summary>
     public void SubmitForModeration()
     {
@@ -148,6 +155,31 @@ public sealed class Listing : AuditableEntity
         if (Status is not ListingStatus.PendingModeration)
         {
             throw new DomainRuleException("Відхилити можна лише оголошення, подане на модерацію.");
+        }
+
+        Status = ListingStatus.Rejected;
+        RejectionReason = reason;
+    }
+
+    /// <summary>
+    /// Модератор знімає з публікації оголошення, на яке надійшла слушна скарга.
+    /// </summary>
+    /// <remarks>
+    /// Чому окремий метод, а не <see cref="Reject"/>: той працює лише з черги
+    /// модерації, і не випадково — «відхилити» означає «не пропустити», а тут
+    /// оголошення вже пропустили й люди його бачили.
+    ///
+    /// Стан обираємо той самий, <see cref="ListingStatus.Rejected"/>, і це
+    /// свідомо: він єдиний, у якому автор може виправити оголошення й подати
+    /// знову. Знята з публікації неправда про пробіг має вести саме до цього,
+    /// а не до архіву, звідки виходять лише через нову чернетку.
+    /// </remarks>
+    public void TakeDown(string reason)
+    {
+        if (!IsPublic)
+        {
+            throw new DomainRuleException(
+                "Зняти з публікації можна лише оголошення, яке в ній є.");
         }
 
         Status = ListingStatus.Rejected;

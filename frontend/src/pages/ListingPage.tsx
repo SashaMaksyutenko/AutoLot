@@ -12,6 +12,7 @@ import { VerifiedMark } from '../components/catalog/ListingCard'
 import { AuctionPanel } from '../components/listing/AuctionPanel'
 import { Gallery } from '../components/listing/Gallery'
 import { Questions } from '../components/listing/Questions'
+import { ReportButton } from '../components/listing/ReportButton'
 import { formatCount, formatMileage, formatPrice, plural } from '../format'
 
 export function ListingPage() {
@@ -248,6 +249,9 @@ function Loaded({ listing }: { listing: ListingDetails }) {
                 {listing.location.regionName}
               </div>
             )}
+
+            {/* На власний лот скаржитися нема сенсу — сервер таку скаргу й не прийме. */}
+            {auth.user?.id !== listing.seller.id && <ReportButton listingId={listing.id} />}
           </div>
 
           <div className="px-1 text-[13px] text-ink-3">
