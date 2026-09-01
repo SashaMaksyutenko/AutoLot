@@ -13,6 +13,7 @@ internal sealed class ListingService(
     AutoLotDbContext dbContext,
     IGeoCatalog geoCatalog,
     IExchangeRateProvider exchangeRates,
+    IDateTimeProvider clock,
     ListingMapper mapper,
     ListingAccess access) : IListingService
 {
@@ -208,7 +209,7 @@ internal sealed class ListingService(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task MarkSoldAsync(
+    public async Task<IReadOnlyList<BuyerCandidate>> GetBuyerCandidatesAsync(
         long listingId,
         long actorId,
         CancellationToken cancellationToken = default)
@@ -216,9 +217,75 @@ internal sealed class ListingService(
         var listing = await LoadForWriteAsync(listingId, cancellationToken);
         await EnsureCanManageAsync(listing, actorId, cancellationToken);
 
-        listing.MarkSold();
+        return await CandidatesAsync(listing, cancellationToken);
+    }
+
+    public async Task MarkSoldAsync(
+        long listingId,
+        long actorId,
+        long? buyerId,
+        CancellationToken cancellationToken = default)
+    {
+        var listing = await LoadForWriteAsync(listingId, cancellationToken);
+        await EnsureCanManageAsync(listing, actorId, cancellationToken);
+
+        if (buyerId is { } wanted)
+        {
+            // Покупця беремо лише зі списку тих, з ким справді була справа.
+            // Інакше продавець міг би приписати угоду будь-кому — а з появою
+            // відгуків це означало б право написати відгук незнайомцю.
+            var candidates = await CandidatesAsync(listing, cancellationToken);
+
+            if (!candidates.Any(candidate => candidate.Id == wanted))
+            {
+                throw new ListingDataException(
+                    "Ця людина не листувалася про це авто, тож покупцем бути не може.");
+            }
+        }
+
+        listing.MarkSold(clock.UtcNow, buyerId);
 
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Хто міг купити. Для аукціонного лота відповідь одна — переможець:
+    /// домовитися після торгів з кимось іншим означало б обійти самі торги.
+    /// Для звичайного — усі, хто писав про це авто.
+    /// </summary>
+    private async Task<IReadOnlyList<BuyerCandidate>> CandidatesAsync(
+        Listing listing,
+        CancellationToken cancellationToken)
+    {
+        var winnerId = await dbContext.Auctions
+            .AsNoTracking()
+            .Where(auction => auction.ListingId == listing.Id)
+            .Select(auction => auction.WinnerId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (winnerId is { } winner)
+        {
+            var name = await dbContext.Users
+                .AsNoTracking()
+                .Where(user => user.Id == winner)
+                .Select(user => user.DisplayName)
+                .FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
+
+            return [new BuyerCandidate(winner, name, listing.CreatedAt, IsAuctionWinner: true)];
+        }
+
+        return await dbContext.Conversations
+            .AsNoTracking()
+            .Where(conversation => conversation.ListingId == listing.Id)
+            // Найсвіжіше листування зверху: з тим, хто писав учора, угода
+            // ймовірніша, ніж із тим, хто питав місяць тому.
+            .OrderByDescending(conversation => conversation.LastMessageAt)
+            .Select(conversation => new BuyerCandidate(
+                conversation.BuyerId,
+                conversation.Buyer.DisplayName,
+                conversation.LastMessageAt,
+                false))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task ArchiveAsync(

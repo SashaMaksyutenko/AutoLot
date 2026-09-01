@@ -97,10 +97,41 @@ public class ListingLifecycleTests
     [Fact]
     public void Only_an_active_listing_can_be_marked_sold()
     {
-        Listing(ListingStatus.Active).MarkSold();
+        Listing(ListingStatus.Active).MarkSold(Now);
 
-        Assert.Throws<DomainRuleException>(Listing(ListingStatus.Draft).MarkSold);
-        Assert.Throws<DomainRuleException>(Listing(ListingStatus.PendingModeration).MarkSold);
+        Assert.Throws<DomainRuleException>(() => Listing(ListingStatus.Draft).MarkSold(Now));
+        Assert.Throws<DomainRuleException>(() => Listing(ListingStatus.PendingModeration).MarkSold(Now));
+    }
+
+    [Fact]
+    public void A_sale_remembers_the_buyer_and_the_moment()
+    {
+        var listing = Listing(ListingStatus.Active);
+
+        listing.MarkSold(Now, buyerId: 7);
+
+        Assert.Equal(7, listing.BuyerId);
+        Assert.Equal(Now, listing.SoldAt);
+    }
+
+    [Fact]
+    public void A_sale_outside_the_platform_has_no_buyer()
+    {
+        var listing = Listing(ListingStatus.Active);
+
+        // Змушувати вказувати покупця означало б отримати вигаданих.
+        listing.MarkSold(Now);
+
+        Assert.Null(listing.BuyerId);
+        Assert.Equal(ListingStatus.Sold, listing.Status);
+    }
+
+    [Fact]
+    public void The_seller_cannot_be_the_buyer()
+    {
+        var listing = Listing(ListingStatus.Active);
+
+        Assert.Throws<DomainRuleException>(() => listing.MarkSold(Now, listing.SellerId));
     }
 
     [Fact]

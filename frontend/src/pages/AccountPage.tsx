@@ -6,6 +6,7 @@ import { ApiError } from '../api/client'
 import { fetchMyDealerships } from '../api/dealership'
 import { useAuth } from '../auth/useAuth'
 import { openSignIn } from '../auth/signInPrompt'
+import { MyListings } from '../components/account/MyListings'
 import { VerifiedMark } from '../components/catalog/ListingCard'
 
 /**
@@ -41,6 +42,7 @@ export function AccountPage() {
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="grid gap-4">
           <ProfileForm profile={auth.user} onSaved={auth.refreshProfile} />
+          <MyListings />
         </div>
 
         <div className="grid gap-4">

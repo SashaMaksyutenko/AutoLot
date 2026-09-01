@@ -41,7 +41,25 @@ public interface IListingService
         long actorId,
         CancellationToken cancellationToken = default);
 
-    Task MarkSoldAsync(long listingId, long actorId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Хто міг купити це авто — ті, хто писав продавцю про нього. Список
+    /// потрібен формі «продано»: змушувати згадувати ім'я вручну означало б
+    /// отримати помилки в іменах або порожнє поле.
+    /// </summary>
+    Task<IReadOnlyList<BuyerCandidate>> GetBuyerCandidatesAsync(
+        long listingId,
+        long actorId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Позначає авто проданим. Покупець не обов'язковий: продати могли й поза
+    /// майданчиком.
+    /// </summary>
+    Task MarkSoldAsync(
+        long listingId,
+        long actorId,
+        long? buyerId,
+        CancellationToken cancellationToken = default);
 
     Task ArchiveAsync(long listingId, long actorId, CancellationToken cancellationToken = default);
 

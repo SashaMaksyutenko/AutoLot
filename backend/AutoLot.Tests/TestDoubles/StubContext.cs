@@ -1,5 +1,6 @@
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Domain.Common;
+using AutoLot.Domain.Enums;
 
 namespace AutoLot.Tests.TestDoubles;
 
@@ -23,4 +24,15 @@ internal sealed class StubCurrentUser(long? id = null) : ICurrentUser
     public bool IsAuthenticated => id is not null;
 
     public bool IsInRole(string role) => false;
+}
+
+/// <summary>
+/// Курс валюти зі сталим значенням. Тестам угоди він потрібен лише тому, що
+/// його вимагає конструктор сервісу: жоден із них ціну не перераховує.
+/// </summary>
+internal sealed class StubExchangeRates(decimal rate = 42m) : IExchangeRateProvider
+{
+    public Task<decimal> GetRateToUahAsync(
+        Currency currency,
+        CancellationToken cancellationToken = default) => Task.FromResult(rate);
 }

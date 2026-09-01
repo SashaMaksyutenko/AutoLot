@@ -107,7 +107,8 @@ internal sealed partial class AuctionCloser(
 
         if (auction.WinnerId is not null)
         {
-            listing.MarkSold();
+            // Покупця не питаємо — його визначили торги.
+            listing.MarkSold(clock.UtcNow, auction.WinnerId);
         }
         else
         {

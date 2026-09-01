@@ -109,16 +109,41 @@ public sealed class ListingsController(
         return NoContent();
     }
 
-    [HttpPost("{listingId:long}/sold")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> MarkSold(long listingId, CancellationToken cancellationToken)
+    /// <summary>Кому можна приписати угоду — ті, хто писав про це авто.</summary>
+    [HttpGet("{listingId:long}/buyer-candidates")]
+    [ProducesResponseType<IReadOnlyList<BuyerCandidate>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetBuyerCandidates(
+        long listingId,
+        CancellationToken cancellationToken)
     {
         if (currentUser.Id is not { } actorId)
         {
             return Unauthorized();
         }
 
-        await listingService.MarkSoldAsync(listingId, actorId, cancellationToken);
+        return Ok(await listingService.GetBuyerCandidatesAsync(listingId, actorId, cancellationToken));
+    }
+
+    [HttpPost("{listingId:long}/sold")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> MarkSold(
+        long listingId,
+        MarkSoldRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (currentUser.Id is not { } actorId)
+        {
+            return Unauthorized();
+        }
+
+        await listingService.MarkSoldAsync(listingId, actorId, request.BuyerId, cancellationToken);
 
         return NoContent();
     }

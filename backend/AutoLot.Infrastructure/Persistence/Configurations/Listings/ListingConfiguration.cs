@@ -44,6 +44,13 @@ internal sealed class ListingConfiguration : IEntityTypeConfiguration<Listing>
             .HasForeignKey(listing => listing.SellerId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Покупця не стирають каскадом: акаунт можуть видалити, а угода —
+        // факт, і відгук про неї має лишитися прив'язаним хоч до чогось.
+        builder.HasOne(listing => listing.Buyer)
+            .WithMany()
+            .HasForeignKey(listing => listing.BuyerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(listing => listing.City)
             .WithMany()
             .HasForeignKey(listing => listing.CityId)
