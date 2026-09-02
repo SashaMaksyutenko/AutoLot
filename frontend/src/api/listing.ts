@@ -23,6 +23,8 @@ export interface UserLocation {
   cityDistrictName: string | null
 }
 
+import type { RatingSummary } from './reviews'
+
 export interface SellerSummary {
   id: number
   displayName: string
@@ -30,6 +32,9 @@ export interface SellerSummary {
 
   /** Гість чужого номера не бачить: сервер його просто не віддає. */
   phoneNumber: string | null
+
+  /** Репутація продавця. Потрібна саме тут — коли покупець вирішує, чи писати. */
+  rating: RatingSummary
 }
 
 /**

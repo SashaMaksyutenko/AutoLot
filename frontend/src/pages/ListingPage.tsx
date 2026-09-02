@@ -11,7 +11,9 @@ import { FavoriteButton } from '../components/FavoriteButton'
 import { VerifiedMark } from '../components/catalog/ListingCard'
 import { AuctionPanel } from '../components/listing/AuctionPanel'
 import { Gallery } from '../components/listing/Gallery'
+import { DealReviews } from '../components/listing/DealReviews'
 import { Questions } from '../components/listing/Questions'
+import { RatingLine } from '../components/listing/Stars'
 import { ReportButton } from '../components/listing/ReportButton'
 import { formatCount, formatMileage, formatPrice, plural } from '../format'
 
@@ -157,6 +159,9 @@ function Loaded({ listing }: { listing: ListingDetails }) {
             </p>
           </Panel>
 
+          {/* Відгуки вище за питання: під проданим лотом важить угода, а не «чи бита». */}
+          <DealReviews listingId={listing.id} />
+
           <Questions listingId={listing.id} isSeller={auth.user?.id === listing.seller.id} />
         </div>
 
@@ -237,6 +242,13 @@ function Loaded({ listing }: { listing: ListingDetails }) {
                 <div className="text-[13px] text-ink-2">Приватна особа</div>
               </div>
             )}
+
+            <div>
+              <RatingLine
+                count={listing.seller.rating.count}
+                average={listing.seller.rating.average}
+              />
+            </div>
 
             {listing.location && (
               <div className="border-t border-line pt-3 text-[13px] text-ink-2">

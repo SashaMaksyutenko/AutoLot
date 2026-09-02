@@ -70,6 +70,7 @@ public static class DependencyInjection
         services.AddScoped<IModerationService, ModerationService>();
         services.AddScoped<IListingQuestionService, ListingQuestionService>();
         services.AddScoped<IListingReportService, ListingReportService>();
+        services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<IDataSeeder, ModerationSeeder>();
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IDealershipService, DealershipService>();
