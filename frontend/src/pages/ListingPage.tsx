@@ -243,12 +243,20 @@ function Loaded({ listing }: { listing: ListingDetails }) {
               </div>
             )}
 
-            <div>
+            {/*
+              Рейтинг веде на профіль. Саме він — вхід у репутацію: побачивши
+              «4,7 (12)», покупець захоче прочитати ті дванадцять відгуків, і
+              йому має бути куди натиснути.
+            */}
+            <Link
+              to={`/users/${listing.seller.id}`}
+              className="justify-self-start hover:text-accent"
+            >
               <RatingLine
                 count={listing.seller.rating.count}
                 average={listing.seller.rating.average}
               />
-            </div>
+            </Link>
 
             {listing.location && (
               <div className="border-t border-line pt-3 text-[13px] text-ink-2">

@@ -10,6 +10,7 @@ import {
 import { ApiError } from '../../api/client'
 import type { ListingSummary } from '../../api/catalog'
 import { formatMileage, formatPrice, plural } from '../../format'
+import { ReviewPrompt } from './ReviewPrompt'
 import { SoldForm } from './SoldForm'
 
 /**
@@ -161,6 +162,9 @@ function ListingRow({ listing }: { listing: ListingSummary }) {
           )}
         </div>
       </div>
+
+      {/* Продали — саме час оцінити покупця, поки угода свіжа. */}
+      {listing.status === 'Sold' && <ReviewPrompt listingId={listing.id} />}
 
       {listing.status === 'Rejected' && (
         <p className="rounded-control bg-surface-2 px-2.5 py-2 text-[12.5px] text-ink-2">

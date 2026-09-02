@@ -93,6 +93,20 @@ public sealed class ListingsController(
         return Ok(await listingService.GetOwnAsync(sellerId, status, cancellationToken));
     }
 
+    /// <summary>Що я купив на майданчику.</summary>
+    [HttpGet("purchased")]
+    [ProducesResponseType<IReadOnlyList<ListingSummary>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetPurchased(CancellationToken cancellationToken)
+    {
+        if (currentUser.Id is not { } buyerId)
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await listingService.GetPurchasedAsync(buyerId, cancellationToken));
+    }
+
     /// <summary>Подає оголошення на розгляд модератора.</summary>
     [HttpPost("{listingId:long}/submit")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

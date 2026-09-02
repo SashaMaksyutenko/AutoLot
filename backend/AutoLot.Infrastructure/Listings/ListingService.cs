@@ -209,6 +209,20 @@ internal sealed class ListingService(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<ListingSummary>> GetPurchasedAsync(
+        long buyerId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Listings
+            .AsNoTracking()
+            .Where(listing => listing.BuyerId == buyerId)
+            // Найсвіжіша покупка зверху: саме про неї згадають найшвидше,
+            // і саме про неї писатимуть відгук.
+            .OrderByDescending(listing => listing.SoldAt);
+
+        return await mapper.ToSummariesAsync(query, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<BuyerCandidate>> GetBuyerCandidatesAsync(
         long listingId,
         long actorId,

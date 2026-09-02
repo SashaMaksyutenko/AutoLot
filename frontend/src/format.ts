@@ -40,6 +40,19 @@ export function formatDateTime(iso: string): string {
   return dateTime.format(new Date(iso))
 }
 
+const monthYear = new Intl.DateTimeFormat('uk-UA', {
+  month: 'long',
+  year: 'numeric',
+})
+
+/**
+ * «вересень 2026» — для «на AutoLot із…». Точний день там зайвий: важить
+ * порядок величини, а не дата.
+ */
+export function formatMonthYear(iso: string): string {
+  return monthYear.format(new Date(iso))
+}
+
 /**
  * Українська форма множини: 1 оголошення, 2 оголошення, 5 оголошень.
  * Без цього видача писала б «знайдено 5 оголошення».

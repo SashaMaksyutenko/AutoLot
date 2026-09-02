@@ -27,6 +27,11 @@ export function fetchMyListings(
   return apiGet<ListingSummary[]>(`/api/listings/mine${query}`, signal)
 }
 
+/** Що я купив. Дзеркало «моїх оголошень» для другого боку угоди. */
+export function fetchPurchases(signal?: AbortSignal): Promise<ListingSummary[]> {
+  return apiGet<ListingSummary[]>(`/api/listings/purchased`, signal)
+}
+
 export function fetchBuyerCandidates(
   listingId: number,
   signal?: AbortSignal,

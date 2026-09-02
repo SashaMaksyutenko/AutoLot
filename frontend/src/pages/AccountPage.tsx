@@ -7,6 +7,8 @@ import { fetchMyDealerships } from '../api/dealership'
 import { useAuth } from '../auth/useAuth'
 import { openSignIn } from '../auth/signInPrompt'
 import { MyListings } from '../components/account/MyListings'
+import { MyPurchases } from '../components/account/MyPurchases'
+import { MyReputation } from '../components/account/MyReputation'
 import { VerifiedMark } from '../components/catalog/ListingCard'
 
 /**
@@ -43,9 +45,11 @@ export function AccountPage() {
         <div className="grid gap-4">
           <ProfileForm profile={auth.user} onSaved={auth.refreshProfile} />
           <MyListings />
+          <MyPurchases />
         </div>
 
         <div className="grid gap-4">
+          <MyReputation userId={auth.user.id} />
           <AccessCard profile={auth.user} />
           <DealershipsCard />
         </div>

@@ -237,34 +237,13 @@ internal sealed class ListingMapper(
                 ?? feature.Code)
             .ToListAsync(cancellationToken);
     }
-/// <summary>
-    /// Рейтинг продавця одним запитом. Не через IReviewService: мапер
-    /// малює картку й не має тягти за собою ще один сервіс заради двох
-    /// чисел — а сервіс відгуків, своєю чергою, не має знати про картку.
+
+    /// <summary>
+    /// Рейтинг продавця. Через спільний <see cref="RatingQuery"/>, а не через
+    /// IReviewService: мапер малює картку й не має тягти за собою ще один
+    /// сервіс заради двох чисел — а сервіс відгуків, своєю чергою, не має
+    /// знати про картку.
     /// </summary>
-    private async Task<RatingSummary> RatingOfAsync(
-        long sellerId,
-        CancellationToken cancellationToken)
-    {
-        var stats = await dbContext.Reviews
-            .AsNoTracking()
-            .Where(review => review.SubjectId == sellerId)
-            .GroupBy(review => 1)
-            .Select(group => new
-            {
-                Count = group.Count(),
-                Sum = group.Sum(review => review.Rating),
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (stats is null || stats.Count == 0)
-        {
-            // Нуль відгуків — не нуль зірок.
-            return new RatingSummary(0, 0m);
-        }
-
-        return new RatingSummary(
-            stats.Count,
-            Math.Round((decimal)stats.Sum / stats.Count, 1, MidpointRounding.AwayFromZero));
-    }
+    private Task<RatingSummary> RatingOfAsync(long sellerId, CancellationToken cancellationToken) =>
+        RatingQuery.OfAsync(dbContext, sellerId, cancellationToken);
 }

@@ -216,6 +216,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAccountRecoveryService, AccountRecoveryService>();
         services.AddScoped<IUserProfileService, UserProfileService>();
+        services.AddScoped<IPublicProfileService, PublicProfileService>();
         services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<IDataSeeder, IdentitySeeder>();
 

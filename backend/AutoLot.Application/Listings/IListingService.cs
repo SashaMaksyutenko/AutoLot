@@ -36,6 +36,15 @@ public interface IListingService
         ListingStatus? status,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Що людина купила на майданчику. Дзеркало «моїх оголошень» для
+    /// другого боку угоди: без цього списку покупець не має де побачити
+    /// свою покупку — а отже, і де лишити відгук.
+    /// </summary>
+    Task<IReadOnlyList<ListingSummary>> GetPurchasedAsync(
+        long buyerId,
+        CancellationToken cancellationToken = default);
+
     Task SubmitForModerationAsync(
         long listingId,
         long actorId,

@@ -107,34 +107,10 @@ internal sealed class ReviewService(
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<RatingSummary> GetRatingAsync(
+    public Task<RatingSummary> GetRatingAsync(
         long userId,
-        CancellationToken cancellationToken = default)
-    {
-        // Рахуємо в базі одним запитом. Тягнути всі відгуки в пам'ять заради
-        // середнього — марна робота, яка зростає разом із репутацією.
-        var stats = await dbContext.Reviews
-            .AsNoTracking()
-            .Where(review => review.SubjectId == userId)
-            .GroupBy(review => 1)
-            .Select(group => new
-            {
-                Count = group.Count(),
-                Sum = group.Sum(review => review.Rating),
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (stats is null || stats.Count == 0)
-        {
-            // Нуль відгуків — це не нуль зірок. Клієнт має показати «без
-            // відгуків», а не «0,0».
-            return new RatingSummary(0, 0m);
-        }
-
-        var average = Math.Round((decimal)stats.Sum / stats.Count, 1, MidpointRounding.AwayFromZero);
-
-        return new RatingSummary(stats.Count, average);
-    }
+        CancellationToken cancellationToken = default) =>
+        RatingQuery.OfAsync(dbContext, userId, cancellationToken);
 
     /// <summary>
     /// З якого боку угоди ця людина — і, отже, про кого писатиме. <c>null</c>

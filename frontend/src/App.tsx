@@ -15,6 +15,7 @@ import { ConfirmEmailPage } from './pages/ConfirmEmailPage'
 import { FavoritesPage } from './pages/FavoritesPage'
 import { ListingPage } from './pages/ListingPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
+import { UserProfilePage } from './pages/UserProfilePage'
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="chat" element={<ChatPage />} />
             <Route path="dealers" element={<DealershipsPage />} />
             <Route path="dealers/:slug" element={<DealershipPage />} />
+            <Route path="users/:id" element={<UserProfilePage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
             <Route path="confirm-email" element={<ConfirmEmailPage />} />
 
