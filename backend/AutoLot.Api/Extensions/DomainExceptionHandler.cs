@@ -1,9 +1,11 @@
 using AutoLot.Application.Admin;
 using AutoLot.Application.Auctions;
+using AutoLot.Application.Billing;
 using AutoLot.Application.Chat;
 using AutoLot.Application.Dealers;
 using AutoLot.Application.Listings;
 using AutoLot.Application.Users;
+using AutoLot.Domain.Billing;
 using AutoLot.Domain.Common;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +35,12 @@ internal sealed class DomainExceptionHandler(IProblemDetailsService problemDetai
             ReportNotFoundException => (StatusCodes.Status404NotFound, "Скаргу не знайдено"),
             ReportNotAllowedException => (StatusCodes.Status403Forbidden, "Скаржитися не можна"),
             ReviewNotAllowedException => (StatusCodes.Status403Forbidden, "Відгук лишити не можна"),
+            PlanNotFoundException => (StatusCodes.Status404NotFound, "Тариф не знайдено"),
+            SubscriptionNotAllowedException => (StatusCodes.Status403Forbidden, "Оформити не можна"),
+
+            // 409, а не 400: запит правильний, просто коштів зараз бракує.
+            // Поповнити баланс — і той самий запит спрацює.
+            InsufficientFundsException => (StatusCodes.Status409Conflict, "Недостатньо коштів"),
             ListingAccessException => (StatusCodes.Status403Forbidden, "Немає доступу"),
             DealershipAccessException => (StatusCodes.Status403Forbidden, "Немає доступу"),
             DealershipNotFoundException => (StatusCodes.Status404NotFound, "Салон не знайдено"),

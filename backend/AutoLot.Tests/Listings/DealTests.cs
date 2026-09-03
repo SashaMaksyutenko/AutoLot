@@ -177,7 +177,8 @@ public class DealTests : IDisposable
             new StubExchangeRates(),
             new FixedClock(Now),
             new ListingMapper(context, language, new StubCurrentUser(SellerId), geo),
-            new ListingAccess(context));
+            new ListingAccess(context),
+            new StubListingAllowance());
     }
 
     private void StartConversation(long listing, long buyerId, DateTimeOffset? lastMessageAt = null)

@@ -191,7 +191,8 @@ public class PublicProfileTests : IDisposable
             new StubExchangeRates(),
             new FixedClock(Now),
             new ListingMapper(context, language, new StubCurrentUser(BuyerId), geo),
-            new ListingAccess(context));
+            new ListingAccess(context),
+            new StubListingAllowance());
     }
 
     private void SellTo(long listingId, long? buyerId, DateTimeOffset? soldAt = null)

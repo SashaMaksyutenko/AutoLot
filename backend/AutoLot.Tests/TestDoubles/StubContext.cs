@@ -1,3 +1,4 @@
+using AutoLot.Application.Billing;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Domain.Common;
 using AutoLot.Domain.Enums;
@@ -35,4 +36,15 @@ internal sealed class StubExchangeRates(decimal rate = 42m) : IExchangeRateProvi
     public Task<decimal> GetRateToUahAsync(
         Currency currency,
         CancellationToken cancellationToken = default) => Task.FromResult(rate);
+}
+
+/// <summary>
+/// Ліміт оголошень із наперед відомим значенням. null означає «без межі» —
+/// саме так відповідає найдорожчий тариф і дилерський акаунт.
+/// </summary>
+internal sealed class StubListingAllowance(int? limit = null) : IListingAllowance
+{
+    public Task<int?> GetListingLimitAsync(
+        long userId,
+        CancellationToken cancellationToken = default) => Task.FromResult(limit);
 }

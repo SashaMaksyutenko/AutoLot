@@ -1,5 +1,6 @@
 using AutoLot.Application.Admin;
 using AutoLot.Application.Auctions;
+using AutoLot.Application.Billing;
 using AutoLot.Application.Auth;
 using AutoLot.Application.Cars;
 using AutoLot.Application.Catalog;
@@ -16,6 +17,7 @@ using AutoLot.Infrastructure.Auctions;
 using AutoLot.Infrastructure.Cars;
 using AutoLot.Infrastructure.Catalog;
 using AutoLot.Infrastructure.Email;
+using AutoLot.Infrastructure.Billing;
 using AutoLot.Infrastructure.Chat;
 using AutoLot.Infrastructure.Dealers;
 using AutoLot.Infrastructure.Favorites;
@@ -71,6 +73,10 @@ public static class DependencyInjection
         services.AddScoped<IListingQuestionService, ListingQuestionService>();
         services.AddScoped<IListingReportService, ListingReportService>();
         services.AddScoped<IReviewService, ReviewService>();
+        services.AddScoped<BillingService>();
+        services.AddScoped<IBillingService>(provider => provider.GetRequiredService<BillingService>());
+        services.AddScoped<IListingAllowance>(provider => provider.GetRequiredService<BillingService>());
+        services.AddScoped<IDataSeeder, PlanSeeder>();
         services.AddScoped<IDataSeeder, ModerationSeeder>();
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IDealershipService, DealershipService>();

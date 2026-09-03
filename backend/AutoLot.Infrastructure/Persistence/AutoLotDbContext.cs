@@ -1,4 +1,5 @@
 using AutoLot.Domain.Auctions;
+using AutoLot.Domain.Billing;
 using AutoLot.Domain.Cars;
 using AutoLot.Domain.Chat;
 using AutoLot.Domain.Common;
@@ -57,6 +58,14 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
     public DbSet<Dealership> Dealerships => Set<Dealership>();
 
     public DbSet<DealershipMember> DealershipMembers => Set<DealershipMember>();
+
+    public DbSet<Wallet> Wallets => Set<Wallet>();
+
+    public DbSet<WalletTransaction> WalletTransactions => Set<WalletTransaction>();
+
+    public DbSet<Plan> Plans => Set<Plan>();
+
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
 
     public DbSet<Auction> Auctions => Set<Auction>();
 

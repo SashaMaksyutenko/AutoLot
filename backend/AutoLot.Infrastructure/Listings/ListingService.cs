@@ -1,3 +1,4 @@
+using AutoLot.Application.Billing;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Application.Geo;
 using AutoLot.Application.Listings;
@@ -15,10 +16,9 @@ internal sealed class ListingService(
     IExchangeRateProvider exchangeRates,
     IDateTimeProvider clock,
     ListingMapper mapper,
-    ListingAccess access) : IListingService
+    ListingAccess access,
+    IListingAllowance allowance) : IListingService
 {
-    /// <summary>Приватній особі — п'ять активних оголошень, дилеру — без ліміту (SPEC §3).</summary>
-    private const int PrivateSellerLimit = 5;
 
     public async Task<long> CreateAsync(
         long sellerId,
@@ -363,20 +363,19 @@ internal sealed class ListingService(
         CancellationToken cancellationToken,
         long? ignoreListingId = null)
     {
-        var isDealer = await dbContext.Users
-            .Where(user => user.Id == sellerId)
-            .Select(user => user.AccountType == AccountType.Dealer)
-            .FirstOrDefaultAsync(cancellationToken);
+        // Ліміт більше не константа: його дає чинний тарифний план. Порожня
+        // відповідь означає «без межі» — так відповідає і найдорожчий тариф,
+        // і дилерський акаунт.
+        var limit = await allowance.GetListingLimitAsync(sellerId, cancellationToken);
 
-        if (isDealer)
+        if (limit is not { } maximum)
         {
             return;
         }
 
         // Рахуємо лише ОСОБИСТІ оголошення. Салонні належать салону, і їх
-        // обмежуватиме тарифний план салону (пункт 13 плану) — інакше
-        // менеджер вичерпав би власний ліміт роботою, а приватні оголошення
-        // подавати вже не міг.
+        // обмежуватиме тарифний план салону — інакше менеджер вичерпав би
+        // власний ліміт роботою, а приватні оголошення подавати вже не міг.
         var active = await dbContext.Listings
             .Where(listing => listing.SellerId == sellerId
                 && listing.DealershipId == null
@@ -385,11 +384,11 @@ internal sealed class ListingService(
                     || listing.Status == ListingStatus.PendingModeration))
             .CountAsync(cancellationToken);
 
-        if (active >= PrivateSellerLimit)
+        if (active >= maximum)
         {
             throw new Domain.Common.DomainRuleException(
-                $"Приватна особа може мати не більше {PrivateSellerLimit} активних оголошень. " +
-                "Архівуйте старі або перейдіть на дилерський акаунт.");
+                $"Ваш тариф дозволяє {maximum} активних оголошень. " +
+                "Архівуйте старі або перейдіть на вищий тариф.");
         }
     }
 

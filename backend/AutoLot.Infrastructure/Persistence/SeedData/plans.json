@@ -1,0 +1,50 @@
+{
+  "$comment": "Тарифні плани. Ціни у віртуальних одиницях — справжніх платежів у проєкті немає (SPEC «Не входить»). Порядок у масиві стає порядком на сторінці тарифів. listingLimit: null означає «без межі». Рівно один план має бути isDefault — на нього спирається кожен, хто нічого не купував.",
+  "plans": [
+    {
+      "code": "free",
+      "price": 0,
+      "durationDays": 30,
+      "listingLimit": 5,
+      "isDefault": true,
+      "names": {
+        "uk": "Базовий",
+        "en": "Basic"
+      },
+      "descriptions": {
+        "uk": "П'ять активних оголошень. Нічого платити не треба.",
+        "en": "Five active listings. Nothing to pay."
+      }
+    },
+    {
+      "code": "plus",
+      "price": 149,
+      "durationDays": 30,
+      "listingLimit": 20,
+      "isDefault": false,
+      "names": {
+        "uk": "Плюс",
+        "en": "Plus"
+      },
+      "descriptions": {
+        "uk": "Двадцять активних оголошень — для тих, хто продає регулярно.",
+        "en": "Twenty active listings — for regular sellers."
+      }
+    },
+    {
+      "code": "pro",
+      "price": 399,
+      "durationDays": 30,
+      "listingLimit": null,
+      "isDefault": false,
+      "names": {
+        "uk": "Профі",
+        "en": "Pro"
+      },
+      "descriptions": {
+        "uk": "Без обмеження на кількість оголошень.",
+        "en": "No cap on the number of listings."
+      }
+    }
+  ]
+}
