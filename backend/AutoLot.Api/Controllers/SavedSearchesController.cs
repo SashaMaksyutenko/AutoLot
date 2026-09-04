@@ -72,6 +72,30 @@ public sealed class SavedSearchesController(
         return Ok(await searches.RenameAsync(searchId, userId, request.Name, cancellationToken));
     }
 
+    /// <summary>Вмикає або вимикає листи про нові збіги за цим пошуком.</summary>
+    [HttpPut("{searchId:long}/notifications")]
+    [ProducesResponseType<SavedSearchCard>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetNotifications(
+        long searchId,
+        SetSearchNotificationsRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (currentUser.Id is not { } userId)
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await searches.SetNotificationsAsync(
+            searchId,
+            userId,
+            request.Enabled,
+            cancellationToken));
+    }
+
     [HttpDelete("{searchId:long}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

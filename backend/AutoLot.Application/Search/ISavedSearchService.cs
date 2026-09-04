@@ -30,6 +30,16 @@ public interface ISavedSearchService
         string name,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Вмикає або вимикає листи про нові збіги. Увімкнення рахує «новим»
+    /// лише те, що з'явиться далі.
+    /// </summary>
+    Task<SavedSearchCard> SetNotificationsAsync(
+        long searchId,
+        long userId,
+        bool enabled,
+        CancellationToken cancellationToken = default);
+
     Task DeleteAsync(long searchId, long userId, CancellationToken cancellationToken = default);
 }
 

@@ -47,8 +47,57 @@ public sealed class SavedSearch : Entity
 
     public DateTimeOffset CreatedAt { get; set; }
 
+    /// <summary>Чи надсилати листи про нові збіги.</summary>
+    public bool NotifyByEmail { get; set; }
+
+    /// <summary>
+    /// Межа, після якої оголошення вважається новим для цього пошуку.
+    /// </summary>
+    /// <remarks>
+    /// Зберігається на КОЖЕН пошук окремо, а не одна дата на весь застосунок.
+    /// Так вимкнений і знову ввімкнений пошук не завалює людину всім, що
+    /// накопичилося, а зупинка застосунку на добу не губить нічого: наступний
+    /// запуск просто візьме все від цієї межі.
+    /// </remarks>
+    public DateTimeOffset? NotifyFrom { get; set; }
+
+    /// <summary>Коли востаннє надіслали листа про цей пошук.</summary>
+    public DateTimeOffset? LastNotifiedAt { get; set; }
+
     /// <summary>Коли востаннє змінювали фільтри або назву.</summary>
     public DateTimeOffset? UpdatedAt { get; set; }
+
+    /// <summary>
+    /// Вмикає або вимикає сповіщення.
+    /// </summary>
+    /// <remarks>
+    /// Увімкнення ставить межу «віднині»: інакше перший же лист приніс би
+    /// всі оголошення, що підходять під фільтр за весь час — тобто сотні.
+    /// Людина хоче знати про НОВЕ, а старе вона й так побачила, коли
+    /// зберігала пошук.
+    /// </remarks>
+    public void SetNotifications(bool enabled, DateTimeOffset now)
+    {
+        if (NotifyByEmail == enabled)
+        {
+            return;
+        }
+
+        NotifyByEmail = enabled;
+        NotifyFrom = enabled ? now : null;
+        UpdatedAt = now;
+    }
+
+    /// <summary>
+    /// Відзначає, що про збіги до цієї миті вже повідомлено. Межу зсуваємо
+    /// навіть тоді, коли нічого не знайшлося: інакше кожен наступний запуск
+    /// перебирав би все ширший проміжок.
+    /// </summary>
+    public void MarkNotified(DateTimeOffset now)
+    {
+        NotifyFrom = now;
+        LastNotifiedAt = now;
+    }
 
     /// <summary>
     /// Перейменовує. Порожня назва заборонена: список без назв — це список

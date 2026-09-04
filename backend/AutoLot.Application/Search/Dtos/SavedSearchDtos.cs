@@ -19,7 +19,16 @@ public sealed record SavedSearchCard(
     /// нічого не каже: «Дизельні універсали» — це нуль знахідок чи сорок?
     /// </summary>
     int MatchCount,
+
+    /// <summary>Чи надсилати листи про нові збіги.</summary>
+    bool NotifyByEmail,
     DateTimeOffset CreatedAt);
+
+/// <summary>Тіло запиту на перемикання сповіщень.</summary>
+public sealed record SetSearchNotificationsRequest
+{
+    public bool Enabled { get; init; }
+}
 
 /// <summary>Тіло запиту на збереження пошуку.</summary>
 public sealed record SaveSearchRequest

@@ -68,6 +68,7 @@ public static class DependencyInjection
         services.AddScoped<IListingPhotoService, ListingPhotoService>();
         services.AddScoped<ICatalogService, CatalogService>();
         services.AddScoped<ISavedSearchService, SavedSearchService>();
+        services.AddScoped<ISavedSearchNotifier, SavedSearchNotifier>();
         services.AddScoped<IDataSeeder, DemoDataSeeder>();
         services.AddScoped<ListingMapper>();
         services.AddScoped<ListingAccess>();
@@ -103,7 +104,28 @@ public static class DependencyInjection
     /// </summary>
     private static IServiceCollection AddAuctionScheduling(this IServiceCollection services)
     {
-        services.AddQuartz(quartz => quartz.UseInMemoryStore());
+        services.AddQuartz(quartz =>
+        {
+            quartz.UseInMemoryStore();
+
+            // Розсилка про нові збіги — єдина задача за СТАЛИМ розкладом:
+            // решта планується під конкретний лот. Щогодини, а не щохвилини:
+            // оголошення не з'являються так часто, щоб частіше мало сенс, а
+            // лист раз на годину ще не дратує.
+            var digest = new JobKey("saved-search-digest");
+
+            quartz.AddJob<NotifySavedSearchesJob>(digest);
+
+            quartz.AddTrigger(trigger => trigger
+                .ForJob(digest)
+                .WithIdentity("saved-search-digest-trigger")
+                .WithSimpleSchedule(schedule => schedule.WithIntervalInHours(1).RepeatForever())
+
+                // Перший прохід не одразу на старті: під час запуску
+                // застосунок ще наповнює довідники, і зайве навантаження
+                // там ні до чого.
+                .StartAt(DateBuilder.FutureDate(5, IntervalUnit.Minute)));
+        });
 
         services.AddQuartzHostedService(options =>
         {
@@ -131,6 +153,7 @@ public static class DependencyInjection
             .ValidateDataAnnotations();
 
         services.AddScoped<AccountEmails>();
+        services.AddScoped<SearchEmails>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
 
         return services;

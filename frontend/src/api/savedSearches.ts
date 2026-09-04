@@ -23,6 +23,9 @@ export interface SavedSearchCard {
 
   /** Скільки авто підходить прямо зараз. */
   matchCount: number
+
+  /** Чи надсилати листи про нові збіги. */
+  notifyByEmail: boolean
   createdAt: string
 }
 
@@ -36,6 +39,17 @@ export function saveSearch(name: string, query: CatalogFilters): Promise<SavedSe
 
 export function renameSearch(searchId: number, name: string): Promise<SavedSearchCard> {
   return apiPut<SavedSearchCard>(`/api/saved-searches/${searchId}`, { name })
+}
+
+/**
+ * Вмикає або вимикає листи. Увімкнення рахує «новим» лише те, що з'явиться
+ * далі — інакше перший лист приніс би весь каталог, що підходить під фільтр.
+ */
+export function setSearchNotifications(
+  searchId: number,
+  enabled: boolean,
+): Promise<SavedSearchCard> {
+  return apiPut<SavedSearchCard>(`/api/saved-searches/${searchId}/notifications`, { enabled })
 }
 
 export function deleteSearch(searchId: number): Promise<void> {

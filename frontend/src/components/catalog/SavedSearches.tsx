@@ -4,6 +4,7 @@ import {
   deleteSearch,
   fetchSavedSearches,
   saveSearch,
+  setSearchNotifications,
   type SavedSearchCard,
 } from '../../api/savedSearches'
 import { ApiError } from '../../api/client'
@@ -112,6 +113,11 @@ function SearchRow({
     onSuccess: onDeleted,
   })
 
+  const notify = useMutation({
+    mutationFn: () => setSearchNotifications(search.id, !search.notifyByEmail),
+    onSuccess: onDeleted,
+  })
+
   return (
     <div className="flex items-center gap-1.5">
       <button
@@ -128,6 +134,27 @@ function SearchRow({
         </span>
       </button>
 
+      {/*
+        Дзвіночок, а не позначка: перемикач у рядку зі списком читався б як
+        «обрати цей пошук», а не «слати листи».
+      */}
+      <button
+        type="button"
+        onClick={() => notify.mutate()}
+        disabled={notify.isPending}
+        title={
+          search.notifyByEmail
+            ? 'Листи про нові збіги увімкнено'
+            : 'Повідомляти листом про нові збіги'
+        }
+        aria-pressed={search.notifyByEmail}
+        className={`shrink-0 px-0.5 ${
+          search.notifyByEmail ? 'text-accent' : 'text-ink-3 hover:text-ink-2'
+        }`}
+      >
+        <BellIcon on={search.notifyByEmail} />
+      </button>
+
       <button
         type="button"
         onClick={() => remove.mutate()}
@@ -138,6 +165,28 @@ function SearchRow({
         ×
       </button>
     </div>
+  )
+}
+
+/**
+ * Дзвіночок. Увімкнений — залитий, вимкнений — лише контур: так вони
+ * розрізняються й на чорно-білому екрані, і для тих, хто не бачить кольору.
+ */
+function BellIcon({ on }: { on: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      width="13"
+      height="13"
+      aria-hidden="true"
+      fill={on ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinejoin="round"
+    >
+      <path d="M8 1.8a3.6 3.6 0 0 0-3.6 3.6c0 3-1.1 4-1.1 4h9.4s-1.1-1-1.1-4A3.6 3.6 0 0 0 8 1.8Z" />
+      <path d="M6.6 11.8a1.6 1.6 0 0 0 2.8 0" fill="none" />
+    </svg>
   )
 }
 
@@ -181,7 +230,8 @@ function NameForm({
       <p className="text-[11.5px] text-ink-3">
         Збережуться саме фільтри — {activeFilterCount(filters)}{' '}
         {plural(activeFilterCount(filters), 'умова', 'умови', 'умов')}. Знайдене
-        рахуватиметься щоразу заново.
+        рахуватиметься щоразу заново, а дзвіночок у списку вмикає листи про
+        нові збіги.
       </p>
 
       {error && <p className="text-[12px] text-danger">{error}</p>}

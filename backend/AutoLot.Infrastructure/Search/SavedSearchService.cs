@@ -105,6 +105,21 @@ internal sealed class SavedSearchService(
         return await ToCardAsync(search, cancellationToken);
     }
 
+    public async Task<SavedSearchCard> SetNotificationsAsync(
+        long searchId,
+        long userId,
+        bool enabled,
+        CancellationToken cancellationToken = default)
+    {
+        var search = await LoadOwnAsync(searchId, userId, cancellationToken);
+
+        search.SetNotifications(enabled, clock.UtcNow);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return await ToCardAsync(search, cancellationToken);
+    }
+
     public async Task DeleteAsync(
         long searchId,
         long userId,
@@ -151,6 +166,7 @@ internal sealed class SavedSearchService(
             search.Name,
             query,
             found.TotalCount,
+            search.NotifyByEmail,
             search.CreatedAt);
     }
 

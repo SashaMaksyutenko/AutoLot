@@ -341,6 +341,11 @@ internal sealed class CatalogService(
             listings = listings.Where(listing => listing.IsUrgent == urgent);
         }
 
+        if (query.PublishedAfter is { } publishedAfter)
+        {
+            listings = listings.Where(listing => listing.PublishedAt > publishedAfter);
+        }
+
 
         if (query.Type is { } listingType)
         {
