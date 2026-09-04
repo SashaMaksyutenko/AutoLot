@@ -44,6 +44,7 @@ export function CatalogPage() {
       <FilterRail
         filters={filters}
         onChange={patchFilters}
+        onApply={setFilters}
         onReset={() => setFilters(emptyFilters)}
         totalCount={total}
       />

@@ -4,6 +4,7 @@ using AutoLot.Application.Billing;
 using AutoLot.Application.Chat;
 using AutoLot.Application.Dealers;
 using AutoLot.Application.Listings;
+using AutoLot.Application.Search;
 using AutoLot.Application.Users;
 using AutoLot.Domain.Billing;
 using AutoLot.Domain.Common;
@@ -35,6 +36,7 @@ internal sealed class DomainExceptionHandler(IProblemDetailsService problemDetai
             ReportNotFoundException => (StatusCodes.Status404NotFound, "Скаргу не знайдено"),
             ReportNotAllowedException => (StatusCodes.Status403Forbidden, "Скаржитися не можна"),
             ReviewNotAllowedException => (StatusCodes.Status403Forbidden, "Відгук лишити не можна"),
+            SavedSearchNotFoundException => (StatusCodes.Status404NotFound, "Збережений пошук не знайдено"),
             PlanNotFoundException => (StatusCodes.Status404NotFound, "Тариф не знайдено"),
             SubscriptionNotAllowedException => (StatusCodes.Status403Forbidden, "Оформити не можна"),
 

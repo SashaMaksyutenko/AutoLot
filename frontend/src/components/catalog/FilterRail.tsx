@@ -8,10 +8,18 @@ import {
   fetchRegions,
   type LookupItem,
 } from '../../api/reference'
+import { SavedSearches } from './SavedSearches'
 
 interface Props {
   filters: CatalogFilters
   onChange: (patch: Partial<CatalogFilters>) => void
+
+  /**
+   * Замінити фільтри цілком. Окремо від onChange: збережений пошук не
+   * доповнює поточні умови, а стає ними — інакше залишки попереднього
+   * фільтра тихо звужували б відновлений пошук.
+   */
+  onApply: (filters: CatalogFilters) => void
   onReset: () => void
   totalCount: number
 }
@@ -20,7 +28,7 @@ interface Props {
  * Панель фільтрів. Довідники тягнуться з бекенду, тож перелік кузовів чи міст
  * тут не зашитий — додати новий тип пального можна без зміни фронтенду.
  */
-export function FilterRail({ filters, onChange, onReset, totalCount }: Props) {
+export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: Props) {
   const attributes = useQuery({
     queryKey: ['car-attributes'],
     queryFn: ({ signal }) => fetchCarAttributes(signal),
@@ -68,6 +76,10 @@ export function FilterRail({ filters, onChange, onReset, totalCount }: Props) {
             Очистити
           </button>
         </div>
+      </Group>
+
+      <Group>
+        <SavedSearches filters={filters} onApply={onApply} />
       </Group>
 
       <Group title="Тип продажу">

@@ -7,6 +7,7 @@ using AutoLot.Domain.Dealers;
 using AutoLot.Domain.Geo;
 using AutoLot.Domain.Identity;
 using AutoLot.Domain.Listings;
+using AutoLot.Domain.Search;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -58,6 +59,8 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
     public DbSet<Dealership> Dealerships => Set<Dealership>();
 
     public DbSet<DealershipMember> DealershipMembers => Set<DealershipMember>();
+
+    public DbSet<SavedSearch> SavedSearches => Set<SavedSearch>();
 
     public DbSet<Wallet> Wallets => Set<Wallet>();
 
