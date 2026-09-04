@@ -24,6 +24,11 @@ internal sealed class CarCatalog(AutoLotDbContext dbContext, ICurrentLanguage la
                 nameof(TransmissionType),
                 nameof(DrivetrainType),
                 nameof(CarColor),
+                nameof(CarCondition),
+                nameof(DamageState),
+                nameof(PaintCondition),
+                nameof(EcologyStandard),
+                nameof(ChargingPortType),
             ],
             code,
             cancellationToken);
@@ -33,7 +38,12 @@ internal sealed class CarCatalog(AutoLotDbContext dbContext, ICurrentLanguage la
             EnumTranslationLookup.Pick(rows, nameof(FuelType), code),
             EnumTranslationLookup.Pick(rows, nameof(TransmissionType), code),
             EnumTranslationLookup.Pick(rows, nameof(DrivetrainType), code),
-            EnumTranslationLookup.Pick(rows, nameof(CarColor), code));
+            EnumTranslationLookup.Pick(rows, nameof(CarColor), code),
+            EnumTranslationLookup.Pick(rows, nameof(CarCondition), code),
+            EnumTranslationLookup.Pick(rows, nameof(DamageState), code),
+            EnumTranslationLookup.Pick(rows, nameof(PaintCondition), code),
+            EnumTranslationLookup.Pick(rows, nameof(EcologyStandard), code),
+            EnumTranslationLookup.Pick(rows, nameof(ChargingPortType), code));
     }
 
     public async Task<IReadOnlyList<MakeItem>> GetMakesAsync(

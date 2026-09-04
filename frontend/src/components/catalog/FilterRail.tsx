@@ -1,13 +1,18 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { CatalogFilters, Currency, ListingType } from '../../api/catalog'
 import {
   fetchCarAttributes,
   fetchCities,
+  fetchCityDistricts,
+  fetchCountries,
+  fetchGenerations,
   fetchMakes,
   fetchModels,
   fetchRegions,
   type LookupItem,
 } from '../../api/reference'
+import { FeaturePicker } from './FeaturePicker'
 import { SavedSearches } from './SavedSearches'
 
 interface Props {
@@ -29,6 +34,9 @@ interface Props {
  * тут не зашитий — додати новий тип пального можна без зміни фронтенду.
  */
 export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: Props) {
+  // Розширений блок згорнутий за замовчуванням — пояснення біля самої кнопки.
+  const [advanced, setAdvanced] = useState(false)
+
   const attributes = useQuery({
     queryKey: ['car-attributes'],
     queryFn: ({ signal }) => fetchCarAttributes(signal),
@@ -54,6 +62,26 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
     staleTime: Infinity,
   })
 
+  const generations = useQuery({
+    queryKey: ['generations', filters.modelId],
+    queryFn: ({ signal }) => fetchGenerations(filters.modelId!, signal),
+    enabled: filters.modelId !== undefined,
+    staleTime: Infinity,
+  })
+
+  const cityDistricts = useQuery({
+    queryKey: ['city-districts', filters.cityId],
+    queryFn: ({ signal }) => fetchCityDistricts(filters.cityId!, signal),
+    enabled: filters.cityId !== undefined,
+    staleTime: Infinity,
+  })
+
+  const countries = useQuery({
+    queryKey: ['countries'],
+    queryFn: ({ signal }) => fetchCountries(signal),
+    staleTime: Infinity,
+  })
+
   const cities = useQuery({
     queryKey: ['cities', filters.regionId],
     queryFn: ({ signal }) => fetchCities(filters.regionId!, signal),
@@ -76,6 +104,15 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
             Очистити
           </button>
         </div>
+      </Group>
+
+      <Group>
+        <input
+          value={filters.text ?? ''}
+          onChange={(event) => onChange({ text: event.target.value || undefined })}
+          placeholder="Пошук за назвою"
+          className="control text-[13px]"
+        />
       </Group>
 
       <Group>
@@ -105,6 +142,16 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
             onClick={() => onChange({ type: 'Auction' })}
           />
         </div>
+      </Group>
+
+      <Group title="Стан авто">
+        <Chips
+          options={attributes.data?.conditions ?? []}
+          // Стан один, не набір: авто або нове, або вживане. Chips вміє
+          // множинний вибір, тож обмежуємо його тут — беремо останнє обране.
+          selected={filters.condition ? [filters.condition] : []}
+          onToggle={(chosen) => onChange({ condition: chosen.at(-1) })}
+        />
       </Group>
 
       <Group title="Хто продає">
@@ -160,8 +207,28 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
           placeholder={filters.makeId ? 'Будь-яка модель' : 'Спершу оберіть марку'}
           disabled={filters.makeId === undefined}
           options={(models.data ?? []).map((model) => ({ id: model.id, name: model.name }))}
-          onChange={(modelId) => onChange({ modelId })}
+          // Покоління належить моделі — зміна моделі скидає обране покоління.
+          onChange={(modelId) => onChange({ modelId, generationId: undefined })}
         />
+
+        {/*
+          Покоління показуємо лише коли воно в моделі є. Порожній список
+          «Будь-яке покоління» під кожною моделлю дратував би на порожньому
+          місці — у більшості моделей поколінь у довіднику немає.
+        */}
+        {(generations.data?.length ?? 0) > 0 && (
+          <Select
+            value={filters.generationId}
+            placeholder="Будь-яке покоління"
+            options={(generations.data ?? []).map((generation) => ({
+              id: generation.id,
+              name: generation.yearTo
+                ? `${generation.name} (${generation.yearFrom}–${generation.yearTo})`
+                : `${generation.name} (з ${generation.yearFrom})`,
+            }))}
+            onChange={(generationId) => onChange({ generationId })}
+          />
+        )}
       </Group>
 
       <Group title="Ціна">
@@ -199,11 +266,50 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
       </Group>
 
       <Group title="Пробіг, км">
-        <NumberInput
-          value={filters.mileageTo}
-          placeholder="до"
-          onChange={(mileageTo) => onChange({ mileageTo })}
-        />
+        <div className="flex gap-2">
+          <NumberInput
+            value={filters.mileageFrom}
+            placeholder="від"
+            onChange={(mileageFrom) => onChange({ mileageFrom })}
+          />
+          <NumberInput
+            value={filters.mileageTo}
+            placeholder="до"
+            onChange={(mileageTo) => onChange({ mileageTo })}
+          />
+        </div>
+      </Group>
+
+      <Group title="Об'єм двигуна, л">
+        <div className="flex gap-2">
+          <NumberInput
+            value={filters.engineVolumeFrom}
+            placeholder="від"
+            step="0.1"
+            onChange={(engineVolumeFrom) => onChange({ engineVolumeFrom })}
+          />
+          <NumberInput
+            value={filters.engineVolumeTo}
+            placeholder="до"
+            step="0.1"
+            onChange={(engineVolumeTo) => onChange({ engineVolumeTo })}
+          />
+        </div>
+      </Group>
+
+      <Group title="Потужність, к.с.">
+        <div className="flex gap-2">
+          <NumberInput
+            value={filters.powerFrom}
+            placeholder="від"
+            onChange={(powerFrom) => onChange({ powerFrom })}
+          />
+          <NumberInput
+            value={filters.powerTo}
+            placeholder="до"
+            onChange={(powerTo) => onChange({ powerTo })}
+          />
+        </div>
       </Group>
 
       <Group title="Тип пального">
@@ -230,6 +336,29 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         />
       </Group>
 
+      <Group title="Привід">
+        <Chips
+          options={attributes.data?.driveTypes ?? []}
+          selected={filters.drivetrains}
+          onToggle={(drivetrains) => onChange({ drivetrains })}
+        />
+      </Group>
+
+      <Group title="Колір">
+        <Chips
+          options={attributes.data?.colors ?? []}
+          selected={filters.colors}
+          onToggle={(colors) => onChange({ colors })}
+        />
+      </Group>
+
+      <Group title="Опції комплектації">
+        <FeaturePicker
+          selected={filters.featureIds}
+          onChange={(featureIds) => onChange({ featureIds })}
+        />
+      </Group>
+
       <Group title="Регіон">
         <Select
           value={filters.regionId}
@@ -242,25 +371,226 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
           placeholder={filters.regionId ? 'Усі міста' : 'Спершу оберіть регіон'}
           disabled={filters.regionId === undefined}
           options={cities.data ?? []}
-          onChange={(cityId) => onChange({ cityId })}
+          // Район належить місту — зміна міста скидає обраний район.
+          onChange={(cityId) => onChange({ cityId, cityDistrictId: undefined })}
+        />
+
+        {/* Райони є лише у великих містах, тож і вибір показуємо лише там. */}
+        {(cityDistricts.data?.length ?? 0) > 0 && (
+          <Select
+            value={filters.cityDistrictId}
+            placeholder="Усі райони"
+            options={cityDistricts.data ?? []}
+            onChange={(cityDistrictId) => onChange({ cityDistrictId })}
+          />
+        )}
+      </Group>
+
+      <Group title="Стан і походження">
+        {/*
+          Кожен прапорець тризначний за змістом: знята позначка означає
+          «байдуже», а не «навпаки». Тому вимкнення повертає undefined,
+          а не false — інакше знята «не був у ДТП» шукала б лише биті.
+        */}
+        <Toggle
+          label="Не був у ДТП"
+          checked={filters.wasInAccident === false}
+          onChange={(on) => onChange({ wasInAccident: on ? false : undefined })}
+        />
+        <Toggle
+          label="Розмитнений"
+          checked={filters.isCustomsCleared === true}
+          onChange={(on) => onChange({ isCustomsCleared: on ? true : undefined })}
+        />
+        <Toggle
+          label="Уже в Україні"
+          checked={filters.isLocatedInUkraine === true}
+          onChange={(on) => onChange({ isLocatedInUkraine: on ? true : undefined })}
+        />
+        <Toggle
+          label="Лише з фото"
+          checked={filters.hasPhotos === true}
+          onChange={(on) => onChange({ hasPhotos: on ? true : undefined })}
+        />
+
+        <Select
+          value={filters.importedFromCountryId}
+          placeholder="Звідки пригнали"
+          options={countries.data ?? []}
+          onChange={(importedFromCountryId) => onChange({ importedFromCountryId })}
         />
       </Group>
 
+      {/*
+        Решта фільтрів під згортанням. Їх ще два десятки, і розгорнутими вони
+        зробили б панель довшою за саму видачу — тим часом більшість людей
+        шукає за маркою, ціною й роком. Хто шукає семимісний дизель із
+        сервісною книжкою, той відкриє.
+      */}
       <Group>
-        <label className="flex cursor-pointer items-center gap-2 text-[13.5px]">
-          <input
-            type="checkbox"
-            checked={filters.wasInAccident === false}
-            onChange={(event) =>
-              onChange({ wasInAccident: event.target.checked ? false : undefined })
-            }
-            // accent-accent фарбує саму «галочку» бірюзовим замість
-            // синього кольору браузера за замовчуванням.
-            className="h-[15px] w-[15px] accent-accent"
-          />
-          <span>Не був у ДТП</span>
-        </label>
+        <button
+          type="button"
+          onClick={() => setAdvanced((open) => !open)}
+          className="flex w-full items-center gap-1.5 text-left text-[13px] text-accent hover:underline"
+        >
+          <span
+            className={`transition-transform ${advanced ? 'rotate-90' : ''}`}
+            aria-hidden="true"
+          >
+            &rsaquo;
+          </span>
+          Розширений пошук
+        </button>
       </Group>
+
+      {advanced && (
+        <>
+          <Group title="Витрата, л/100 км">
+            <NumberInput
+              value={filters.fuelConsumptionTo}
+              placeholder="не більше"
+              step="0.1"
+              onChange={(fuelConsumptionTo) => onChange({ fuelConsumptionTo })}
+            />
+          </Group>
+
+          <Group title="Власників">
+            <NumberInput
+              value={filters.ownerCountTo}
+              placeholder="не більше"
+              onChange={(ownerCountTo) => onChange({ ownerCountTo })}
+            />
+          </Group>
+
+          <Group title="Місць">
+            <div className="flex gap-2">
+              <NumberInput
+                value={filters.seatCountFrom}
+                placeholder="від"
+                onChange={(seatCountFrom) => onChange({ seatCountFrom })}
+              />
+              <NumberInput
+                value={filters.seatCountTo}
+                placeholder="до"
+                onChange={(seatCountTo) => onChange({ seatCountTo })}
+              />
+            </div>
+          </Group>
+
+          <Group title="Дверей">
+            <NumberInput
+              value={filters.doorCountFrom}
+              placeholder="від"
+              onChange={(doorCountFrom) => onChange({ doorCountFrom })}
+            />
+          </Group>
+
+          {/*
+            Блок електромобіля показуємо лише коли обрано відповідне пальне:
+            запас ходу під бензиновим авто — просто шум.
+          */}
+          {isElectric(filters.fuelTypes) && (
+            <>
+              <Group title="Батарея, кВт·год">
+                <NumberInput
+                  value={filters.batteryCapacityFrom}
+                  placeholder="від"
+                  step="0.1"
+                  onChange={(batteryCapacityFrom) => onChange({ batteryCapacityFrom })}
+                />
+              </Group>
+
+              <Group title="Запас ходу, км">
+                <NumberInput
+                  value={filters.electricRangeFrom}
+                  placeholder="від"
+                  onChange={(electricRangeFrom) => onChange({ electricRangeFrom })}
+                />
+              </Group>
+
+              <Group title="Роз&rsquo;єм заряджання">
+                <Chips
+                  options={attributes.data?.chargingPorts ?? []}
+                  selected={filters.chargingPorts}
+                  onToggle={(chargingPorts) => onChange({ chargingPorts })}
+                />
+              </Group>
+            </>
+          )}
+
+          <Group title="Пошкодження">
+            <Chips
+              options={attributes.data?.damageStates ?? []}
+              selected={filters.damageStates}
+              onToggle={(damageStates) => onChange({ damageStates })}
+            />
+          </Group>
+
+          <Group title="Фарба">
+            <Chips
+              options={attributes.data?.paintConditions ?? []}
+              selected={filters.paintConditions}
+              onToggle={(paintConditions) => onChange({ paintConditions })}
+            />
+          </Group>
+
+          <Group title="Екостандарт">
+            <Chips
+              options={attributes.data?.ecologyStandards ?? []}
+              selected={filters.ecologyStandards}
+              onToggle={(ecologyStandards) => onChange({ ecologyStandards })}
+            />
+          </Group>
+
+          <Group title="Країна виробника">
+            <Select
+              value={filters.manufacturerCountryId}
+              placeholder="Будь-яка"
+              options={countries.data ?? []}
+              onChange={(manufacturerCountryId) => onChange({ manufacturerCountryId })}
+            />
+          </Group>
+
+          <Group title="Умови продажу">
+            <Toggle
+              label="Металік"
+              checked={filters.isMetallic === true}
+              onChange={(on) => onChange({ isMetallic: on ? true : undefined })}
+            />
+            <Toggle
+              label="Є сервісна книжка"
+              checked={filters.hasServiceBook === true}
+              onChange={(on) => onChange({ hasServiceBook: on ? true : undefined })}
+            />
+            <Toggle
+              label="Зберігалося в гаражі"
+              checked={filters.isGarageKept === true}
+              onChange={(on) => onChange({ isGarageKept: on ? true : undefined })}
+            />
+            {/* Шукають саме НЕ кредитні, тож позначка вмикає false. */}
+            <Toggle
+              label="Не в кредиті"
+              checked={filters.isOnCredit === false}
+              onChange={(on) => onChange({ isOnCredit: on ? false : undefined })}
+            />
+            <Toggle
+              label="Торг доречний"
+              checked={filters.isNegotiable === true}
+              onChange={(on) => onChange({ isNegotiable: on ? true : undefined })}
+            />
+            <Toggle
+              label="Розглядає обмін"
+              checked={filters.acceptsTrade === true}
+              onChange={(on) => onChange({ acceptsTrade: on ? true : undefined })}
+            />
+            <Toggle
+              label="Терміновий продаж"
+              checked={filters.isUrgent === true}
+              onChange={(on) => onChange({ isUrgent: on ? true : undefined })}
+            />
+          </Group>
+        </>
+      )}
 
       <Group>
         <div className="btn btn-primary w-full">Знайдено {totalCount}</div>
@@ -336,19 +666,60 @@ function Select({
   )
 }
 
+/**
+ * Чи цікавлять людину електромобілі. Поля батареї показуємо лише тоді:
+ * запас ходу під бензиновим авто — просто шум.
+ */
+function isElectric(fuelTypes: string[]): boolean {
+  return fuelTypes.includes('Electric') || fuelTypes.includes('PluginHybrid')
+}
+
+/**
+ * Прапорець фільтра. Окремим компонентом, бо їх чотири поспіль, і чотири
+ * копії однакової розмітки розійшлися б при першій же правці вигляду.
+ */
+function Toggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2 text-[13.5px]">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        // accent-accent фарбує саму «галочку» бірюзовим замість синього
+        // кольору браузера за замовчуванням.
+        className="h-[15px] w-[15px] accent-accent"
+      />
+      <span>{label}</span>
+    </label>
+  )
+}
+
 function NumberInput({
   value,
   placeholder,
+  step,
   onChange,
 }: {
   value: number | undefined
   placeholder: string
+
+  /** Крок стрілок. Потрібен об'єму двигуна: він дробовий, решта — цілі. */
+  step?: string
   onChange: (value: number | undefined) => void
 }) {
   return (
     <input
       type="number"
-      inputMode="numeric"
+      step={step}
+      inputMode={step ? 'decimal' : 'numeric'}
       value={value ?? ''}
       placeholder={placeholder}
       onChange={(event) => onChange(event.target.value ? Number(event.target.value) : undefined)}

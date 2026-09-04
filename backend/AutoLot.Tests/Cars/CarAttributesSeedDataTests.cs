@@ -27,6 +27,11 @@ public class CarAttributesSeedDataTests
         [nameof(TransmissionType)] = typeof(TransmissionType),
         [nameof(DrivetrainType)] = typeof(DrivetrainType),
         [nameof(CarColor)] = typeof(CarColor),
+        [nameof(CarCondition)] = typeof(CarCondition),
+        [nameof(DamageState)] = typeof(DamageState),
+        [nameof(PaintCondition)] = typeof(PaintCondition),
+        [nameof(EcologyStandard)] = typeof(EcologyStandard),
+        [nameof(ChargingPortType)] = typeof(ChargingPortType),
     };
 
     private static readonly CarAttributesSeedDocument Document = Load();

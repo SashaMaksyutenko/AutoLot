@@ -57,6 +57,30 @@ public sealed record CatalogQuery
 
     public int? PowerTo { get; init; }
 
+    /// <summary>Витрата пального в змішаному циклі, л/100 км — «не більше».</summary>
+    public decimal? FuelConsumptionTo { get; init; }
+
+    /// <summary>Скільки власників було. «Один власник» — класичний запит.</summary>
+    public int? OwnerCountTo { get; init; }
+
+    public int? SeatCountFrom { get; init; }
+
+    public int? DoorCountFrom { get; init; }
+
+    // ── Електромобіль ────────────────────────────────────────────────
+    //
+    // Ці три поля й є те, за чим обирають електрокар. Фільтр «пальне =
+    // Електро» відповідає лише на питання «чи електричний», а покупця
+    // цікавить, скільки він проїде й чим заряджається.
+
+    /// <summary>Ємність батареї, кВт·год — «не менше».</summary>
+    public decimal? BatteryCapacityFrom { get; init; }
+
+    /// <summary>Запас ходу, км — «не менше».</summary>
+    public int? ElectricRangeFrom { get; init; }
+
+    public ChargingPortType[] ChargingPorts { get; init; } = [];
+
     public BodyType[] BodyTypes { get; init; } = [];
 
     public FuelType[] FuelTypes { get; init; } = [];
@@ -69,6 +93,13 @@ public sealed record CatalogQuery
 
     public CarCondition? Condition { get; init; }
 
+    public EcologyStandard[] EcologyStandards { get; init; } = [];
+
+    /// <summary>Металік. Порожньо — байдуже.</summary>
+    public bool? IsMetallic { get; init; }
+
+    public int? SeatCountTo { get; init; }
+
     // ── Стан і походження ────────────────────────────────────────────
 
     public bool? WasInAccident { get; init; }
@@ -79,15 +110,36 @@ public sealed record CatalogQuery
 
     public long? ImportedFromCountryId { get; init; }
 
+    /// <summary>Країна виробника. Це НЕ те саме, що «звідки пригнали».</summary>
+    public long? ManufacturerCountryId { get; init; }
+
+    public DamageState[] DamageStates { get; init; } = [];
+
+    public PaintCondition[] PaintConditions { get; init; } = [];
+
+    /// <summary>Є сервісна книжка.</summary>
+    public bool? HasServiceBook { get; init; }
+
+    /// <summary>Зберігалося в гаражі.</summary>
+    public bool? IsGarageKept { get; init; }
+
+    /// <summary>
+    /// Чи авто в кредиті. Покупці найчастіше шукають ті, що НЕ в кредиті,
+    /// тож фільтр тризначний, а не «показати кредитні».
+    /// </summary>
+    public bool? IsOnCredit { get; init; }
+
     // ── Де ───────────────────────────────────────────────────────────
 
     public long? RegionId { get; init; }
 
     public long? CityId { get; init; }
 
+    /// <summary>Район міста. У великих містах відстань вирішує все.</summary>
+    public long? CityDistrictId { get; init; }
+
     // ── Хто продає ───────────────────────────────────────────────────
 
-    public AccountType? SellerType { get; init; }
 
     public ListingType? Type { get; init; }
 
@@ -95,6 +147,15 @@ public sealed record CatalogQuery
 
     /// <summary>Опції, які авто має мати **всі** одразу, а не будь-яку з них.</summary>
     public long[] FeatureIds { get; init; } = [];
+
+    /// <summary>Торг доречний.</summary>
+    public bool? IsNegotiable { get; init; }
+
+    /// <summary>Продавець розглядає обмін.</summary>
+    public bool? AcceptsTrade { get; init; }
+
+    /// <summary>Терміновий продаж.</summary>
+    public bool? IsUrgent { get; init; }
 
     /// <summary>Оголошення без жодного фото зазвичай пропускають.</summary>
     public bool? HasPhotos { get; init; }
@@ -109,6 +170,12 @@ public sealed record CatalogQuery
     /// особи, порожньо — усі. Саме тризначний вибір, а не прапорець: обидва
     /// боки цього фільтра однаково потрібні. Одні шукають гарантію салону,
     /// інші свідомо йдуть до приватника, щоб не переплачувати.
+    ///
+    /// Питається саме про НАЛЕЖНІСТЬ ЛОТА салону, а не про тип акаунта
+    /// продавця. Донедавна поруч жив другий фільтр, який питав друге, і
+    /// відповіді могли розійтися: працівник салону з дилерським акаунтом
+    /// може подати й особисте оголошення. Після появи сутності салону
+    /// правильна відповідь одна, тож і фільтр лишився один.
     /// </summary>
     public bool? FromDealer { get; init; }
 

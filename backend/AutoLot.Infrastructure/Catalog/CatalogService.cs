@@ -167,6 +167,43 @@ internal sealed class CatalogService(
             listings = listings.Where(listing => listing.Car.EnginePower <= powerTo);
         }
 
+        // Витрату порівнюємо за змішаним циклом: міський і трасовий показники
+        // без нього непорівнянні між авто, бо міряють різне.
+        if (query.FuelConsumptionTo is { } consumptionTo)
+        {
+            listings = listings.Where(listing => listing.Car.FuelConsumptionCombined <= consumptionTo);
+        }
+
+        if (query.OwnerCountTo is { } ownersTo)
+        {
+            listings = listings.Where(listing => listing.Car.OwnerCount <= ownersTo);
+        }
+
+        if (query.SeatCountFrom is { } seatsFrom)
+        {
+            listings = listings.Where(listing => listing.Car.SeatCount >= seatsFrom);
+        }
+
+        if (query.SeatCountTo is { } seatsTo)
+        {
+            listings = listings.Where(listing => listing.Car.SeatCount <= seatsTo);
+        }
+
+        if (query.DoorCountFrom is { } doorsFrom)
+        {
+            listings = listings.Where(listing => listing.Car.DoorCount >= doorsFrom);
+        }
+
+        if (query.BatteryCapacityFrom is { } batteryFrom)
+        {
+            listings = listings.Where(listing => listing.Car.BatteryCapacity >= batteryFrom);
+        }
+
+        if (query.ElectricRangeFrom is { } rangeFrom)
+        {
+            listings = listings.Where(listing => listing.Car.ElectricRange >= rangeFrom);
+        }
+
         return listings;
     }
 
@@ -201,6 +238,34 @@ internal sealed class CatalogService(
             listings = listings.Where(listing => query.Colors.Contains(listing.Car.Color));
         }
 
+        if (query.DamageStates.Length > 0)
+        {
+            listings = listings.Where(listing => query.DamageStates.Contains(listing.Car.DamageState));
+        }
+
+        // Поля нижче необов'язкові, тож порівнюємо через Value: без нього
+        // Contains по типу з питальним знаком не перекладається в SQL.
+        if (query.PaintConditions.Length > 0)
+        {
+            listings = listings.Where(listing =>
+                listing.Car.PaintCondition != null
+                && query.PaintConditions.Contains(listing.Car.PaintCondition.Value));
+        }
+
+        if (query.EcologyStandards.Length > 0)
+        {
+            listings = listings.Where(listing =>
+                listing.Car.EcologyStandard != null
+                && query.EcologyStandards.Contains(listing.Car.EcologyStandard.Value));
+        }
+
+        if (query.ChargingPorts.Length > 0)
+        {
+            listings = listings.Where(listing =>
+                listing.Car.ChargingPort != null
+                && query.ChargingPorts.Contains(listing.Car.ChargingPort.Value));
+        }
+
         return listings;
     }
 
@@ -231,10 +296,51 @@ internal sealed class CatalogService(
             listings = listings.Where(listing => listing.Car.ImportedFromCountryId == importedFrom);
         }
 
-        if (query.SellerType is { } sellerType)
+        if (query.ManufacturerCountryId is { } madeIn)
         {
-            listings = listings.Where(listing => listing.Seller.AccountType == sellerType);
+            listings = listings.Where(listing => listing.Car.ManufacturerCountryId == madeIn);
         }
+
+        if (query.IsMetallic is { } metallic)
+        {
+            listings = listings.Where(listing => listing.Car.IsMetallic == metallic);
+        }
+
+        if (query.HasServiceBook is { } serviceBook)
+        {
+            listings = listings.Where(listing => listing.Car.HasServiceBook == serviceBook);
+        }
+
+        if (query.IsGarageKept is { } garageKept)
+        {
+            listings = listings.Where(listing => listing.Car.IsGarageKept == garageKept);
+        }
+
+        if (query.IsOnCredit is { } onCredit)
+        {
+            listings = listings.Where(listing => listing.Car.IsOnCredit == onCredit);
+        }
+
+        if (query.CityDistrictId is { } cityDistrictId)
+        {
+            listings = listings.Where(listing => listing.CityDistrictId == cityDistrictId);
+        }
+
+        if (query.IsNegotiable is { } negotiable)
+        {
+            listings = listings.Where(listing => listing.IsNegotiable == negotiable);
+        }
+
+        if (query.AcceptsTrade is { } acceptsTrade)
+        {
+            listings = listings.Where(listing => listing.AcceptsTrade == acceptsTrade);
+        }
+
+        if (query.IsUrgent is { } urgent)
+        {
+            listings = listings.Where(listing => listing.IsUrgent == urgent);
+        }
+
 
         if (query.Type is { } listingType)
         {

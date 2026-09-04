@@ -2,57 +2,465 @@
   "$comment": "Назви значень перелічень для показу. Самі значення живуть у коді (AutoLot.Domain.Enums), тут лише переклади. Порядок елементів у масиві стає порядком у випадаючому списку, тож найчастіші варіанти йдуть першими.",
   "enums": {
     "BodyType": [
-      { "value": "Sedan", "names": { "uk": "Седан", "en": "Sedan" } },
-      { "value": "Crossover", "names": { "uk": "Позашляховик / Кросовер", "en": "SUV / Crossover" } },
-      { "value": "Hatchback", "names": { "uk": "Хетчбек", "en": "Hatchback" } },
-      { "value": "Universal", "names": { "uk": "Універсал", "en": "Estate" } },
-      { "value": "Minivan", "names": { "uk": "Мінівен", "en": "Minivan" } },
-      { "value": "Coupe", "names": { "uk": "Купе", "en": "Coupe" } },
-      { "value": "Pickup", "names": { "uk": "Пікап", "en": "Pickup" } },
-      { "value": "Van", "names": { "uk": "Фургон", "en": "Van" } },
-      { "value": "Liftback", "names": { "uk": "Ліфтбек", "en": "Liftback" } },
-      { "value": "Microvan", "names": { "uk": "Мікровен", "en": "Microvan" } },
-      { "value": "Minibus", "names": { "uk": "Мікроавтобус", "en": "Minibus" } },
-      { "value": "Convertible", "names": { "uk": "Кабріолет", "en": "Convertible" } },
-      { "value": "Roadster", "names": { "uk": "Родстер", "en": "Roadster" } },
-      { "value": "Limousine", "names": { "uk": "Лімузин", "en": "Limousine" } }
+      {
+        "value": "Sedan",
+        "names": {
+          "uk": "Седан",
+          "en": "Sedan"
+        }
+      },
+      {
+        "value": "Crossover",
+        "names": {
+          "uk": "Позашляховик / Кросовер",
+          "en": "SUV / Crossover"
+        }
+      },
+      {
+        "value": "Hatchback",
+        "names": {
+          "uk": "Хетчбек",
+          "en": "Hatchback"
+        }
+      },
+      {
+        "value": "Universal",
+        "names": {
+          "uk": "Універсал",
+          "en": "Estate"
+        }
+      },
+      {
+        "value": "Minivan",
+        "names": {
+          "uk": "Мінівен",
+          "en": "Minivan"
+        }
+      },
+      {
+        "value": "Coupe",
+        "names": {
+          "uk": "Купе",
+          "en": "Coupe"
+        }
+      },
+      {
+        "value": "Pickup",
+        "names": {
+          "uk": "Пікап",
+          "en": "Pickup"
+        }
+      },
+      {
+        "value": "Van",
+        "names": {
+          "uk": "Фургон",
+          "en": "Van"
+        }
+      },
+      {
+        "value": "Liftback",
+        "names": {
+          "uk": "Ліфтбек",
+          "en": "Liftback"
+        }
+      },
+      {
+        "value": "Microvan",
+        "names": {
+          "uk": "Мікровен",
+          "en": "Microvan"
+        }
+      },
+      {
+        "value": "Minibus",
+        "names": {
+          "uk": "Мікроавтобус",
+          "en": "Minibus"
+        }
+      },
+      {
+        "value": "Convertible",
+        "names": {
+          "uk": "Кабріолет",
+          "en": "Convertible"
+        }
+      },
+      {
+        "value": "Roadster",
+        "names": {
+          "uk": "Родстер",
+          "en": "Roadster"
+        }
+      },
+      {
+        "value": "Limousine",
+        "names": {
+          "uk": "Лімузин",
+          "en": "Limousine"
+        }
+      }
     ],
     "FuelType": [
-      { "value": "Petrol", "names": { "uk": "Бензин", "en": "Petrol" } },
-      { "value": "Diesel", "names": { "uk": "Дизель", "en": "Diesel" } },
-      { "value": "PetrolGas", "names": { "uk": "Газ / Бензин", "en": "LPG / Petrol" } },
-      { "value": "Gas", "names": { "uk": "Газ", "en": "LPG" } },
-      { "value": "Hybrid", "names": { "uk": "Гібрид", "en": "Hybrid" } },
-      { "value": "PluginHybrid", "names": { "uk": "Плагін-гібрид", "en": "Plug-in hybrid" } },
-      { "value": "Electric", "names": { "uk": "Електро", "en": "Electric" } },
-      { "value": "Hydrogen", "names": { "uk": "Водень", "en": "Hydrogen" } }
+      {
+        "value": "Petrol",
+        "names": {
+          "uk": "Бензин",
+          "en": "Petrol"
+        }
+      },
+      {
+        "value": "Diesel",
+        "names": {
+          "uk": "Дизель",
+          "en": "Diesel"
+        }
+      },
+      {
+        "value": "PetrolGas",
+        "names": {
+          "uk": "Газ / Бензин",
+          "en": "LPG / Petrol"
+        }
+      },
+      {
+        "value": "Gas",
+        "names": {
+          "uk": "Газ",
+          "en": "LPG"
+        }
+      },
+      {
+        "value": "Hybrid",
+        "names": {
+          "uk": "Гібрид",
+          "en": "Hybrid"
+        }
+      },
+      {
+        "value": "PluginHybrid",
+        "names": {
+          "uk": "Плагін-гібрид",
+          "en": "Plug-in hybrid"
+        }
+      },
+      {
+        "value": "Electric",
+        "names": {
+          "uk": "Електро",
+          "en": "Electric"
+        }
+      },
+      {
+        "value": "Hydrogen",
+        "names": {
+          "uk": "Водень",
+          "en": "Hydrogen"
+        }
+      }
+    ],
+    "CarCondition": [
+      {
+        "value": "Used",
+        "names": {
+          "uk": "Вживані",
+          "en": "Used"
+        }
+      },
+      {
+        "value": "New",
+        "names": {
+          "uk": "Нові",
+          "en": "New"
+        }
+      }
     ],
     "TransmissionType": [
-      { "value": "Manual", "names": { "uk": "Механіка", "en": "Manual" } },
-      { "value": "Automatic", "names": { "uk": "Автомат", "en": "Automatic" } },
-      { "value": "Robot", "names": { "uk": "Робот", "en": "Automated manual" } },
-      { "value": "Variator", "names": { "uk": "Варіатор", "en": "CVT" } }
+      {
+        "value": "Manual",
+        "names": {
+          "uk": "Механіка",
+          "en": "Manual"
+        }
+      },
+      {
+        "value": "Automatic",
+        "names": {
+          "uk": "Автомат",
+          "en": "Automatic"
+        }
+      },
+      {
+        "value": "Robot",
+        "names": {
+          "uk": "Робот",
+          "en": "Automated manual"
+        }
+      },
+      {
+        "value": "Variator",
+        "names": {
+          "uk": "Варіатор",
+          "en": "CVT"
+        }
+      }
     ],
     "DrivetrainType": [
-      { "value": "FrontWheel", "names": { "uk": "Передній", "en": "Front-wheel drive" } },
-      { "value": "AllWheel", "names": { "uk": "Повний", "en": "All-wheel drive" } },
-      { "value": "RearWheel", "names": { "uk": "Задній", "en": "Rear-wheel drive" } }
+      {
+        "value": "FrontWheel",
+        "names": {
+          "uk": "Передній",
+          "en": "Front-wheel drive"
+        }
+      },
+      {
+        "value": "AllWheel",
+        "names": {
+          "uk": "Повний",
+          "en": "All-wheel drive"
+        }
+      },
+      {
+        "value": "RearWheel",
+        "names": {
+          "uk": "Задній",
+          "en": "Rear-wheel drive"
+        }
+      }
     ],
     "CarColor": [
-      { "value": "Black", "names": { "uk": "Чорний", "en": "Black" } },
-      { "value": "White", "names": { "uk": "Білий", "en": "White" } },
-      { "value": "Grey", "names": { "uk": "Сірий", "en": "Grey" } },
-      { "value": "Silver", "names": { "uk": "Сріблястий", "en": "Silver" } },
-      { "value": "Blue", "names": { "uk": "Синій", "en": "Blue" } },
-      { "value": "Red", "names": { "uk": "Червоний", "en": "Red" } },
-      { "value": "Green", "names": { "uk": "Зелений", "en": "Green" } },
-      { "value": "Brown", "names": { "uk": "Коричневий", "en": "Brown" } },
-      { "value": "Beige", "names": { "uk": "Бежевий", "en": "Beige" } },
-      { "value": "Burgundy", "names": { "uk": "Бордовий", "en": "Burgundy" } },
-      { "value": "Yellow", "names": { "uk": "Жовтий", "en": "Yellow" } },
-      { "value": "Orange", "names": { "uk": "Оранжевий", "en": "Orange" } },
-      { "value": "Gold", "names": { "uk": "Золотистий", "en": "Gold" } },
-      { "value": "Purple", "names": { "uk": "Фіолетовий", "en": "Purple" } }
+      {
+        "value": "Black",
+        "names": {
+          "uk": "Чорний",
+          "en": "Black"
+        }
+      },
+      {
+        "value": "White",
+        "names": {
+          "uk": "Білий",
+          "en": "White"
+        }
+      },
+      {
+        "value": "Grey",
+        "names": {
+          "uk": "Сірий",
+          "en": "Grey"
+        }
+      },
+      {
+        "value": "Silver",
+        "names": {
+          "uk": "Сріблястий",
+          "en": "Silver"
+        }
+      },
+      {
+        "value": "Blue",
+        "names": {
+          "uk": "Синій",
+          "en": "Blue"
+        }
+      },
+      {
+        "value": "Red",
+        "names": {
+          "uk": "Червоний",
+          "en": "Red"
+        }
+      },
+      {
+        "value": "Green",
+        "names": {
+          "uk": "Зелений",
+          "en": "Green"
+        }
+      },
+      {
+        "value": "Brown",
+        "names": {
+          "uk": "Коричневий",
+          "en": "Brown"
+        }
+      },
+      {
+        "value": "Beige",
+        "names": {
+          "uk": "Бежевий",
+          "en": "Beige"
+        }
+      },
+      {
+        "value": "Burgundy",
+        "names": {
+          "uk": "Бордовий",
+          "en": "Burgundy"
+        }
+      },
+      {
+        "value": "Yellow",
+        "names": {
+          "uk": "Жовтий",
+          "en": "Yellow"
+        }
+      },
+      {
+        "value": "Orange",
+        "names": {
+          "uk": "Оранжевий",
+          "en": "Orange"
+        }
+      },
+      {
+        "value": "Gold",
+        "names": {
+          "uk": "Золотистий",
+          "en": "Gold"
+        }
+      },
+      {
+        "value": "Purple",
+        "names": {
+          "uk": "Фіолетовий",
+          "en": "Purple"
+        }
+      }
+    ],
+    "DamageState": [
+      {
+        "value": "NotDamaged",
+        "names": {
+          "uk": "Не пошкоджений",
+          "en": "Undamaged"
+        }
+      },
+      {
+        "value": "Damaged",
+        "names": {
+          "uk": "Пошкоджений",
+          "en": "Damaged"
+        }
+      },
+      {
+        "value": "ForParts",
+        "names": {
+          "uk": "На запчастини",
+          "en": "For parts"
+        }
+      }
+    ],
+    "PaintCondition": [
+      {
+        "value": "Original",
+        "names": {
+          "uk": "Заводська фарба",
+          "en": "Original paint"
+        }
+      },
+      {
+        "value": "PartiallyRepainted",
+        "names": {
+          "uk": "Часткове фарбування",
+          "en": "Partly repainted"
+        }
+      },
+      {
+        "value": "FullyRepainted",
+        "names": {
+          "uk": "Повне фарбування",
+          "en": "Fully repainted"
+        }
+      }
+    ],
+    "EcologyStandard": [
+      {
+        "value": "Euro6",
+        "names": {
+          "uk": "Євро-6",
+          "en": "Euro 6"
+        }
+      },
+      {
+        "value": "Euro5",
+        "names": {
+          "uk": "Євро-5",
+          "en": "Euro 5"
+        }
+      },
+      {
+        "value": "Euro4",
+        "names": {
+          "uk": "Євро-4",
+          "en": "Euro 4"
+        }
+      },
+      {
+        "value": "Euro3",
+        "names": {
+          "uk": "Євро-3",
+          "en": "Euro 3"
+        }
+      },
+      {
+        "value": "Euro2",
+        "names": {
+          "uk": "Євро-2",
+          "en": "Euro 2"
+        }
+      },
+      {
+        "value": "Euro1",
+        "names": {
+          "uk": "Євро-1",
+          "en": "Euro 1"
+        }
+      }
+    ],
+    "ChargingPortType": [
+      {
+        "value": "Type2",
+        "names": {
+          "uk": "Type 2",
+          "en": "Type 2"
+        }
+      },
+      {
+        "value": "Ccs",
+        "names": {
+          "uk": "CCS",
+          "en": "CCS"
+        }
+      },
+      {
+        "value": "ChaDeMo",
+        "names": {
+          "uk": "CHAdeMO",
+          "en": "CHAdeMO"
+        }
+      },
+      {
+        "value": "Type1",
+        "names": {
+          "uk": "Type 1",
+          "en": "Type 1"
+        }
+      },
+      {
+        "value": "Gbt",
+        "names": {
+          "uk": "GB/T",
+          "en": "GB/T"
+        }
+      },
+      {
+        "value": "Tesla",
+        "names": {
+          "uk": "Tesla",
+          "en": "Tesla"
+        }
+      }
     ]
   }
 }

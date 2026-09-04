@@ -1,3 +1,4 @@
+using System.Globalization;
 using AutoLot.Application.Catalog;
 using AutoLot.Application.Search;
 using AutoLot.Domain.Cars;
@@ -201,7 +202,10 @@ public class SavedSearchServiceTests : IDisposable
         var refused = await Assert.ThrowsAsync<DomainRuleException>(
             () => Service().SaveAsync(OwnerId, "Ще один", new CatalogQuery()));
 
-        Assert.Contains(SavedSearch.PerUserLimit.ToString(), refused.Message, StringComparison.Ordinal);
+        Assert.Contains(
+            SavedSearch.PerUserLimit.ToString(CultureInfo.InvariantCulture),
+            refused.Message,
+            StringComparison.Ordinal);
     }
 
     [Fact]
