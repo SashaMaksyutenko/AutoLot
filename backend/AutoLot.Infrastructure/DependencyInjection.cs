@@ -1,4 +1,5 @@
 using AutoLot.Application.Admin;
+using AutoLot.Application.Analytics;
 using AutoLot.Application.Auctions;
 using AutoLot.Application.Billing;
 using AutoLot.Application.Search;
@@ -18,6 +19,7 @@ using AutoLot.Infrastructure.Auctions;
 using AutoLot.Infrastructure.Cars;
 using AutoLot.Infrastructure.Catalog;
 using AutoLot.Infrastructure.Email;
+using AutoLot.Infrastructure.Analytics;
 using AutoLot.Infrastructure.Billing;
 using AutoLot.Infrastructure.Chat;
 using AutoLot.Infrastructure.Search;
@@ -68,6 +70,7 @@ public static class DependencyInjection
         services.AddScoped<IListingPhotoService, ListingPhotoService>();
         services.AddScoped<ICatalogService, CatalogService>();
         services.AddScoped<ISavedSearchService, SavedSearchService>();
+        services.AddScoped<IPriceAnalyticsService, PriceAnalyticsService>();
         services.AddScoped<ISavedSearchNotifier, SavedSearchNotifier>();
         services.AddScoped<IDataSeeder, DemoDataSeeder>();
         services.AddScoped<ListingMapper>();

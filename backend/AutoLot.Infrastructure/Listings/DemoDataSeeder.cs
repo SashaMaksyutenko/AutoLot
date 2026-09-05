@@ -57,6 +57,15 @@ public sealed partial class DemoDataSeeder(
         var featureIds = await dbContext.Features.Select(feature => feature.Id).ToListAsync(cancellationToken);
         var countryIds = await dbContext.Countries.Select(country => country.Id).ToListAsync(cancellationToken);
 
+        // Райони є лише у великих містах, тож тримаємо їх за містом:
+        // приписати оголошенню чужий район означало б зламати вибір у формі.
+        var districtsByCity = await dbContext.CityDistricts
+            .GroupBy(district => district.CityId)
+            .ToDictionaryAsync(
+                group => group.Key,
+                group => group.Select(district => district.Id).ToList(),
+                cancellationToken);
+
         if (sellers.Count == 0 || models.Count == 0 || cities.Count == 0)
         {
             LogSkipped(logger);
@@ -65,14 +74,28 @@ public sealed partial class DemoDataSeeder(
 
         var now = clock.UtcNow;
         var created = 0;
+        var popular = PickPopularCombinations(random, models, now);
 
         for (var index = 0; index < settings.ListingCount; index++)
         {
+            // Більшість оголошень — на ходові моделі, решта розсіяна по всіх
+            // інших. Так виглядає справжній майданчик: кілька моделей займають
+            // половину видачі, а далі йде довгий хвіст поодиноких авто.
+            //
+            // Це не косметика. Рівномірний випадок по чотириста моделях давав
+            // менше половини оголошення на модель, а отже — жодної вибірки,
+            // на якій можна порахувати ринкову ціну.
+            var (model, year) = random.NextDouble() < PopularShare
+                ? popular[random.Next(popular.Count)]
+                : (models[random.Next(models.Count)], random.Next(2005, now.Year + 1));
+
             var listing = await BuildListingAsync(
                 random,
                 sellers[random.Next(sellers.Count)],
-                models[random.Next(models.Count)],
+                model,
+                year,
                 cities[random.Next(cities.Count)],
+                districtsByCity,
                 featureIds,
                 countryIds,
                 now,
@@ -98,20 +121,29 @@ public sealed partial class DemoDataSeeder(
         Random random,
         User seller,
         ModelRow model,
+        int year,
         CityRow city,
+        Dictionary<long, List<long>> districtsByCity,
         List<long> featureIds,
         List<long> countryIds,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
-        var year = random.Next(2005, now.Year + 1);
         var isNew = year >= now.Year && random.Next(10) == 0;
         var fuelType = PickFuelType(random);
         var currency = random.Next(4) == 0 ? Currency.Uah : Currency.Usd;
 
+        // Ціна залежить від віку авто, а не береться навмання. Інакше
+        // «медіана по моделі та році» рахувалася б із чисел, між якими
+        // немає жодного зв'язку, і довідка про ринок вводила б в оману.
+        var age = Math.Max(0, now.Year - year);
+        var baseUsd = Math.Max(1_500, 42_000 - (age * 2_400));
+        var spread = random.Next(-15, 16) / 100m;
+        var usd = decimal.Round(baseUsd * (1 + spread), 0);
+
         var price = currency is Currency.Uah
-            ? random.Next(150, 3000) * 1000m
-            : random.Next(2, 75) * 1000m;
+            ? decimal.Round(usd * 42m, 0)
+            : usd;
 
         var listing = new Listing
         {
@@ -137,6 +169,14 @@ public sealed partial class DemoDataSeeder(
             IsUrgent = random.Next(8) == 0,
             Car = BuildCar(random, model, year, isNew, fuelType, featureIds, countryIds),
         };
+
+        // Район ставимо не завжди: у житті його вказує приблизно кожен другий.
+        if (districtsByCity.TryGetValue(city.Id, out var districts)
+            && districts.Count > 0
+            && random.Next(2) == 0)
+        {
+            listing.CityDistrictId = districts[random.Next(districts.Count)];
+        }
 
         await AddPhotosAsync(listing, model, year, random, cancellationToken);
 
@@ -227,6 +267,21 @@ public sealed partial class DemoDataSeeder(
             car.ImportedFromCountryId = countryIds[random.Next(countryIds.Count)];
         }
 
+        if (countryIds.Count > 0)
+        {
+            car.ManufacturerCountryId = countryIds[random.Next(countryIds.Count)];
+        }
+
+        // Стан фарби пов'язаний із ДТП: у битого «заводська фарба» траплялася б
+        // рідше, ніж у цілого, і дані не мають цьому суперечити.
+        car.PaintCondition = car.WasInAccident
+            ? (PaintCondition)random.Next(1, 3)
+            : (PaintCondition)random.Next(0, 2);
+
+        car.DamageState = car.WasInAccident && random.Next(4) == 0
+            ? DamageState.Damaged
+            : DamageState.NotDamaged;
+
         foreach (var featureId in PickFeatures(random, featureIds))
         {
             car.Features.Add(new CarFeature { FeatureId = featureId });
@@ -270,6 +325,49 @@ public sealed partial class DemoDataSeeder(
                 IsPrimary = index == 0,
             });
         }
+    }
+
+    /// <summary>
+    /// Частка оголошень, що припадає на ходові моделі.
+    /// </summary>
+    /// <remarks>
+    /// Дві третини — приблизно так виглядає справжній класифайд: десяток
+    /// моделей займає більшу частину видачі. Решта третина лишається на
+    /// довгий хвіст, щоб каталог не звівся до десяти назв.
+    /// </remarks>
+    private const double PopularShare = 0.66;
+
+    /// <summary>
+    /// Скільки пар «модель + рік» вважати ходовими. Розрахунок простий:
+    /// двісті оголошень, дві третини з них на ці пари — щоб у кожній
+    /// набралося помітно більше за поріг ринкової статистики.
+    /// </summary>
+    private const int PopularCombinations = 16;
+
+    /// <summary>
+    /// Обирає ходові пари «модель + рік». Роки беремо свіжі: саме такі авто
+    /// й складають більшість оголошень на майданчику.
+    /// </summary>
+    private static List<(ModelRow Model, int Year)> PickPopularCombinations(
+        Random random,
+        List<ModelRow> models,
+        DateTimeOffset now)
+    {
+        var combinations = new List<(ModelRow, int)>(PopularCombinations);
+        var used = new HashSet<(long, int)>();
+
+        while (combinations.Count < PopularCombinations && used.Count < models.Count * 8)
+        {
+            var model = models[random.Next(models.Count)];
+            var year = now.Year - random.Next(0, 8);
+
+            if (used.Add((model.Id, year)))
+            {
+                combinations.Add((model, year));
+            }
+        }
+
+        return combinations;
     }
 
     private static FuelType PickFuelType(Random random) => random.Next(100) switch

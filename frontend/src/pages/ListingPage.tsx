@@ -12,6 +12,7 @@ import { VerifiedMark } from '../components/catalog/ListingCard'
 import { AuctionPanel } from '../components/listing/AuctionPanel'
 import { Gallery } from '../components/listing/Gallery'
 import { DealReviews } from '../components/listing/DealReviews'
+import { PriceInsight } from '../components/listing/PriceInsight'
 import { Questions } from '../components/listing/Questions'
 import { RatingLine } from '../components/listing/Stars'
 import { ReportButton } from '../components/listing/ReportButton'
@@ -198,6 +199,9 @@ function Loaded({ listing }: { listing: ListingDetails }) {
                 )}
               </div>
             )}
+
+            {/* Ринкова довідка одразу під ціною — саме там її шукають. */}
+            {!isAuction && <PriceInsight listingId={listing.id} />}
 
             {(listing.isNegotiable || listing.acceptsTrade || listing.isUrgent) && (
               <div className="flex flex-wrap gap-1.5">
