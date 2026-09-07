@@ -108,6 +108,25 @@ export interface ListingDetails {
   dealer: DealerBadge | null
 }
 
+/**
+ * Кілька оголошень одним запитом — для таблиці порівняння.
+ *
+ * Саме одним, а не чотирма окремими: таблиця малюється цілком або не
+ * малюється зовсім, і чотири відповіді, що приходять різночасно, лише
+ * дали б їй мигати по колонці.
+ *
+ * У відповіді може бути МЕНШЕ, ніж просили: неопубліковане й видалене
+ * просто не повертається. Колонки для нього не буде, і це правильно.
+ */
+export function fetchListingsForCompare(
+  ids: number[],
+  signal?: AbortSignal,
+): Promise<ListingDetails[]> {
+  const query = ids.map((id) => `ids=${id}`).join('&')
+
+  return apiGet<ListingDetails[]>(`/api/listings/compare?${query}`, signal)
+}
+
 export function fetchListing(id: number, signal?: AbortSignal): Promise<ListingDetails> {
   return apiGet<ListingDetails>(`/api/listings/${id}`, signal)
 }

@@ -15,6 +15,7 @@ import { ConfirmEmailPage } from './pages/ConfirmEmailPage'
 import { FavoritesPage } from './pages/FavoritesPage'
 import { ListingPage } from './pages/ListingPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
+import { ComparePage } from './pages/ComparePage'
 import { UserProfilePage } from './pages/UserProfilePage'
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
             <Route index element={<CatalogPage />} />
             <Route path="listing/:id" element={<ListingPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
+            <Route path="compare" element={<ComparePage />} />
             <Route path="account" element={<AccountPage />} />
             <Route path="chat" element={<ChatPage />} />
             <Route path="dealers" element={<DealershipsPage />} />

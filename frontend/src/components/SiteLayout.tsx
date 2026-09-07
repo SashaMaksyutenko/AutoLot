@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchUnreadCount } from '../api/chat'
 import { fetchFavoriteCount } from '../api/favorites'
 import { useAuth } from '../auth/useAuth'
+import { useCompare } from '../compare/useCompare'
 import { closeSignIn, openSignIn, useSignInPrompt } from '../auth/signInPrompt'
 import { AuthDialog } from './AuthDialog'
 import { ThemeToggle } from './ThemeToggle'
@@ -10,6 +11,7 @@ import { ThemeToggle } from './ThemeToggle'
 /** Спільна шапка для всіх сторінок; вміст підставляє маршрутизатор. */
 export function SiteLayout() {
   const auth = useAuth()
+  const { ids: compared } = useCompare()
 
   // Вікно входу відкриває не лише кнопка в шапці, а й, скажімо, сердечко
   // на картці, яке натиснув гість. Тому його стан живе в спільному сховищі.
@@ -28,6 +30,22 @@ export function SiteLayout() {
           {/* mr-auto відтісняє все наступне до правого краю. */}
           <nav className="mr-auto hidden gap-5 text-[14.5px] sm:flex">
             <NavItem to="/" label="Купити авто" />
+            {/*
+              Порівняння доступне й гостю: воно живе в браузері, а не в
+              акаунті. Показуємо пункт лише коли є що порівнювати — порожній
+              він тільки додавав би шуму в шапку.
+            */}
+            {compared.length > 0 && (
+              <NavItem
+                to="/compare"
+                label="Порівняння"
+                badge={
+                  <span className="rounded-full bg-accent-soft px-1.5 font-mono text-[11px] font-semibold text-accent tabular-nums">
+                    {compared.length}
+                  </span>
+                }
+              />
+            )}
             {auth.user && <NavItem to="/favorites" label="Обране" badge={<FavoriteBadge />} />}
             {auth.user && <NavItem to="/chat" label="Повідомлення" badge={<ChatBadge />} />}
             <NavItem to="/dealers" label="Автосалони" />

@@ -19,7 +19,6 @@ internal sealed class ListingService(
     ListingAccess access,
     IListingAllowance allowance) : IListingService
 {
-
     public async Task<long> CreateAsync(
         long sellerId,
         CreateListingRequest request,
@@ -207,6 +206,59 @@ internal sealed class ListingService(
         listing.SubmitForModeration();
 
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ListingDetails>> GetManyAsync(
+        IReadOnlyList<long> listingIds,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(listingIds);
+
+        if (listingIds.Count == 0)
+        {
+            return [];
+        }
+
+        var listings = await dbContext.Listings
+            .AsNoTracking()
+            .Include(item => item.Seller)
+            .Include(item => item.Dealership)
+            .Include(item => item.Car).ThenInclude(car => car.Make)
+            .Include(item => item.Car).ThenInclude(car => car.Model)
+            .Include(item => item.Car).ThenInclude(car => car.Generation)
+            .Include(item => item.Car).ThenInclude(car => car.Features)
+            .Include(item => item.Car).ThenInclude(car => car.Photos)
+            .AsSplitQuery()
+
+            // Порівнювати можна лише опубліковане. Чужа чернетка не має
+            // проступати навіть колонкою в таблиці.
+            .Where(item => listingIds.Contains(item.Id) && item.Status == ListingStatus.Active)
+            .ToListAsync(cancellationToken);
+
+        var details = new List<ListingDetails>(listings.Count);
+
+        foreach (var listing in listings)
+        {
+            details.Add(await mapper.ToDetailsAsync(
+                listing,
+                includePrivateFields: false,
+                cancellationToken));
+        }
+
+        // Порядок беремо з запиту, а не з бази: людина додавала авто до
+        // порівняння в певній послідовності, і колонки мають стояти так само.
+        //
+        // Distinct тут, а не лише в контролері: «одна колонка на авто» —
+        // властивість самої операції, і кожен новий викликач не має
+        // відкривати її заново.
+        return
+        [
+            .. listingIds
+                .Distinct()
+                .Select(id => details.FirstOrDefault(item => item.Id == id))
+                .Where(item => item is not null)
+                .Select(item => item!),
+        ];
     }
 
     public async Task<IReadOnlyList<ListingSummary>> GetPurchasedAsync(

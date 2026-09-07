@@ -4,6 +4,7 @@ import type { DealerBadge } from '../../api/dealership'
 import { useAttributeLabels } from '../../api/useAttributeLabels'
 import { formatMileage, formatPrice } from '../../format'
 import { FavoriteButton } from '../FavoriteButton'
+import { CompareButton } from './CompareButton'
 
 /**
  * Картка оголошення у видачі. Лот з торгами відрізняється сигнальною
@@ -131,7 +132,8 @@ function Photo({ listing, isAuction }: { listing: ListingSummary; isAuction: boo
         </div>
       )}
 
-      <div className="absolute top-2 right-2">
+      <div className="absolute top-2 right-2 flex gap-1.5">
+        <CompareButton listingId={listing.id} />
         <FavoriteButton listingId={listing.id} isFavorite={listing.isFavorite} />
       </div>
     </div>

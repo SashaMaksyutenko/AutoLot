@@ -20,6 +20,9 @@ public sealed class ListingsController(
     IListingService listingService,
     ICurrentUser currentUser) : ControllerBase
 {
+    /// <summary>Скільки авто можна порівнювати за раз. Більше не влазить на екран.</summary>
+    private const int CompareLimit = 4;
+
     /// <summary>Створює чернетку. У видачу вона потрапить лише після модерації.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -76,6 +79,27 @@ public sealed class ListingsController(
             cancellationToken);
 
         return details is null ? NotFound() : Ok(details);
+    }
+
+    /// <summary>
+    /// Кілька оголошень для порівняння. Одним запитом, а не чотирма: таблиця
+    /// порівняння малюється цілком або не малюється зовсім, і чотири окремі
+    /// відповіді лише дали б їй мигати по колонці.
+    /// </summary>
+    [HttpGet("compare")]
+    [AllowAnonymous]
+    [ProducesResponseType<IReadOnlyList<ListingDetails>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Compare(
+        [FromQuery] long[] ids,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+
+        // Стеля на кількість — не примха: більше чотирьох колонок не влазить
+        // на екран, а без межі адресою можна було б попросити всю базу.
+        var wanted = ids.Distinct().Take(CompareLimit).ToArray();
+
+        return Ok(await listingService.GetManyAsync(wanted, cancellationToken));
     }
 
     /// <summary>Власні оголошення, за потреби відфільтровані за статусом.</summary>

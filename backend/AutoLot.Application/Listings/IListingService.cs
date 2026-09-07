@@ -41,6 +41,16 @@ public interface IListingService
     /// другого боку угоди: без цього списку покупець не має де побачити
     /// свою покупку — а отже, і де лишити відгук.
     /// </summary>
+    /// <summary>
+    /// Кілька оголошень одним запитом — для порівняння пліч-о-пліч.
+    /// Неопубліковані й неіснуючі просто не потрапляють у відповідь: у
+    /// порівнянні немає кому показувати «такого немає», там або є колонка,
+    /// або її немає.
+    /// </summary>
+    Task<IReadOnlyList<ListingDetails>> GetManyAsync(
+        IReadOnlyList<long> listingIds,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ListingSummary>> GetPurchasedAsync(
         long buyerId,
         CancellationToken cancellationToken = default);
