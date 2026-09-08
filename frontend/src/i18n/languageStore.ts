@@ -61,6 +61,18 @@ function applyToDocument(value: Language): void {
   document.documentElement.lang = value
 }
 
+/**
+ * Повна локаль для Intl. Дволітерного коду там замало: саме країна
+ * вирішує, чи писати «08.09.2026» чи «8 September 2026» і чи відділяти
+ * тисячі пробілом. Для англійської беремо британську, а не американську:
+ * тут кілометри, метричні літри й день перед місяцем.
+ */
+const locales: Record<Language, string> = { uk: 'uk-UA', en: 'en-GB' }
+
+export function localeOf(language: Language): string {
+  return locales[language]
+}
+
 export function getLanguage(): Language {
   return current
 }

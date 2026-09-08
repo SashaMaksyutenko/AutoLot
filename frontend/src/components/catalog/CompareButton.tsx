@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { compareLimit } from '../../compare/compareStore'
 import { useCompare } from '../../compare/useCompare'
+import { useTranslation } from '../../i18n/useTranslation'
 
 /**
  * «Порівняти» на картці авто.
@@ -10,6 +11,7 @@ import { useCompare } from '../../compare/useCompare'
  * сторінку, з якої людина вже не бачить, що саме сталося.
  */
 export function CompareButton({ listingId }: { listingId: number }) {
+  const { t } = useTranslation()
   const compare = useCompare()
   const [full, setFull] = useState(false)
 
@@ -28,10 +30,10 @@ export function CompareButton({ listingId }: { listingId: number }) {
       }}
       title={
         full
-          ? `Більше ${compareLimit} авто порівнювати нема сенсу — не влазить на екран`
+          ? t('compare.limit', { limit: compareLimit })
           : chosen
-            ? 'Прибрати з порівняння'
-            : 'Додати до порівняння'
+            ? t('compare.remove')
+            : t('compare.add')
       }
       aria-pressed={chosen}
       className={`grid h-[30px] w-[30px] place-items-center rounded-control border backdrop-blur-sm ${

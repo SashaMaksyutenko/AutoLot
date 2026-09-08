@@ -3,6 +3,7 @@ import type { ListingSummary } from '../../api/catalog'
 import type { DealerBadge } from '../../api/dealership'
 import { useAttributeLabels } from '../../api/useAttributeLabels'
 import { formatMileage, formatPrice } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
 import { FavoriteButton } from '../FavoriteButton'
 import { CompareButton } from './CompareButton'
 
@@ -12,6 +13,7 @@ import { CompareButton } from './CompareButton'
  * відрізняється від звичайного класифайду.
  */
 export function ListingCard({ listing }: { listing: ListingSummary }) {
+  const { t } = useTranslation()
   const isAuction = listing.type === 'Auction'
   const labelOf = useAttributeLabels()
 
@@ -43,7 +45,7 @@ export function ListingCard({ listing }: { listing: ListingSummary }) {
 
           <div className="flex items-end justify-between gap-2 border-t border-line pt-2">
             <div>
-              {isAuction && <div className="eyebrow">Стартова ціна</div>}
+              {isAuction && <div className="eyebrow">{t('card.startingPrice')}</div>}
               <div
                 className={`font-display text-[19px] font-bold tabular-nums ${
                   isAuction ? 'text-signal' : ''
@@ -58,7 +60,7 @@ export function ListingCard({ listing }: { listing: ListingSummary }) {
               )}
             </div>
 
-            <span className="pill">{isAuction ? 'До лота' : 'Купити зараз'}</span>
+            <span className="pill">{isAuction ? t('card.toLot') : t('card.buyNow')}</span>
           </div>
         </div>
       </article>
@@ -85,6 +87,8 @@ function DealerLine({ dealer }: { dealer: DealerBadge }) {
  * тексту навколо, тож окремих правил для теми не треба.
  */
 export function VerifiedMark({ size = 13 }: { size?: number }) {
+  const { t } = useTranslation()
+
   return (
     <svg
       width={size}
@@ -92,7 +96,7 @@ export function VerifiedMark({ size = 13 }: { size?: number }) {
       viewBox="0 0 24 24"
       fill="currentColor"
       className="shrink-0 text-accent"
-      aria-label="Перевірений салон"
+      aria-label={t('card.verifiedDealer')}
       role="img"
     >
       <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.3 14.2-4-4 1.5-1.5 2.5 2.5 5.6-5.6 1.5 1.5z" />
@@ -101,6 +105,8 @@ export function VerifiedMark({ size = 13 }: { size?: number }) {
 }
 
 function Photo({ listing, isAuction }: { listing: ListingSummary; isAuction: boolean }) {
+  const { t } = useTranslation()
+
   return (
     <div className="relative aspect-[4/3] overflow-hidden rounded-control border border-line bg-surface-2">
       {listing.primaryPhotoPath ? (
@@ -127,7 +133,7 @@ function Photo({ listing, isAuction }: { listing: ListingSummary; isAuction: boo
         <div className="absolute top-2 left-2">
           <span className="pill pill-live">
             <i className="dot" />
-            Торги
+            {t('card.auction')}
           </span>
         </div>
       )}

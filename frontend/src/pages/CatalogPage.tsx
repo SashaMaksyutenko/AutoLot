@@ -8,17 +8,26 @@ import {
 } from '../api/catalog'
 import { FilterRail } from '../components/catalog/FilterRail'
 import { ListingCard } from '../components/catalog/ListingCard'
-import { formatCount, plural } from '../format'
+import { formatCount } from '../format'
+import { useTranslation } from '../i18n/useTranslation'
+import type { MessageKey } from '../i18n/messages'
 
-const sortLabels: Record<CatalogSort, string> = {
-  Newest: 'Найновіші',
-  PriceAscending: 'Спочатку дешевші',
-  PriceDescending: 'Спочатку дорожчі',
-  MileageAscending: 'Менший пробіг',
-  YearDescending: 'Свіжіший рік',
+/**
+ * Порядок сортування → ключ словника. Записуємо ключі повністю, а не
+ * складаємо рядок на кшталт `sort.${value}`: так TypeScript перевіряє, що
+ * кожен варіант справді має переклад, а не покладається на віру.
+ */
+const sortKeys: Record<CatalogSort, MessageKey> = {
+  Newest: 'sort.Newest',
+  PriceAscending: 'sort.PriceAscending',
+  PriceDescending: 'sort.PriceDescending',
+  MileageAscending: 'sort.MileageAscending',
+  YearDescending: 'sort.YearDescending',
 }
 
 export function CatalogPage() {
+  const { t, tPlural } = useTranslation()
+
   const [filters, setFilters] = useState<CatalogFilters>(emptyFilters)
 
   const results = useQuery({
@@ -52,32 +61,29 @@ export function CatalogPage() {
       <main className="flex min-w-0 flex-col gap-3.5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="font-display text-[25px] font-bold">Легкові автомобілі</h1>
+            <h1 className="font-display text-[25px] font-bold">{t('catalog.title')}</h1>
             <p className="text-[13px] text-ink-2">
               {results.isPending ? (
-                'Шукаємо…'
+                t('catalog.searching')
               ) : (
-                <>
-                  Знайдено{' '}
-                  <span className="font-mono font-semibold text-ink tabular-nums">
-                    {formatCount(total)}
-                  </span>{' '}
-                  {plural(total, 'оголошення', 'оголошення', 'оголошень')}
-                </>
+                <FoundLine
+                  text={tPlural('catalog.found', total, { count: formatCount(total) })}
+                  count={formatCount(total)}
+                />
               )}
             </p>
           </div>
 
           <label className="flex items-center gap-2 text-[13px] text-ink-2">
-            <span>Сортувати</span>
+            <span>{t('catalog.sort')}</span>
             <select
               value={filters.sort}
               onChange={(event) => patchFilters({ sort: event.target.value as CatalogSort })}
               className="control w-auto"
             >
-              {Object.entries(sortLabels).map(([value, label]) => (
+              {Object.entries(sortKeys).map(([value, key]) => (
                 <option key={value} value={value}>
-                  {label}
+                  {t(key)}
                 </option>
               ))}
             </select>
@@ -86,13 +92,13 @@ export function CatalogPage() {
 
         {results.isError && (
           <p className="card p-6 text-sm text-danger">
-            Не вдалося отримати каталог. Перевірте, що AutoLot.Api запущено на порту 5080.
+            {t('catalog.error')}
           </p>
         )}
 
         {results.data && results.data.items.length === 0 && (
           <p className="card p-10 text-center text-sm text-ink-2">
-            За такими фільтрами нічого немає. Спробуйте прибрати частину умов.
+            {t('catalog.empty')}
           </p>
         )}
 
@@ -123,6 +129,8 @@ function Pagination({
   totalPages: number
   onPage: (page: number) => void
 }) {
+  const { t } = useTranslation()
+
   // Показуємо вікно навколо поточної сторінки: за десяти сторінок список
   // номерів ще влазить, за ста — вже ні.
   const from = Math.max(1, Math.min(page - 2, totalPages - 4))
@@ -130,7 +138,12 @@ function Pagination({
 
   return (
     <nav className="mt-2 flex items-center justify-center gap-1.5">
-      <PageButton label="←" disabled={page === 1} onClick={() => onPage(page - 1)} />
+      <PageButton
+        label="←"
+        title={t('catalog.previousPage')}
+        disabled={page === 1}
+        onClick={() => onPage(page - 1)}
+      />
       {pages.map((value) => (
         <PageButton
           key={value}
@@ -139,18 +152,27 @@ function Pagination({
           onClick={() => onPage(value)}
         />
       ))}
-      <PageButton label="→" disabled={page === totalPages} onClick={() => onPage(page + 1)} />
+      <PageButton
+        label="→"
+        title={t('catalog.nextPage')}
+        disabled={page === totalPages}
+        onClick={() => onPage(page + 1)}
+      />
     </nav>
   )
 }
 
 function PageButton({
   label,
+  title,
   active,
   disabled,
   onClick,
 }: {
   label: string
+
+  /** Підпис для стрілок: сама «←» програмі для незрячих нічого не каже. */
+  title?: string
   active?: boolean
   disabled?: boolean
   onClick: () => void
@@ -158,11 +180,37 @@ function PageButton({
   return (
     <button
       type="button"
+      title={title}
+      aria-label={title}
       disabled={disabled}
       onClick={onClick}
       className={`btn min-w-[36px] px-2.5 tabular-nums ${active ? 'btn-primary' : ''}`}
     >
       {label}
     </button>
+  )
+}
+
+/**
+ * Рядок «Знайдено 187 оголошень» із виділеним числом.
+ *
+ * Розмітку навколо числа зашити не можна: у різних мовах воно стоїть у
+ * різних місцях речення («Знайдено 187 оголошень» проти «187 listings
+ * found»). Тому беремо вже перекладений рядок і розрізаємо його по
+ * самому числу — так виділення лишається на числі за будь-якого порядку слів.
+ */
+function FoundLine({ text, count }: { text: string; count: string }) {
+  const at = text.indexOf(count)
+
+  // Числа в рядку немає — показуємо як є. Такого статися не має, але
+  // краще рядок без виділення, ніж порожнеча.
+  if (at < 0) return <>{text}</>
+
+  return (
+    <>
+      {text.slice(0, at)}
+      <span className="font-mono font-semibold text-ink tabular-nums">{count}</span>
+      {text.slice(at + count.length)}
+    </>
   )
 }

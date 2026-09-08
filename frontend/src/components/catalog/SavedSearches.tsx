@@ -11,7 +11,7 @@ import { ApiError } from '../../api/client'
 import { emptyFilters, type CatalogFilters } from '../../api/catalog'
 import { useAuth } from '../../auth/useAuth'
 import { openSignIn } from '../../auth/signInPrompt'
-import { plural } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
 
 /**
  * Збережені пошуки в смузі фільтрів.
@@ -27,6 +27,7 @@ export function SavedSearches({
   filters: CatalogFilters
   onApply: (filters: CatalogFilters) => void
 }) {
+  const { t } = useTranslation()
   const auth = useAuth()
   const queryClient = useQueryClient()
   const [naming, setNaming] = useState(false)
@@ -49,7 +50,7 @@ export function SavedSearches({
           onClick={openSignIn}
           className="text-left text-[12.5px] text-ink-2 hover:text-accent"
         >
-          Увійдіть, щоб зберігати пошуки
+          {t('saved.signInFirst')}
         </button>
       </Frame>
     )
@@ -83,7 +84,7 @@ export function SavedSearches({
           onClick={() => setNaming(true)}
           className="text-left text-[12.5px] text-accent hover:underline"
         >
-          + Зберегти поточний пошук
+          {t('saved.saveCurrent')}
         </button>
       )}
     </Frame>
@@ -91,9 +92,11 @@ export function SavedSearches({
 }
 
 function Frame({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation()
+
   return (
     <section className="grid gap-1.5 border-b border-line pb-3">
-      <span className="eyebrow">Збережені пошуки</span>
+      <span className="eyebrow">{t('saved.title')}</span>
       {children}
     </section>
   )
@@ -108,6 +111,7 @@ function SearchRow({
   onApply: () => void
   onDeleted: () => void
 }) {
+  const { t } = useTranslation()
   const remove = useMutation({
     mutationFn: () => deleteSearch(search.id),
     onSuccess: onDeleted,
@@ -144,8 +148,8 @@ function SearchRow({
         disabled={notify.isPending}
         title={
           search.notifyByEmail
-            ? 'Листи про нові збіги увімкнено'
-            : 'Повідомляти листом про нові збіги'
+            ? t('saved.emailsOn')
+            : t('saved.emailsOff')
         }
         aria-pressed={search.notifyByEmail}
         className={`shrink-0 px-0.5 ${
@@ -159,7 +163,7 @@ function SearchRow({
         type="button"
         onClick={() => remove.mutate()}
         disabled={remove.isPending}
-        title="Видалити"
+        title={t('saved.delete')}
         className="shrink-0 px-1 text-[13px] text-ink-3 hover:text-danger"
       >
         ×
@@ -199,6 +203,7 @@ function NameForm({
   onDone: () => void
   onCancel: () => void
 }) {
+  const { t, tPlural } = useTranslation()
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -206,7 +211,7 @@ function NameForm({
     mutationFn: () => saveSearch(name.trim(), filters),
     onSuccess: onDone,
     onError: (caught) =>
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося зберегти.'),
+      setError(caught instanceof ApiError ? caught.message : t('saved.failed')),
   })
 
   return (
@@ -223,15 +228,12 @@ function NameForm({
         onChange={(event) => setName(event.target.value)}
         maxLength={60}
         autoFocus
-        placeholder="Наприклад: дизель до 8000"
+        placeholder={t('saved.namePlaceholder')}
         className="control text-[13px]"
       />
 
       <p className="text-[11.5px] text-ink-3">
-        Збережуться саме фільтри — {activeFilterCount(filters)}{' '}
-        {plural(activeFilterCount(filters), 'умова', 'умови', 'умов')}. Знайдене
-        рахуватиметься щоразу заново, а дзвіночок у списку вмикає листи про
-        нові збіги.
+        {tPlural('saved.hint', activeFilterCount(filters))}
       </p>
 
       {error && <p className="text-[12px] text-danger">{error}</p>}
@@ -242,10 +244,10 @@ function NameForm({
           disabled={save.isPending || name.trim().length === 0}
           className="btn btn-primary"
         >
-          {save.isPending ? 'Зберігаємо…' : 'Зберегти'}
+          {save.isPending ? t('saved.saving') : t('saved.save')}
         </button>
         <button type="button" onClick={onCancel} className="btn">
-          Скасувати
+          {t('saved.cancel')}
         </button>
       </div>
     </form>

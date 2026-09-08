@@ -1,11 +1,18 @@
 import { useCallback, useSyncExternalStore } from 'react'
 import { getLanguage, setLanguage, subscribeToLanguage, type Language } from './languageStore'
-import { translate, type MessageValues } from './translate'
+import { translate, translatePlural, type MessageValues, type PluralKey } from './translate'
 import { type MessageKey } from './messages'
 
 interface Translation {
   /** Переклад за ключем: t('nav.buy'), t('auth.checkMailText', { email }). */
   t: (key: MessageKey, values?: MessageValues) => string
+
+  /**
+   * Переклад із формою множини: tPlural('catalog.found', 187) дає
+   * «Знайдено 187 оголошень». Саме число доступне в рядку як {count}.
+   */
+  tPlural: (key: PluralKey, count: number, values?: MessageValues) => string
+
   /** Мова, якою зараз говорить інтерфейс. */
   language: Language
   setLanguage: (value: Language) => void
@@ -41,5 +48,11 @@ export function useTranslation(): Translation {
     [language],
   )
 
-  return { t, language, setLanguage }
+  const tPlural = useCallback(
+    (key: PluralKey, count: number, values?: MessageValues) =>
+      translatePlural(key, count, values, language),
+    [language],
+  )
+
+  return { t, tPlural, language, setLanguage }
 }

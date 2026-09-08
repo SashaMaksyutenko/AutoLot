@@ -12,6 +12,8 @@ import {
   fetchRegions,
   type LookupItem,
 } from '../../api/reference'
+import { formatCount } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
 import { FeaturePicker } from './FeaturePicker'
 import { SavedSearches } from './SavedSearches'
 
@@ -34,6 +36,8 @@ interface Props {
  * тут не зашитий — додати новий тип пального можна без зміни фронтенду.
  */
 export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: Props) {
+  const { t } = useTranslation()
+
   // Розширений блок згорнутий за замовчуванням — пояснення біля самої кнопки.
   const [advanced, setAdvanced] = useState(false)
 
@@ -95,13 +99,13 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
     <aside className="card self-start px-4 pt-1 pb-4 lg:sticky lg:top-[74px]">
       <Group>
         <div className="flex items-center justify-between">
-          <span className="eyebrow">Фільтри</span>
+          <span className="eyebrow">{t('filter.title')}</span>
           <button
             type="button"
             onClick={onReset}
             className="text-xs text-accent hover:underline"
           >
-            Очистити
+            {t('filter.clear')}
           </button>
         </div>
       </Group>
@@ -110,7 +114,7 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         <input
           value={filters.text ?? ''}
           onChange={(event) => onChange({ text: event.target.value || undefined })}
-          placeholder="Пошук за назвою"
+          placeholder={t('filter.search')}
           className="control text-[13px]"
         />
       </Group>
@@ -119,7 +123,7 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         <SavedSearches filters={filters} onApply={onApply} />
       </Group>
 
-      <Group title="Тип продажу">
+      <Group title={t('filter.saleType')}>
         {/*
           Три кнопки, з яких активна завжди одна — це «радіо» без круглих
           позначок. aria-pressed усередині SaleType повідомляє програмам для
@@ -127,24 +131,24 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         */}
         <div className="flex overflow-hidden rounded-control border border-line">
           <SaleType
-            label="Усі"
+            label={t('filter.all')}
             active={filters.type === undefined}
             onClick={() => onChange({ type: undefined })}
           />
           <SaleType
-            label="Ціна"
+            label={t('filter.fixedPrice')}
             active={filters.type === 'FixedPrice'}
             onClick={() => onChange({ type: 'FixedPrice' })}
           />
           <SaleType
-            label="Торги"
+            label={t('filter.auction')}
             active={filters.type === 'Auction'}
             onClick={() => onChange({ type: 'Auction' })}
           />
         </div>
       </Group>
 
-      <Group title="Стан авто">
+      <Group title={t('filter.condition')}>
         <Chips
           options={attributes.data?.conditions ?? []}
           // Стан один, не набір: авто або нове, або вживане. Chips вміє
@@ -154,7 +158,7 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         />
       </Group>
 
-      <Group title="Хто продає">
+      <Group title={t('filter.seller')}>
         {/*
           Тризначний вибір, а не прапорець: обидва боки однаково потрібні.
           Одні шукають гарантію салону, інші свідомо йдуть до приватника,
@@ -162,17 +166,17 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         */}
         <div className="flex overflow-hidden rounded-control border border-line">
           <SaleType
-            label="Усі"
+            label={t('filter.all')}
             active={filters.fromDealer === undefined}
             onClick={() => onChange({ fromDealer: undefined, verifiedDealerOnly: undefined })}
           />
           <SaleType
-            label="Салони"
+            label={t('filter.dealers')}
             active={filters.fromDealer === true}
             onClick={() => onChange({ fromDealer: true })}
           />
           <SaleType
-            label="Приватні"
+            label={t('filter.private')}
             active={filters.fromDealer === false}
             onClick={() => onChange({ fromDealer: false, verifiedDealerOnly: undefined })}
           />
@@ -189,22 +193,22 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
               }
               className="h-[15px] w-[15px] accent-accent"
             />
-            <span>Лише перевірені</span>
+            <span>{t('filter.verifiedOnly')}</span>
           </label>
         )}
       </Group>
 
-      <Group title="Марка і модель">
+      <Group title={t('filter.makeModel')}>
         <Select
           value={filters.makeId}
-          placeholder="Будь-яка марка"
+          placeholder={t('filter.anyMake')}
           options={(makes.data ?? []).map((make) => ({ id: make.id, name: make.name }))}
           // Модель належить марці, тож зміна марки скидає раніше обрану модель.
           onChange={(makeId) => onChange({ makeId, modelId: undefined })}
         />
         <Select
           value={filters.modelId}
-          placeholder={filters.makeId ? 'Будь-яка модель' : 'Спершу оберіть марку'}
+          placeholder={filters.makeId ? t('filter.anyModel') : t('filter.chooseMakeFirst')}
           disabled={filters.makeId === undefined}
           options={(models.data ?? []).map((model) => ({ id: model.id, name: model.name }))}
           // Покоління належить моделі — зміна моделі скидає обране покоління.
@@ -219,28 +223,35 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         {(generations.data?.length ?? 0) > 0 && (
           <Select
             value={filters.generationId}
-            placeholder="Будь-яке покоління"
+            placeholder={t('filter.anyGeneration')}
             options={(generations.data ?? []).map((generation) => ({
               id: generation.id,
               name: generation.yearTo
-                ? `${generation.name} (${generation.yearFrom}–${generation.yearTo})`
-                : `${generation.name} (з ${generation.yearFrom})`,
+                ? t('filter.generationRange', {
+                    name: generation.name,
+                    from: generation.yearFrom,
+                    to: generation.yearTo,
+                  })
+                : t('filter.generationOpen', {
+                    name: generation.name,
+                    from: generation.yearFrom,
+                  }),
             }))}
             onChange={(generationId) => onChange({ generationId })}
           />
         )}
       </Group>
 
-      <Group title="Ціна">
+      <Group title={t('filter.price')}>
         <div className="flex gap-2">
           <NumberInput
             value={filters.priceFrom}
-            placeholder="від"
+            placeholder={t('filter.from')}
             onChange={(priceFrom) => onChange({ priceFrom })}
           />
           <NumberInput
             value={filters.priceTo}
-            placeholder="до"
+            placeholder={t('filter.to')}
             onChange={(priceTo) => onChange({ priceTo })}
           />
           <CurrencyPicker
@@ -250,69 +261,69 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         </div>
       </Group>
 
-      <Group title="Рік випуску">
+      <Group title={t('filter.year')}>
         <div className="flex gap-2">
           <NumberInput
             value={filters.yearFrom}
-            placeholder="від"
+            placeholder={t('filter.from')}
             onChange={(yearFrom) => onChange({ yearFrom })}
           />
           <NumberInput
             value={filters.yearTo}
-            placeholder="до"
+            placeholder={t('filter.to')}
             onChange={(yearTo) => onChange({ yearTo })}
           />
         </div>
       </Group>
 
-      <Group title="Пробіг, км">
+      <Group title={t('filter.mileage')}>
         <div className="flex gap-2">
           <NumberInput
             value={filters.mileageFrom}
-            placeholder="від"
+            placeholder={t('filter.from')}
             onChange={(mileageFrom) => onChange({ mileageFrom })}
           />
           <NumberInput
             value={filters.mileageTo}
-            placeholder="до"
+            placeholder={t('filter.to')}
             onChange={(mileageTo) => onChange({ mileageTo })}
           />
         </div>
       </Group>
 
-      <Group title="Об'єм двигуна, л">
+      <Group title={t('filter.engineVolume')}>
         <div className="flex gap-2">
           <NumberInput
             value={filters.engineVolumeFrom}
-            placeholder="від"
+            placeholder={t('filter.from')}
             step="0.1"
             onChange={(engineVolumeFrom) => onChange({ engineVolumeFrom })}
           />
           <NumberInput
             value={filters.engineVolumeTo}
-            placeholder="до"
+            placeholder={t('filter.to')}
             step="0.1"
             onChange={(engineVolumeTo) => onChange({ engineVolumeTo })}
           />
         </div>
       </Group>
 
-      <Group title="Потужність, к.с.">
+      <Group title={t('filter.power')}>
         <div className="flex gap-2">
           <NumberInput
             value={filters.powerFrom}
-            placeholder="від"
+            placeholder={t('filter.from')}
             onChange={(powerFrom) => onChange({ powerFrom })}
           />
           <NumberInput
             value={filters.powerTo}
-            placeholder="до"
+            placeholder={t('filter.to')}
             onChange={(powerTo) => onChange({ powerTo })}
           />
         </div>
       </Group>
 
-      <Group title="Тип пального">
+      <Group title={t('filter.fuel')}>
         <Chips
           options={attributes.data?.fuelTypes ?? []}
           selected={filters.fuelTypes}
@@ -320,7 +331,7 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         />
       </Group>
 
-      <Group title="Кузов">
+      <Group title={t('filter.body')}>
         <Chips
           options={attributes.data?.bodyTypes ?? []}
           selected={filters.bodyTypes}
@@ -328,7 +339,7 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         />
       </Group>
 
-      <Group title="Коробка передач">
+      <Group title={t('filter.transmission')}>
         <Chips
           options={attributes.data?.transmissions ?? []}
           selected={filters.transmissions}
@@ -336,7 +347,7 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         />
       </Group>
 
-      <Group title="Привід">
+      <Group title={t('filter.drivetrain')}>
         <Chips
           options={attributes.data?.driveTypes ?? []}
           selected={filters.drivetrains}
@@ -344,7 +355,7 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         />
       </Group>
 
-      <Group title="Колір">
+      <Group title={t('filter.colour')}>
         <Chips
           options={attributes.data?.colors ?? []}
           selected={filters.colors}
@@ -352,23 +363,23 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         />
       </Group>
 
-      <Group title="Опції комплектації">
+      <Group title={t('filter.features')}>
         <FeaturePicker
           selected={filters.featureIds}
           onChange={(featureIds) => onChange({ featureIds })}
         />
       </Group>
 
-      <Group title="Регіон">
+      <Group title={t('filter.region')}>
         <Select
           value={filters.regionId}
-          placeholder="Уся Україна"
+          placeholder={t('filter.wholeCountry')}
           options={regions.data ?? []}
           onChange={(regionId) => onChange({ regionId, cityId: undefined })}
         />
         <Select
           value={filters.cityId}
-          placeholder={filters.regionId ? 'Усі міста' : 'Спершу оберіть регіон'}
+          placeholder={filters.regionId ? t('filter.allCities') : t('filter.chooseRegionFirst')}
           disabled={filters.regionId === undefined}
           options={cities.data ?? []}
           // Район належить місту — зміна міста скидає обраний район.
@@ -379,43 +390,43 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
         {(cityDistricts.data?.length ?? 0) > 0 && (
           <Select
             value={filters.cityDistrictId}
-            placeholder="Усі райони"
+            placeholder={t('filter.allDistricts')}
             options={cityDistricts.data ?? []}
             onChange={(cityDistrictId) => onChange({ cityDistrictId })}
           />
         )}
       </Group>
 
-      <Group title="Стан і походження">
+      <Group title={t('filter.origin')}>
         {/*
           Кожен прапорець тризначний за змістом: знята позначка означає
           «байдуже», а не «навпаки». Тому вимкнення повертає undefined,
           а не false — інакше знята «не був у ДТП» шукала б лише биті.
         */}
         <Toggle
-          label="Не був у ДТП"
+          label={t('filter.noAccident')}
           checked={filters.wasInAccident === false}
           onChange={(on) => onChange({ wasInAccident: on ? false : undefined })}
         />
         <Toggle
-          label="Розмитнений"
+          label={t('filter.customsCleared')}
           checked={filters.isCustomsCleared === true}
           onChange={(on) => onChange({ isCustomsCleared: on ? true : undefined })}
         />
         <Toggle
-          label="Уже в Україні"
+          label={t('filter.inUkraine')}
           checked={filters.isLocatedInUkraine === true}
           onChange={(on) => onChange({ isLocatedInUkraine: on ? true : undefined })}
         />
         <Toggle
-          label="Лише з фото"
+          label={t('filter.withPhotos')}
           checked={filters.hasPhotos === true}
           onChange={(on) => onChange({ hasPhotos: on ? true : undefined })}
         />
 
         <Select
           value={filters.importedFromCountryId}
-          placeholder="Звідки пригнали"
+          placeholder={t('filter.importedFrom')}
           options={countries.data ?? []}
           onChange={(importedFromCountryId) => onChange({ importedFromCountryId })}
         />
@@ -439,48 +450,48 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
           >
             &rsaquo;
           </span>
-          Розширений пошук
+          {t('filter.advanced')}
         </button>
       </Group>
 
       {advanced && (
         <>
-          <Group title="Витрата, л/100 км">
+          <Group title={t('filter.consumption')}>
             <NumberInput
               value={filters.fuelConsumptionTo}
-              placeholder="не більше"
+              placeholder={t('filter.atMost')}
               step="0.1"
               onChange={(fuelConsumptionTo) => onChange({ fuelConsumptionTo })}
             />
           </Group>
 
-          <Group title="Власників">
+          <Group title={t('filter.owners')}>
             <NumberInput
               value={filters.ownerCountTo}
-              placeholder="не більше"
+              placeholder={t('filter.atMost')}
               onChange={(ownerCountTo) => onChange({ ownerCountTo })}
             />
           </Group>
 
-          <Group title="Місць">
+          <Group title={t('filter.seats')}>
             <div className="flex gap-2">
               <NumberInput
                 value={filters.seatCountFrom}
-                placeholder="від"
+                placeholder={t('filter.from')}
                 onChange={(seatCountFrom) => onChange({ seatCountFrom })}
               />
               <NumberInput
                 value={filters.seatCountTo}
-                placeholder="до"
+                placeholder={t('filter.to')}
                 onChange={(seatCountTo) => onChange({ seatCountTo })}
               />
             </div>
           </Group>
 
-          <Group title="Дверей">
+          <Group title={t('filter.doors')}>
             <NumberInput
               value={filters.doorCountFrom}
-              placeholder="від"
+              placeholder={t('filter.from')}
               onChange={(doorCountFrom) => onChange({ doorCountFrom })}
             />
           </Group>
@@ -491,24 +502,24 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
           */}
           {isElectric(filters.fuelTypes) && (
             <>
-              <Group title="Батарея, кВт·год">
+              <Group title={t('filter.battery')}>
                 <NumberInput
                   value={filters.batteryCapacityFrom}
-                  placeholder="від"
+                  placeholder={t('filter.from')}
                   step="0.1"
                   onChange={(batteryCapacityFrom) => onChange({ batteryCapacityFrom })}
                 />
               </Group>
 
-              <Group title="Запас ходу, км">
+              <Group title={t('filter.range')}>
                 <NumberInput
                   value={filters.electricRangeFrom}
-                  placeholder="від"
+                  placeholder={t('filter.from')}
                   onChange={(electricRangeFrom) => onChange({ electricRangeFrom })}
                 />
               </Group>
 
-              <Group title="Роз&rsquo;єм заряджання">
+              <Group title={t('filter.chargingPort')}>
                 <Chips
                   options={attributes.data?.chargingPorts ?? []}
                   selected={filters.chargingPorts}
@@ -518,7 +529,7 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
             </>
           )}
 
-          <Group title="Пошкодження">
+          <Group title={t('filter.damage')}>
             <Chips
               options={attributes.data?.damageStates ?? []}
               selected={filters.damageStates}
@@ -526,7 +537,7 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
             />
           </Group>
 
-          <Group title="Фарба">
+          <Group title={t('filter.paint')}>
             <Chips
               options={attributes.data?.paintConditions ?? []}
               selected={filters.paintConditions}
@@ -534,7 +545,7 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
             />
           </Group>
 
-          <Group title="Екостандарт">
+          <Group title={t('filter.ecology')}>
             <Chips
               options={attributes.data?.ecologyStandards ?? []}
               selected={filters.ecologyStandards}
@@ -542,49 +553,49 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
             />
           </Group>
 
-          <Group title="Країна виробника">
+          <Group title={t('filter.manufacturerCountry')}>
             <Select
               value={filters.manufacturerCountryId}
-              placeholder="Будь-яка"
+              placeholder={t('filter.any')}
               options={countries.data ?? []}
               onChange={(manufacturerCountryId) => onChange({ manufacturerCountryId })}
             />
           </Group>
 
-          <Group title="Умови продажу">
+          <Group title={t('filter.terms')}>
             <Toggle
-              label="Металік"
+              label={t('filter.metallic')}
               checked={filters.isMetallic === true}
               onChange={(on) => onChange({ isMetallic: on ? true : undefined })}
             />
             <Toggle
-              label="Є сервісна книжка"
+              label={t('filter.serviceBook')}
               checked={filters.hasServiceBook === true}
               onChange={(on) => onChange({ hasServiceBook: on ? true : undefined })}
             />
             <Toggle
-              label="Зберігалося в гаражі"
+              label={t('filter.garageKept')}
               checked={filters.isGarageKept === true}
               onChange={(on) => onChange({ isGarageKept: on ? true : undefined })}
             />
             {/* Шукають саме НЕ кредитні, тож позначка вмикає false. */}
             <Toggle
-              label="Не в кредиті"
+              label={t('filter.notOnCredit')}
               checked={filters.isOnCredit === false}
               onChange={(on) => onChange({ isOnCredit: on ? false : undefined })}
             />
             <Toggle
-              label="Торг доречний"
+              label={t('filter.negotiable')}
               checked={filters.isNegotiable === true}
               onChange={(on) => onChange({ isNegotiable: on ? true : undefined })}
             />
             <Toggle
-              label="Розглядає обмін"
+              label={t('filter.acceptsTrade')}
               checked={filters.acceptsTrade === true}
               onChange={(on) => onChange({ acceptsTrade: on ? true : undefined })}
             />
             <Toggle
-              label="Терміновий продаж"
+              label={t('filter.urgent')}
               checked={filters.isUrgent === true}
               onChange={(on) => onChange({ isUrgent: on ? true : undefined })}
             />
@@ -593,7 +604,9 @@ export function FilterRail({ filters, onChange, onApply, onReset, totalCount }: 
       )}
 
       <Group>
-        <div className="btn btn-primary w-full">Знайдено {totalCount}</div>
+        <div className="btn btn-primary w-full">
+          {t('filter.foundButton', { count: formatCount(totalCount) })}
+        </div>
       </Group>
     </aside>
   )

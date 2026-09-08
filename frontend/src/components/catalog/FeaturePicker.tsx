@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchFeatures } from '../../api/reference'
-import { plural } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
+import type { MessageKey } from '../../i18n/messages'
 
 /**
  * Вибір опцій комплектації: підігрів сидінь, камера, фаркоп.
@@ -21,6 +22,7 @@ export function FeaturePicker({
   selected: number[]
   onChange: (featureIds: number[]) => void
 }) {
+  const { t, tPlural } = useTranslation()
   const [openCategory, setOpenCategory] = useState<string | null>(null)
 
   const features = useQuery({
@@ -46,15 +48,14 @@ export function FeaturePicker({
       {selected.length > 0 && (
         <div className="flex items-baseline justify-between gap-2 pb-1">
           <span className="text-[12px] text-ink-2">
-            обрано {selected.length}{' '}
-            {plural(selected.length, 'опція', 'опції', 'опцій')}
+            {tPlural('feature.selected', selected.length)}
           </span>
           <button
             type="button"
             onClick={() => onChange([])}
             className="text-[12px] text-accent hover:underline"
           >
-            зняти
+            {t('feature.clear')}
           </button>
         </div>
       )}
@@ -78,7 +79,7 @@ export function FeaturePicker({
                 ›
               </span>
 
-              <span className="flex-1">{categoryLabels[group.category] ?? group.category}</span>
+              <span className="flex-1">{categoryName(t, group.category)}</span>
 
               {chosenHere > 0 && (
                 <span className="font-mono text-[11.5px] text-accent tabular-nums">
@@ -116,10 +117,24 @@ export function FeaturePicker({
  * переліку в коді, а не рядок довідника — на відміну від назв самих опцій,
  * які сервер уже переклав.
  */
-const categoryLabels: Record<string, string> = {
-  Interior: 'Салон',
-  Comfort: 'Комфорт',
-  Safety: 'Безпека',
-  Body: 'Кузов',
-  Multimedia: 'Мультимедіа',
+const categoryKeys: Record<string, MessageKey> = {
+  Interior: 'featureGroup.Interior',
+  Comfort: 'featureGroup.Comfort',
+  Safety: 'featureGroup.Safety',
+  Body: 'featureGroup.Body',
+  Multimedia: 'featureGroup.Multimedia',
+}
+
+/**
+ * Незнайому категорію показуємо її ж кодом. Це навмисно: якщо на сервері
+ * з’явиться нова, людина побачить «Towing» замість порожнього рядка —
+ * негарно, але зрозуміло, і одразу видно, що бракує перекладу.
+ */
+function categoryName(
+  t: (key: MessageKey) => string,
+  category: string,
+): string {
+  const key = categoryKeys[category]
+
+  return key ? t(key) : category
 }
