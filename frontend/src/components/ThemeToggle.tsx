@@ -1,3 +1,4 @@
+import { useTranslation } from '../i18n/useTranslation'
 import { useTheme } from '../theme/useTheme'
 
 /**
@@ -6,6 +7,7 @@ import { useTheme } from '../theme/useTheme'
  * після натискання.
  */
 export function ThemeToggle() {
+  const { t } = useTranslation()
   const { theme, toggle } = useTheme()
   const goingDark = theme === 'light'
 
@@ -15,8 +17,8 @@ export function ThemeToggle() {
       onClick={toggle}
       // title спливає підказкою для миші, aria-label читає програма для
       // незрячих: у кнопки немає тексту, лише картинка.
-      title={goingDark ? 'Темна тема' : 'Світла тема'}
-      aria-label={goingDark ? 'Увімкнути темну тему' : 'Увімкнути світлу тему'}
+      title={goingDark ? t('theme.toDark') : t('theme.toLight')}
+      aria-label={goingDark ? t('theme.enableDark') : t('theme.enableLight')}
       className="grid h-[30px] w-[32px] shrink-0 place-items-center rounded-control border border-line bg-surface-2 text-ink-2 hover:text-ink"
     >
       {goingDark ? <MoonIcon /> : <SunIcon />}

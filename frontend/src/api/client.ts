@@ -1,4 +1,6 @@
 import { getAccessToken, setAccessToken } from '../auth/tokenStore'
+import { getLanguage } from '../i18n/languageStore'
+import { translate } from '../i18n/translate'
 
 /**
  * Тонка обгортка над fetch. У розробці шлях відносний — його проксює Vite
@@ -79,6 +81,11 @@ async function send(path: string, init: RequestInit, retryOnUnauthorized: boolea
     credentials: 'include',
     headers: {
       Accept: 'application/json',
+
+      // Мову інтерфейсу повідомляємо серверу тим самим заголовком, яким її
+      // повідомляє браузер. Довідники — кузови, міста, опції — приходять
+      // уже перекладеними, тож клієнту не треба тримати власних словників.
+      'Accept-Language': getLanguage(),
       ...(init.body ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init.headers,
@@ -103,14 +110,14 @@ async function parse<T>(response: Response, path: string): Promise<T> {
 
   if (!response.ok) {
     throw new ApiError(
-      payload?.detail ?? payload?.error ?? payload?.title ?? `Запит ${path} завершився помилкою`,
+      payload?.detail ?? payload?.error ?? payload?.title ?? translate('error.requestFailed', { path }),
       response.status,
       payload?.errors ?? {},
     )
   }
 
   if (payload === null) {
-    throw new ApiError(`Некоректна відповідь від ${path}`, response.status)
+    throw new ApiError(translate('error.badResponse', { path }), response.status)
   }
 
   return payload

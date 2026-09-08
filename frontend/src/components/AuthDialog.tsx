@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ApiError } from '../api/client'
 import { requestPasswordReset, type AccountType } from '../api/auth'
 import { useAuth } from '../auth/useAuth'
+import { useTranslation } from '../i18n/useTranslation'
 
 type Mode = 'login' | 'register' | 'forgot'
 
@@ -10,6 +11,7 @@ type Mode = 'login' | 'register' | 'forgot'
  * лише кількома полями, а перемикатися між ними людина може посеред вводу.
  */
 export function AuthDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation()
   const auth = useAuth()
 
   const [mode, setMode] = useState<Mode>('login')
@@ -42,7 +44,7 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
         setError(caught.message)
         setFieldErrors(caught.errors)
       } else {
-        setError('Не вдалося зв’язатися з сервером.')
+        setError(t('error.network'))
       }
     } finally {
       setBusy(false)
@@ -65,8 +67,8 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
         {/* У режимі відновлення вкладки ховаємо: там інша задача. */}
         {mode !== 'forgot' && (
           <div className="mb-5 flex gap-0.5 rounded-control border border-line bg-surface-2 p-0.5">
-            <Tab active={mode === 'login'} onClick={() => setMode('login')} label="Вхід" />
-            <Tab active={mode === 'register'} onClick={() => setMode('register')} label="Реєстрація" />
+            <Tab active={mode === 'login'} onClick={() => setMode('login')} label={t('auth.tabSignIn')} />
+            <Tab active={mode === 'register'} onClick={() => setMode('register')} label={t('auth.tabRegister')} />
           </div>
         )}
 
@@ -75,7 +77,7 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
         ) : (
         <form onSubmit={submit} className="flex flex-col gap-3.5">
           {mode === 'register' && (
-            <Field label="Як до вас звертатися" errors={fieldErrors.DisplayName}>
+            <Field label={t('auth.displayName')} errors={fieldErrors.DisplayName}>
               <input
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
@@ -86,7 +88,7 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
             </Field>
           )}
 
-          <Field label="Email" errors={fieldErrors.Email}>
+          <Field label={t('auth.email')} errors={fieldErrors.Email}>
             <input
               type="email"
               value={email}
@@ -98,11 +100,11 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
           </Field>
 
           <Field
-            label="Пароль"
+            label={t('auth.password')}
             errors={fieldErrors.Password}
             hint={
               mode === 'register'
-                ? 'Щонайменше 8 символів, велика й мала літери та цифра'
+                ? t('auth.passwordHint')
                 : undefined
             }
           >
@@ -117,15 +119,15 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
           </Field>
 
           {mode === 'register' && (
-            <Field label="Тип акаунта">
+            <Field label={t('auth.accountType')}>
               <div className="flex gap-2">
                 <AccountChoice
-                  label="Приватна особа"
+                  label={t('auth.private')}
                   active={accountType === 'Private'}
                   onClick={() => setAccountType('Private')}
                 />
                 <AccountChoice
-                  label="Автосалон"
+                  label={t('auth.dealer')}
                   active={accountType === 'Dealer'}
                   onClick={() => setAccountType('Dealer')}
                 />
@@ -140,7 +142,7 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
           )}
 
           <button type="submit" disabled={busy} className="btn btn-primary mt-1 w-full py-2.5">
-            {busy ? 'Хвилинку…' : mode === 'login' ? 'Увійти' : 'Зареєструватися'}
+            {busy ? t('auth.busy') : mode === 'login' ? t('auth.signIn') : t('auth.register')}
           </button>
 
           {mode === 'login' && (
@@ -149,7 +151,7 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
               onClick={() => setMode('forgot')}
               className="text-[13px] text-ink-2 hover:text-accent"
             >
-              Забули пароль?
+              {t('auth.forgot')}
             </button>
           )}
         </form>
@@ -167,6 +169,7 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
  * форма перетворилася б на спосіб перевіряти, хто є на майданчику.
  */
 function ForgotPassword({ onBack }: { onBack: () => void }) {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -175,12 +178,10 @@ function ForgotPassword({ onBack }: { onBack: () => void }) {
   if (sent) {
     return (
       <div className="grid gap-3 text-center">
-        <h2 className="font-display text-lg font-bold">Перевірте пошту</h2>
-        <p className="text-[13px] text-ink-2">
-          Якщо {email} зареєстрована в AutoLot, ми надіслали туди посилання для зміни пароля.
-        </p>
+        <h2 className="font-display text-lg font-bold">{t('auth.checkMail')}</h2>
+        <p className="text-[13px] text-ink-2">{t('auth.checkMailText', { email })}</p>
         <button type="button" onClick={onBack} className="btn w-full">
-          Повернутися до входу
+          {t('auth.backToSignIn')}
         </button>
       </div>
     )
@@ -199,17 +200,17 @@ function ForgotPassword({ onBack }: { onBack: () => void }) {
           setSent(true)
         } catch (caught) {
           setError(
-            caught instanceof ApiError ? caught.message : 'Не вдалося зв’язатися з сервером.',
+            caught instanceof ApiError ? caught.message : t('error.network'),
           )
         } finally {
           setBusy(false)
         }
       }}
     >
-      <h2 className="font-display text-lg font-bold">Відновлення пароля</h2>
-      <p className="text-[13px] text-ink-2">Надішлемо посилання на вашу пошту.</p>
+      <h2 className="font-display text-lg font-bold">{t('auth.resetTitle')}</h2>
+      <p className="text-[13px] text-ink-2">{t('auth.resetLead')}</p>
 
-      <Field label="Email">
+      <Field label={t('auth.email')}>
         <input
           type="email"
           value={email}
@@ -225,11 +226,11 @@ function ForgotPassword({ onBack }: { onBack: () => void }) {
       )}
 
       <button type="submit" disabled={busy} className="btn btn-primary w-full py-2.5">
-        {busy ? 'Надсилаємо…' : 'Надіслати посилання'}
+        {busy ? t('auth.resetSending') : t('auth.resetSend')}
       </button>
 
       <button type="button" onClick={onBack} className="text-[13px] text-ink-2 hover:text-accent">
-        Згадав пароль
+        {t('auth.resetRemembered')}
       </button>
     </form>
   )

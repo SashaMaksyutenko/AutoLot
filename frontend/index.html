@@ -11,18 +11,36 @@
       перелічені в src/index.css. Сторінка від цього стартує швидше.
 
       Скрипт нижче виконується ДО завантаження застосунку і ставить
-      data-theme, якщо людина раніше обрала тему вручну. Без нього браузер
-      устиг би намалювати світлу сторінку, і темна тема блимнула б білим.
-      Тому це саме звичайний вбудований скрипт, а не код усередині React.
+      data-theme та lang, якщо людина раніше зробила вибір. Без нього браузер
+      устиг би намалювати світлу сторінку, і темна тема блимнула б білим, а
+      англійському відвідувачу дісталося б lang="uk" — за ним програма для
+      незрячих обирає вимову. Тому це саме звичайний вбудований скрипт, а не
+      код усередині React: той запрацює лише після завантаження застосунку.
+
+      Так, ця логіка повторює src/theme/themeStore.ts і src/i18n/languageStore.ts.
+      Повторення тут свідоме: обійти його можна тільки складнішим способом —
+      віддавати HTML із сервера, а це вже інша архітектура.
     -->
     <script>
       try {
-        var saved = localStorage.getItem('autolot.theme')
-        if (saved === 'light' || saved === 'dark') {
-          document.documentElement.dataset.theme = saved
+        var savedTheme = localStorage.getItem('autolot.theme')
+        if (savedTheme === 'light' || savedTheme === 'dark') {
+          document.documentElement.dataset.theme = savedTheme
+        }
+
+        var savedLanguage = localStorage.getItem('autolot.language')
+        var languages = savedLanguage ? [savedLanguage] : navigator.languages || [navigator.language]
+
+        for (var i = 0; i < languages.length; i++) {
+          var code = String(languages[i]).split('-')[0].toLowerCase()
+
+          if (code === 'uk' || code === 'en') {
+            document.documentElement.lang = code
+            break
+          }
         }
       } catch (error) {
-        /* localStorage може бути заборонений — тоді просто діє тема системи. */
+        /* localStorage може бути заборонений — тоді діють тема й мова системи. */
       }
     </script>
   </head>

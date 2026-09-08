@@ -5,11 +5,14 @@ import { fetchFavoriteCount } from '../api/favorites'
 import { useAuth } from '../auth/useAuth'
 import { useCompare } from '../compare/useCompare'
 import { closeSignIn, openSignIn, useSignInPrompt } from '../auth/signInPrompt'
+import { useTranslation } from '../i18n/useTranslation'
 import { AuthDialog } from './AuthDialog'
+import { LanguageToggle } from './LanguageToggle'
 import { ThemeToggle } from './ThemeToggle'
 
 /** Спільна шапка для всіх сторінок; вміст підставляє маршрутизатор. */
 export function SiteLayout() {
+  const { t } = useTranslation()
   const auth = useAuth()
   const { ids: compared } = useCompare()
 
@@ -29,7 +32,7 @@ export function SiteLayout() {
 
           {/* mr-auto відтісняє все наступне до правого краю. */}
           <nav className="mr-auto hidden gap-5 text-[14.5px] sm:flex">
-            <NavItem to="/" label="Купити авто" />
+            <NavItem to="/" label={t('nav.buy')} />
             {/*
               Порівняння доступне й гостю: воно живе в браузері, а не в
               акаунті. Показуємо пункт лише коли є що порівнювати — порожній
@@ -38,7 +41,7 @@ export function SiteLayout() {
             {compared.length > 0 && (
               <NavItem
                 to="/compare"
-                label="Порівняння"
+                label={t('nav.compare')}
                 badge={
                   <span className="rounded-full bg-accent-soft px-1.5 font-mono text-[11px] font-semibold text-accent tabular-nums">
                     {compared.length}
@@ -46,16 +49,17 @@ export function SiteLayout() {
                 }
               />
             )}
-            {auth.user && <NavItem to="/favorites" label="Обране" badge={<FavoriteBadge />} />}
-            {auth.user && <NavItem to="/chat" label="Повідомлення" badge={<ChatBadge />} />}
-            <NavItem to="/dealers" label="Автосалони" />
+            {auth.user && <NavItem to="/favorites" label={t('nav.favorites')} badge={<FavoriteBadge />} />}
+            {auth.user && <NavItem to="/chat" label={t('nav.messages')} badge={<ChatBadge />} />}
+            <NavItem to="/dealers" label={t('nav.dealers')} />
             {/* Адмінку показуємо лише тим, кого туди пустять. */}
-            {isStaff(auth) && <NavItem to="/admin" label="Адмінка" />}
+            {isStaff(auth) && <NavItem to="/admin" label={t('nav.admin')} />}
             {/* Окремої сторінки аукціонів ще немає — поки що це фільтр у каталозі. */}
-            <span className="pb-1 text-ink-3">Аукціони</span>
+            <span className="pb-1 text-ink-3">{t('nav.auctions')}</span>
           </nav>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            <LanguageToggle />
             <ThemeToggle />
             <AccountTools auth={auth} />
           </div>
@@ -141,6 +145,8 @@ function Brand() {
 }
 
 function AccountTools({ auth }: { auth: ReturnType<typeof useAuth> }) {
+  const { t } = useTranslation()
+
   // Поки поновлюється сесія, не показуємо ні «Увійти», ні ім'я: інакше
   // на секунду блимнуло б «Увійти» вже залогіненому.
   if (auth.isRestoring) return null
@@ -149,10 +155,10 @@ function AccountTools({ auth }: { auth: ReturnType<typeof useAuth> }) {
     return (
       <>
         <button type="button" onClick={openSignIn} className="text-sm text-ink-2 hover:text-ink">
-          Увійти
+          {t('account.signIn')}
         </button>
         <button type="button" onClick={openSignIn} className="btn btn-primary">
-          Продати авто
+          {t('account.sell')}
         </button>
       </>
     )
@@ -165,14 +171,14 @@ function AccountTools({ auth }: { auth: ReturnType<typeof useAuth> }) {
         onClick={() => void auth.logout()}
         className="text-sm text-ink-2 hover:text-ink"
       >
-        Вийти
+        {t('account.signOut')}
       </button>
-      <span className="btn btn-primary">Продати авто</span>
+      <span className="btn btn-primary">{t('account.sell')}</span>
 
       {/* Кружечок з ініціалами — найзвичніший вхід у кабінет. */}
       <Link
         to="/account"
-        title={`${auth.user.displayName} — кабінет`}
+        title={t('account.cabinet', { name: auth.user.displayName })}
         className="font-display grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full bg-surface-3 text-[12.5px] font-bold text-ink-2 hover:bg-accent-soft hover:text-accent"
       >
         {initialsOf(auth.user.displayName)}
