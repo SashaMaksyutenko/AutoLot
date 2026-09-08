@@ -6,13 +6,15 @@ using AutoLot.Application.Users.Dtos;
 using AutoLot.Domain.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AutoLot.Infrastructure.Identity;
 
-internal sealed class UserProfileService(
+internal sealed partial class UserProfileService(
     UserManager<User> userManager,
     IGeoCatalog geoCatalog,
-    IAuthService authService) : IUserProfileService
+    IAuthService authService,
+    ILogger<UserProfileService> logger) : IUserProfileService
 {
     public async Task<UserProfile?> UpdateAsync(
         long userId,
@@ -44,6 +46,8 @@ internal sealed class UserProfileService(
         }
 
         await userManager.UpdateAsync(user);
+
+        LogProfileChanged(logger, userId, user.PhoneNumber is not null);
 
         return await authService.GetProfileAsync(userId, cancellationToken);
     }
@@ -91,4 +95,15 @@ internal sealed class UserProfileService(
 
         return await authService.GetProfileAsync(userId, cancellationToken);
     }
+
+    /// <remarks>
+    /// Сам номер у лог не пишемо — це особисті дані, і в базі він уже є.
+    /// Записуємо лише ФАКТ зміни: він відповідає на питання «чому листи
+    /// раптом пішли не туди», а для цього номер не потрібен.
+    /// </remarks>
+    [LoggerMessage(
+        EventId = 230,
+        Level = LogLevel.Information,
+        Message = "Профіль користувача {UserId} змінено; телефон вказано: {HasPhone}")]
+    private static partial void LogProfileChanged(ILogger logger, long userId, bool hasPhone);
 }

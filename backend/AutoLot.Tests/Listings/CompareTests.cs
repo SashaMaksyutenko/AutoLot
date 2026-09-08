@@ -7,6 +7,7 @@ using AutoLot.Infrastructure.Geo;
 using AutoLot.Infrastructure.Listings;
 using AutoLot.Infrastructure.Persistence;
 using AutoLot.Tests.TestDoubles;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AutoLot.Tests.Listings;
 
@@ -129,7 +130,8 @@ public class CompareTests : IDisposable
             new FixedClock(new DateTimeOffset(2026, 9, 5, 12, 0, 0, TimeSpan.Zero)),
             new ListingMapper(context, language, new StubCurrentUser(), geo),
             new ListingAccess(context),
-            new StubListingAllowance());
+            new StubListingAllowance(),
+            NullLogger<ListingService>.Instance);
     }
 
     private long NewListing(ListingStatus status = ListingStatus.Active)

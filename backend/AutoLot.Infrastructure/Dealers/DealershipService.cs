@@ -8,6 +8,7 @@ using AutoLot.Domain.Dealers;
 using AutoLot.Domain.Enums;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AutoLot.Infrastructure.Dealers;
 
@@ -15,10 +16,11 @@ namespace AutoLot.Infrastructure.Dealers;
 /// Автосалони та їхній персонал. Права всередині салону перевіряються тут за
 /// записом у базі, а не за тим, що надіслав клієнт (SPEC §8).
 /// </summary>
-internal sealed class DealershipService(
+internal sealed partial class DealershipService(
     AutoLotDbContext dbContext,
     IDateTimeProvider clock,
-    ICurrentLanguage language) : IDealershipService
+    ICurrentLanguage language,
+    ILogger<DealershipService> logger) : IDealershipService
 {
     public async Task<DealershipDetails?> GetBySlugAsync(
         string slug,
@@ -210,6 +212,8 @@ internal sealed class DealershipService(
         user.AccountType = AccountType.Dealer;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        LogStaffAdded(logger, dealershipId, user.Id, email, role, actorId);
     }
 
     public async Task RemoveStaffAsync(
@@ -246,6 +250,8 @@ internal sealed class DealershipService(
         dbContext.DealershipMembers.Remove(member);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        LogStaffRemoved(logger, dealershipId, userId, actorId);
+
         // Оголошення при цьому НЕ чіпаємо: вони належать салону, а не людині.
         // Саме заради цього випадку модель і зроблена такою.
     }
@@ -270,6 +276,8 @@ internal sealed class DealershipService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        LogVerificationChanged(logger, dealershipId, isVerified, moderatorId);
     }
 
     private async Task EnsureMemberAsync(
@@ -392,4 +400,43 @@ internal sealed class DealershipService(
 
         return builder.ToString().Trim('-') is { Length: > 0 } slug ? slug : "dealer";
     }
+
+    // ── Журнал ───────────────────────────────────────────────────────
+    //
+    // Тут пишемо саме зміни ПРАВ і статусу — те саме, що вже логує адмінка
+    // для ролей. Персонал салону бачить чужі оголошення й відповідає на
+    // листи покупців, а бейдж перевіреного впливає на довіру до цін. Хто
+    // і коли це змінив — питання, яке рано чи пізно поставлять.
+
+    [LoggerMessage(
+        EventId = 220,
+        Level = LogLevel.Information,
+        Message = "До салону {DealershipId} додано {UserId} ({Email}) з роллю {Role}; додав {ActorId}")]
+    private static partial void LogStaffAdded(
+        ILogger logger,
+        long dealershipId,
+        long userId,
+        string email,
+        DealershipRole role,
+        long actorId);
+
+    [LoggerMessage(
+        EventId = 221,
+        Level = LogLevel.Information,
+        Message = "Із салону {DealershipId} прибрано користувача {UserId}; прибрав {ActorId}")]
+    private static partial void LogStaffRemoved(
+        ILogger logger,
+        long dealershipId,
+        long userId,
+        long actorId);
+
+    [LoggerMessage(
+        EventId = 222,
+        Level = LogLevel.Information,
+        Message = "Салон {DealershipId}: перевірку встановлено в {IsVerified} модератором {ModeratorId}")]
+    private static partial void LogVerificationChanged(
+        ILogger logger,
+        long dealershipId,
+        bool isVerified,
+        long moderatorId);
 }

@@ -11,6 +11,7 @@ using AutoLot.Infrastructure.Listings;
 using AutoLot.Infrastructure.Persistence;
 using AutoLot.Tests.TestDoubles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AutoLot.Tests.Listings;
 
@@ -255,7 +256,11 @@ public class ReviewServiceTests : IDisposable
     private ReviewService Service() => ServiceAt(Now);
 
     private ReviewService ServiceAt(DateTimeOffset now) =>
-        new(context, new FixedClock(now), new ListingAccess(context));
+        new(
+            context,
+            new FixedClock(now),
+            new ListingAccess(context),
+            NullLogger<ReviewService>.Instance);
 
     private void Sell(long listing, long? buyerId)
     {

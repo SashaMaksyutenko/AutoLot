@@ -6,6 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Проміжні обробники конвеєра внутрішні: назовні їх не викликають,
+         вони підключаються в Program. Тестам вони потрібні напряму —
+         перевіряти поведінку через живий HTTP значно дорожче й крихкіше. -->
+    <InternalsVisibleTo Include="AutoLot.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.11" />

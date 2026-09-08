@@ -7,17 +7,19 @@ using AutoLot.Domain.Enums;
 using AutoLot.Domain.Listings;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AutoLot.Infrastructure.Listings;
 
-internal sealed class ListingService(
+internal sealed partial class ListingService(
     AutoLotDbContext dbContext,
     IGeoCatalog geoCatalog,
     IExchangeRateProvider exchangeRates,
     IDateTimeProvider clock,
     ListingMapper mapper,
     ListingAccess access,
-    IListingAllowance allowance) : IListingService
+    IListingAllowance allowance,
+    ILogger<ListingService> logger) : IListingService
 {
     public async Task<long> CreateAsync(
         long sellerId,
@@ -206,6 +208,8 @@ internal sealed class ListingService(
         listing.SubmitForModeration();
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        LogSubmitted(logger, listingId, actorId);
     }
 
     public async Task<IReadOnlyList<ListingDetails>> GetManyAsync(
@@ -312,6 +316,8 @@ internal sealed class ListingService(
         listing.MarkSold(clock.UtcNow, buyerId);
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        LogSold(logger, listingId, actorId, buyerId);
     }
 
     /// <summary>
@@ -367,6 +373,11 @@ internal sealed class ListingService(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    /// <remarks>
+    /// Єдина незворотна дія з оголошенням — тому єдина, яку тут пишемо
+    /// рівнем Warning. Архівація зворотна, редагування лишає саме
+    /// оголошення на місці, а видалене повернути вже нічим.
+    /// </remarks>
     public async Task DeleteDraftAsync(
         long listingId,
         long actorId,
@@ -383,6 +394,8 @@ internal sealed class ListingService(
 
         dbContext.Listings.Remove(listing);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        LogDraftDeleted(logger, listingId, actorId);
     }
 
     private async Task<Listing> LoadForWriteAsync(long listingId, CancellationToken cancellationToken)
@@ -620,4 +633,33 @@ internal sealed class ListingService(
             car.Features.Add(new CarFeature { FeatureId = featureId });
         }
     }
+
+    // ── Журнал ───────────────────────────────────────────────────────
+    //
+    // Пишемо не кожну дію, а ті, які комусь колись доведеться відновлювати
+    // або оскаржувати: публікацію, угоду й видалення. Створення чернетки
+    // й редагування сюди не входять — чернетку ніхто не бачить, а виправити
+    // її можна скільки завгодно разів.
+
+    [LoggerMessage(
+        EventId = 200,
+        Level = LogLevel.Information,
+        Message = "Оголошення {ListingId} подано на модерацію користувачем {ActorId}")]
+    private static partial void LogSubmitted(ILogger logger, long listingId, long actorId);
+
+    [LoggerMessage(
+        EventId = 201,
+        Level = LogLevel.Information,
+        Message = "Оголошення {ListingId} позначено проданим користувачем {ActorId}; покупець {BuyerId}")]
+    private static partial void LogSold(
+        ILogger logger,
+        long listingId,
+        long actorId,
+        long? buyerId);
+
+    [LoggerMessage(
+        EventId = 202,
+        Level = LogLevel.Warning,
+        Message = "Чернетку {ListingId} видалено користувачем {ActorId}")]
+    private static partial void LogDraftDeleted(ILogger logger, long listingId, long actorId);
 }

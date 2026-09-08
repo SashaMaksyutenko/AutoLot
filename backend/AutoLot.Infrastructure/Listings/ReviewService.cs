@@ -5,6 +5,7 @@ using AutoLot.Domain.Enums;
 using AutoLot.Domain.Listings;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AutoLot.Infrastructure.Listings;
 
@@ -16,10 +17,11 @@ namespace AutoLot.Infrastructure.Listings;
 /// пише один, відгук про другого. Через це неможливо приписати відгук
 /// сторонньому, навіть підробивши запит: у тілі просто немає поля «про кого».
 /// </summary>
-internal sealed class ReviewService(
+internal sealed partial class ReviewService(
     AutoLotDbContext dbContext,
     IDateTimeProvider clock,
-    ListingAccess access) : IReviewService
+    ListingAccess access,
+    ILogger<ReviewService> logger) : IReviewService
 {
     public async Task<DealReviews> GetForListingAsync(
         long listingId,
@@ -91,6 +93,8 @@ internal sealed class ReviewService(
 
         dbContext.Reviews.Add(review);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        LogReviewLeft(logger, review.Id, listingId, authorId, side.SubjectId, request.Rating);
 
         return await Project(Reviews().Where(item => item.Id == review.Id))
             .FirstAsync(cancellationToken);
@@ -171,4 +175,21 @@ internal sealed class ReviewService(
                 review.CreatedAt,
                 review.AuthorIsSeller));
     }
+
+    /// <remarks>
+    /// Відгук незмінний і публічний — тобто рівно те, що згодом оскаржують.
+    /// Сам ТЕКСТ у лог не пишемо: він і так у базі, а дублювати чужі слова
+    /// ще й у логах немає жодної потреби.
+    /// </remarks>
+    [LoggerMessage(
+        EventId = 210,
+        Level = LogLevel.Information,
+        Message = "Відгук {ReviewId} про угоду {ListingId}: автор {AuthorId}, про {SubjectId}, оцінка {Rating}")]
+    private static partial void LogReviewLeft(
+        ILogger logger,
+        long reviewId,
+        long listingId,
+        long authorId,
+        long subjectId,
+        int rating);
 }

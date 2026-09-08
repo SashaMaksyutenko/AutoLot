@@ -19,6 +19,8 @@ const string CorsPolicy = "autolot-frontend";
 
 var builder = WebApplication.CreateBuilder(args);
 
+ConfigureLogging(builder);
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -74,6 +76,10 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 await SeedDatabaseAsync(app);
+
+// Найперший обробник у конвеєрі: усе, що станеться далі — зокрема
+// перехоплення помилок, — має потрапити в лог уже з ідентифікатором запиту.
+app.UseRequestId();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
@@ -136,6 +142,44 @@ await app.RunAsync();
 /// Якщо база недоступна чи не мігрована, застосунок усе одно піднімаємо: про
 /// це чесно розкаже /health, а падіння на старті сховало б причину.
 /// </summary>
+
+/// <summary>
+/// Формат логів (SPEC §8).
+/// </summary>
+/// <remarks>
+/// У розробці — звичайний текст із областями: людині читати його очима, а
+/// без IncludeScopes ідентифікатор запиту нікуди б не потрапив, бо він
+/// живе саме в області, а не в тексті повідомлення.
+///
+/// Поза розробкою — JSON, по рядку на подію. Це і є «структуроване
+/// логування»: {UserId} у шаблоні стає окремим полем, за яким збирач логів
+/// уміє шукати й групувати. З тексту ту саму інформацію довелося б
+/// видобувати регулярними виразами, які ламаються від першої ж правки
+/// формулювання.
+/// </remarks>
+static void ConfigureLogging(WebApplicationBuilder builder)
+{
+    builder.Logging.ClearProviders();
+
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Logging.AddSimpleConsole(options =>
+        {
+            options.IncludeScopes = true;
+            options.SingleLine = false;
+            options.TimestampFormat = "HH:mm:ss ";
+        });
+
+        return;
+    }
+
+    builder.Logging.AddJsonConsole(options =>
+    {
+        options.IncludeScopes = true;
+        options.UseUtcTimestamp = true;
+    });
+}
+
 static async Task SeedDatabaseAsync(WebApplication app)
 {
     await using var scope = app.Services.CreateAsyncScope();

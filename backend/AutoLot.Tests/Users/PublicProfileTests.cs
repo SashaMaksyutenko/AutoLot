@@ -12,6 +12,7 @@ using AutoLot.Infrastructure.Listings;
 using AutoLot.Infrastructure.Persistence;
 using AutoLot.Tests.TestDoubles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AutoLot.Tests.Users;
 
@@ -178,7 +179,11 @@ public class PublicProfileTests : IDisposable
     }
 
     private ReviewService Reviews() =>
-        new(context, new FixedClock(Now), new ListingAccess(context));
+        new(
+            context,
+            new FixedClock(Now),
+            new ListingAccess(context),
+            NullLogger<ReviewService>.Instance);
 
     private ListingService Listings()
     {
@@ -192,7 +197,8 @@ public class PublicProfileTests : IDisposable
             new FixedClock(Now),
             new ListingMapper(context, language, new StubCurrentUser(BuyerId), geo),
             new ListingAccess(context),
-            new StubListingAllowance());
+            new StubListingAllowance(),
+            NullLogger<ListingService>.Instance);
     }
 
     private void SellTo(long listingId, long? buyerId, DateTimeOffset? soldAt = null)

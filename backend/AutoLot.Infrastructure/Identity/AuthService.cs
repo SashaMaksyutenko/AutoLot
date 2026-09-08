@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 
 namespace AutoLot.Infrastructure.Identity;
 
-internal sealed class AuthService(
+internal sealed partial class AuthService(
     UserManager<User> userManager,
     AutoLotDbContext dbContext,
     JwtTokenGenerator tokenGenerator,
@@ -64,8 +64,8 @@ internal sealed class AuthService(
         {
             // Найімовірніша причина — ролі не засіяні. Реєстрацію не валимо,
             // але слід у логах лишаємо: права такого користувача будуть неповні.
-            logger.LogError(
-                "Не вдалося призначити роль {Role} користувачу {UserId}: {Errors}",
+            LogRoleNotAssigned(
+                logger,
                 RoleNames.User,
                 user.Id,
                 string.Join("; ", roleAssigned.Errors.Select(error => error.Description)));
@@ -81,10 +81,7 @@ internal sealed class AuthService(
         }
         catch (Exception error)
         {
-            logger.LogWarning(
-                error,
-                "Не вдалося надіслати лист підтвердження користувачу {UserId}. Реєстрація пройшла.",
-                user.Id);
+            LogConfirmationNotSent(logger, error, user.Id);
         }
 
         return AuthResult.Success(await IssueTokensAsync(user, familyId: null, ipAddress, cancellationToken));
@@ -101,16 +98,28 @@ internal sealed class AuthService(
 
         if (user is null)
         {
+            // Пошту в лог пишемо, пароль — ніколи (SPEC §8). Це не суперечність:
+            // за адресою видно, який саме акаунт перебирають, і саме це робить
+            // запис корисним; пароль же не додав би до розслідування нічого,
+            // зате витік би разом із логами.
+            LogLoginFailed(logger, request.Email, "невідома пошта", ipAddress);
+
             return AuthResult.Failure(AuthError.InvalidCredentials, InvalidCredentialsMessage);
         }
 
         if (user.IsBanned)
         {
+            LogLoginRefused(logger, user.Id, "акаунт заблоковано", ipAddress);
+
             return AuthResult.Failure(AuthError.AccountBanned, "Акаунт заблоковано модератором.");
         }
 
         if (await userManager.IsLockedOutAsync(user))
         {
+            // Саме Warning, а не Information: до блокування доводить лише
+            // низка невдалих спроб, і це вже схоже на добір пароля.
+            LogLoginRefused(logger, user.Id, "тимчасове блокування за невдалі спроби", ipAddress);
+
             return AuthResult.Failure(
                 AuthError.AccountLockedOut,
                 "Забагато невдалих спроб. Спробуйте пізніше.");
@@ -119,6 +128,9 @@ internal sealed class AuthService(
         if (!await userManager.CheckPasswordAsync(user, request.Password))
         {
             await userManager.AccessFailedAsync(user);
+
+            LogLoginFailed(logger, request.Email, "невірний пароль", ipAddress);
+
             return AuthResult.Failure(AuthError.InvalidCredentials, InvalidCredentialsMessage);
         }
 
@@ -126,6 +138,10 @@ internal sealed class AuthService(
 
         user.LastLoginAt = clock.UtcNow;
         await userManager.UpdateAsync(user);
+
+        // Успішний вхід — теж подія для аудиту: без нього невдалі спроби
+        // неможливо відрізнити від «підібрали й зайшли».
+        LogLoginSucceeded(logger, user.Id, ipAddress);
 
         return AuthResult.Success(await IssueTokensAsync(user, familyId: null, ipAddress, cancellationToken));
     }
@@ -157,11 +173,7 @@ internal sealed class AuthService(
         {
             // Погашений токен пред'явили вдруге. Найімовірніше, його вкрали:
             // гасимо всю сім'ю, щоб і зловмисник, і власник входили заново.
-            logger.LogWarning(
-                "Повторне використання refresh-токена сім'ї {FamilyId} користувача {UserId} з {Ip}",
-                stored.FamilyId,
-                stored.UserId,
-                ipAddress);
+            LogTokenReuse(logger, stored.FamilyId, stored.UserId, ipAddress);
 
             await RevokeFamilyAsync(
                 stored.UserId,
@@ -370,4 +382,68 @@ internal sealed class AuthService(
             [.. roles],
             location);
     }
+// ── Журнал ───────────────────────────────────────────────────────
+    //
+    // Через [LoggerMessage] генератор збирає ці методи під час компіляції:
+    // жодного розбору шаблону в час виконання й жодного пакування чисел
+    // у object. Але головне тут не швидкість, а те, що кожне {Поле} стає
+    // окремим полем запису — за ним потім можна шукати, а не вигрібати
+    // текст регулярними виразами.
+
+    [LoggerMessage(
+        EventId = 100,
+        Level = LogLevel.Information,
+        Message = "Вхід користувача {UserId} з {Ip}")]
+    private static partial void LogLoginSucceeded(ILogger logger, long userId, string? ip);
+
+    /// <summary>Невдала спроба там, де користувача ще не встановлено.</summary>
+    [LoggerMessage(
+        EventId = 101,
+        Level = LogLevel.Warning,
+        Message = "Невдалий вхід для {Email}: {Reason}, з {Ip}")]
+    private static partial void LogLoginFailed(
+        ILogger logger,
+        string email,
+        string reason,
+        string? ip);
+
+    /// <summary>Відмова відомому користувачеві: блокування або лок-аут.</summary>
+    [LoggerMessage(
+        EventId = 102,
+        Level = LogLevel.Warning,
+        Message = "Вхід користувача {UserId} відхилено: {Reason}, з {Ip}")]
+    private static partial void LogLoginRefused(
+        ILogger logger,
+        long userId,
+        string reason,
+        string? ip);
+
+    [LoggerMessage(
+        EventId = 103,
+        Level = LogLevel.Error,
+        Message = "Не вдалося призначити роль {Role} користувачу {UserId}: {Errors}")]
+    private static partial void LogRoleNotAssigned(
+        ILogger logger,
+        string role,
+        long userId,
+        string errors);
+
+    [LoggerMessage(
+        EventId = 104,
+        Level = LogLevel.Warning,
+        Message = "Не вдалося надіслати лист підтвердження користувачу {UserId}. Реєстрація пройшла.")]
+    private static partial void LogConfirmationNotSent(
+        ILogger logger,
+        Exception exception,
+        long userId);
+
+    [LoggerMessage(
+        EventId = 105,
+        Level = LogLevel.Warning,
+        Message = "Повторне використання refresh-токена сім'ї {FamilyId} користувача {UserId} з {Ip}")]
+    private static partial void LogTokenReuse(
+        ILogger logger,
+        Guid familyId,
+        long userId,
+        string? ip);
 }

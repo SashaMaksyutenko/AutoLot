@@ -11,6 +11,7 @@ using AutoLot.Infrastructure.Listings;
 using AutoLot.Infrastructure.Persistence;
 using AutoLot.Tests.TestDoubles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AutoLot.Tests.Listings;
 
@@ -178,7 +179,8 @@ public class DealTests : IDisposable
             new FixedClock(Now),
             new ListingMapper(context, language, new StubCurrentUser(SellerId), geo),
             new ListingAccess(context),
-            new StubListingAllowance());
+            new StubListingAllowance(),
+            NullLogger<ListingService>.Instance);
     }
 
     private void StartConversation(long listing, long buyerId, DateTimeOffset? lastMessageAt = null)

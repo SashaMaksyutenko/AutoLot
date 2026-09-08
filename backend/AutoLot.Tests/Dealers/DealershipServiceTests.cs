@@ -8,6 +8,7 @@ using AutoLot.Domain.Identity;
 using AutoLot.Infrastructure.Dealers;
 using AutoLot.Infrastructure.Persistence;
 using AutoLot.Tests.TestDoubles;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AutoLot.Tests.Dealers;
 
@@ -199,7 +200,11 @@ public class DealershipServiceTests : IDisposable
     }
 
     private DealershipService Service() =>
-        new(context, new FixedClock(Now), new StubLanguage());
+        new(
+            context,
+            new FixedClock(Now),
+            new StubLanguage(),
+            NullLogger<DealershipService>.Instance);
 
     private static CreateDealershipRequest Request(string name) => new()
     {
