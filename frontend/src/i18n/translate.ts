@@ -40,7 +40,13 @@ export function translate(
  * Ключі, у яких є форми множини. Кожен має всі чотири — це перевіряє тип
  * нижче, тож додати «.one» і забути «.many» не вийде.
  */
-export type PluralKey = 'catalog.found' | 'saved.hint' | 'feature.selected'
+export type PluralKey =
+  | 'catalog.found'
+  | 'saved.hint'
+  | 'feature.selected'
+  | 'listing.views'
+  | 'price.basis'
+  | 'auction.bids'
 
 /** Усі чотири форми кожного такого ключа мають бути у словнику. */
 type PluralForms = `${PluralKey}.${'one' | 'few' | 'many' | 'other'}`

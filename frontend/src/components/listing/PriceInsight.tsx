@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchPriceInsight } from '../../api/analytics'
-import { formatPrice, plural } from '../../format'
+import { formatPrice } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
 
 /**
  * Ціна цього авто на тлі ринку.
@@ -14,6 +15,8 @@ import { formatPrice, plural } from '../../format'
  * порівняння гірше за його відсутність.
  */
 export function PriceInsight({ listingId }: { listingId: number }) {
+  const { t, tPlural } = useTranslation()
+
   const insight = useQuery({
     queryKey: ['price-insight', listingId],
     queryFn: ({ signal }) => fetchPriceInsight(listingId, signal),
@@ -35,19 +38,20 @@ export function PriceInsight({ listingId }: { listingId: number }) {
           Називати його вигодою означало б підказувати неправду.
         */}
         {size < 5 ? (
-          <span>Ціна на рівні ринку</span>
+          <span>{t('price.atMarket')}</span>
         ) : (
           <>
             <strong className={cheaper ? 'text-accent' : 'text-ink'}>
-              на {size}% {cheaper ? 'дешевше' : 'дорожче'}
+              {cheaper ? t('price.cheaperBy', { size }) : t('price.dearerBy', { size })}
             </strong>
-            <span className="text-ink-2">за типову ціну</span>
+            <span className="text-ink-2">{t('price.versusTypical')}</span>
           </>
         )}
       </div>
 
       <div className="text-[12.5px] text-ink-2">
-        Типова: <span className="font-mono tabular-nums">{formatPrice(market.median, 'Uah')}</span>
+        {t('price.typical')}{' '}
+        <span className="font-mono tabular-nums">{formatPrice(market.median, 'Uah')}</span>
       </div>
 
       {/*
@@ -57,11 +61,13 @@ export function PriceInsight({ listingId }: { listingId: number }) {
         десяте авто просто іншого року, а роки не змішуються.
       */}
       <div className="text-[12px] text-ink-3">
-        За {market.count}{' '}
-        {plural(market.count, 'оголошенням', 'оголошеннями', 'оголошеннями')}{' '}
-        {market.makeName} {market.modelName}
-        {market.year ? ` ${market.year} року` : ' за всі роки'}
-        {market.count < 10 ? ' — вибірка мала' : ''}
+        {tPlural('price.basis', market.count, {
+          model: `${market.makeName} ${market.modelName}`,
+          period: market.year
+            ? t('price.periodYear', { year: market.year })
+            : t('price.periodAllYears'),
+          note: market.count < 10 ? t('price.smallSample') : '',
+        })}
       </div>
     </div>
   )

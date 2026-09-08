@@ -10,6 +10,7 @@ import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { openSignIn } from '../../auth/signInPrompt'
 import { formatDateTime } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
 
 interface Props {
   listingId: number
@@ -24,6 +25,8 @@ interface Props {
  * завжди цікавить усіх, хто торгується.
  */
 export function Questions({ listingId, isSeller }: Props) {
+  const { t } = useTranslation()
+
   const auth = useAuth()
   const queryClient = useQueryClient()
 
@@ -37,7 +40,9 @@ export function Questions({ listingId, isSeller }: Props) {
   return (
     <section className="card p-4">
       <h2 className="eyebrow mb-3">
-        Питання продавцю{questions.data?.length ? ` · ${questions.data.length}` : ''}
+        {questions.data?.length
+          ? t('questions.titleCount', { count: questions.data.length })
+          : t('questions.title')}
       </h2>
 
       {/* Продавцю форму питання не показуємо: питати самого себе немає сенсу. */}
@@ -49,11 +54,12 @@ export function Questions({ listingId, isSeller }: Props) {
         />
       )}
 
-      {questions.isPending && <p className="text-sm text-ink-2">Завантажуємо…</p>}
+      {questions.isPending && <p className="text-sm text-ink-2">{t('questions.loading')}</p>}
 
       {questions.data?.length === 0 && (
         <p className="text-sm text-ink-2">
-          Питань поки немає.{isSeller ? '' : ' Запитайте перші — відповідь побачать усі.'}
+          {t('questions.empty')}
+          {isSeller ? '' : t('questions.emptyInvite')}
         </p>
       )}
 
@@ -81,6 +87,8 @@ function AskForm({
   isAuthenticated: boolean
   onAsked: () => void
 }) {
+  const { t } = useTranslation()
+
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -92,16 +100,16 @@ function AskForm({
       onAsked()
     },
     onError: (caught) =>
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося надіслати питання.'),
+      setError(caught instanceof ApiError ? caught.message : t('questions.askFailed')),
   })
 
   if (!isAuthenticated) {
     return (
       <p className="mb-4 rounded-control bg-surface-2 px-3 py-2 text-[13px] text-ink-2">
         <button type="button" onClick={openSignIn} className="text-accent hover:underline">
-          Увійдіть
+          {t('questions.signIn')}
         </button>
-        , щоб поставити запитання продавцю.
+        {t('questions.signInTail')}
       </p>
     )
   }
@@ -119,20 +127,20 @@ function AskForm({
         onChange={(event) => setText(event.target.value)}
         rows={2}
         maxLength={1000}
-        placeholder="Наприклад: чи фарбувалися елементи кузова?"
+        placeholder={t('questions.placeholder')}
         className="control resize-y"
       />
 
       {error && <p className="text-[12px] text-danger">{error}</p>}
 
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[12px] text-ink-3">Питання й відповідь побачать усі</span>
+        <span className="text-[12px] text-ink-3">{t('questions.publicNote')}</span>
         <button
           type="submit"
           disabled={ask.isPending || text.trim().length < 5}
           className="btn btn-primary"
         >
-          {ask.isPending ? 'Надсилаємо…' : 'Запитати'}
+          {ask.isPending ? t('questions.sending') : t('questions.ask')}
         </button>
       </div>
     </form>
@@ -150,6 +158,8 @@ function QuestionItem({
   isSeller: boolean
   onAnswered: () => void
 }) {
+  const { t } = useTranslation()
+
   return (
     <article className="border-t border-line pt-3 first:border-0 first:pt-0">
       <div className="flex items-baseline justify-between gap-3">
@@ -164,7 +174,7 @@ function QuestionItem({
         // питання, а де відповідь продавця.
         <div className="mt-2 border-l-2 border-accent pl-3">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-[12px] font-semibold text-accent">Відповідь продавця</span>
+            <span className="text-[12px] font-semibold text-accent">{t('questions.sellerAnswer')}</span>
             {question.answeredAt && (
               <span className="text-[11.5px] text-ink-3">
                 {formatDateTime(question.answeredAt)}
@@ -174,7 +184,7 @@ function QuestionItem({
           <p className="mt-0.5 text-[14px] whitespace-pre-line text-ink-2">{question.answer}</p>
         </div>
       ) : (
-        <p className="mt-1 text-[12px] text-ink-3">Продавець ще не відповів</p>
+        <p className="mt-1 text-[12px] text-ink-3">{t('questions.noAnswerYet')}</p>
       )}
 
       {isSeller && (
@@ -197,6 +207,8 @@ function AnswerForm({
   question: QuestionRecord
   onAnswered: () => void
 }) {
+  const { t } = useTranslation()
+
   // Уже відповів — форму згортаємо, поки не натиснуть «виправити»: інакше під
   // кожним питанням висіло б порожнє поле.
   const [isOpen, setOpen] = useState(question.answer === null)
@@ -211,7 +223,7 @@ function AnswerForm({
       onAnswered()
     },
     onError: (caught) =>
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося зберегти відповідь.'),
+      setError(caught instanceof ApiError ? caught.message : t('questions.answerFailed')),
   })
 
   if (!isOpen) {
@@ -221,7 +233,7 @@ function AnswerForm({
         onClick={() => setOpen(true)}
         className="mt-2 text-[12px] text-accent hover:underline"
       >
-        Виправити відповідь
+        {t('questions.editAnswer')}
       </button>
     )
   }
@@ -239,7 +251,7 @@ function AnswerForm({
         onChange={(event) => setText(event.target.value)}
         rows={2}
         maxLength={2000}
-        placeholder="Ваша відповідь"
+        placeholder={t('questions.answerPlaceholder')}
         className="control resize-y"
       />
 
@@ -251,11 +263,11 @@ function AnswerForm({
           disabled={answer.isPending || text.trim().length === 0}
           className="btn btn-primary"
         >
-          {answer.isPending ? 'Зберігаємо…' : 'Відповісти'}
+          {answer.isPending ? t('questions.saving') : t('questions.answer')}
         </button>
         {question.answer !== null && (
           <button type="button" onClick={() => setOpen(false)} className="btn">
-            Скасувати
+            {t('questions.cancel')}
           </button>
         )}
       </div>

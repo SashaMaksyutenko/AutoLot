@@ -1,3 +1,5 @@
+import { useTranslation } from '../../i18n/useTranslation'
+
 /**
  * Зірки рейтингу — і для показу, і для вибору оцінки.
  *
@@ -18,6 +20,7 @@ export function Stars({
   size?: number
   onPick?: (rating: number) => void
 }) {
+  const { t } = useTranslation()
   const filled = Math.round(value)
 
   return (
@@ -28,7 +31,7 @@ export function Stars({
             key={position}
             type="button"
             onClick={() => onPick(position)}
-            aria-label={`Оцінка ${position} з 5`}
+            aria-label={t('stars.rating', { value: position })}
             className="leading-none"
           >
             <Star on={position <= filled} size={size + 5} />
@@ -74,9 +77,11 @@ export function RatingLine({
   average: number
   size?: number
 }) {
+  const { t } = useTranslation()
+
   if (count === 0) {
     // «0,0» читалося б як погана оцінка, хоча оцінок просто немає.
-    return <span className="text-[12.5px] text-ink-3">Ще без відгуків</span>
+    return <span className="text-[12.5px] text-ink-3">{t('stars.noReviews')}</span>
   }
 
   return (

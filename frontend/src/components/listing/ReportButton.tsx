@@ -4,6 +4,7 @@ import { fetchReportReasons, submitReport, type ReportReason } from '../../api/r
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { openSignIn } from '../../auth/signInPrompt'
+import { useTranslation } from '../../i18n/useTranslation'
 
 /**
  * «Поскаржитися на оголошення».
@@ -17,18 +18,20 @@ import { openSignIn } from '../../auth/signInPrompt'
  * надсилати його знову.
  */
 export function ReportButton({ listingId }: { listingId: number }) {
+  const { t } = useTranslation()
+
   const auth = useAuth()
   const [open, setOpen] = useState(false)
 
   if (!auth.user) {
     return (
-      <Trigger onClick={openSignIn} label="Поскаржитися на оголошення" />
+      <Trigger onClick={openSignIn} label={t('report.trigger')} />
     )
   }
 
   if (!open) {
     return (
-      <Trigger onClick={() => setOpen(true)} label="Поскаржитися на оголошення" />
+      <Trigger onClick={() => setOpen(true)} label={t('report.trigger')} />
     )
   }
 
@@ -78,6 +81,8 @@ function FlagIcon() {
 }
 
 function ReportForm({ listingId, onClose }: { listingId: number; onClose: () => void }) {
+  const { t } = useTranslation()
+
   const [reason, setReason] = useState<ReportReason>('Fraud')
   const [comment, setComment] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -96,11 +101,11 @@ function ReportForm({ listingId, onClose }: { listingId: number; onClose: () => 
     onSuccess: (receipt) =>
       setDone(
         receipt.isNew
-          ? 'Дякуємо, скаргу передано модератору.'
-          : 'Ви вже скаржилися на це оголошення — скарга в черзі.',
+          ? t('report.thanks')
+          : t('report.duplicate'),
       ),
     onError: (caught) =>
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося надіслати скаргу.'),
+      setError(caught instanceof ApiError ? caught.message : t('report.failed')),
   })
 
   if (done) {
@@ -108,7 +113,7 @@ function ReportForm({ listingId, onClose }: { listingId: number; onClose: () => 
       <div className="card grid gap-2 p-3">
         <p className="text-[13px]">{done}</p>
         <button type="button" onClick={onClose} className="btn justify-self-start">
-          Закрити
+          {t('report.close')}
         </button>
       </div>
     )
@@ -129,7 +134,7 @@ function ReportForm({ listingId, onClose }: { listingId: number; onClose: () => 
         send.mutate()
       }}
     >
-      <span className="eyebrow">Що не так з оголошенням?</span>
+      <span className="eyebrow">{t('report.title')}</span>
 
       <select
         value={reason}
@@ -148,7 +153,7 @@ function ReportForm({ listingId, onClose }: { listingId: number; onClose: () => 
         onChange={(event) => setComment(event.target.value)}
         rows={3}
         maxLength={1000}
-        placeholder={needsComment ? 'Опишіть, у чому річ' : 'Подробиці (не обов’язково)'}
+        placeholder={needsComment ? t('report.commentRequired') : t('report.commentOptional')}
         className="control resize-y"
       />
 
@@ -156,10 +161,10 @@ function ReportForm({ listingId, onClose }: { listingId: number; onClose: () => 
 
       <div className="flex gap-2">
         <button type="submit" disabled={!canSend} className="btn btn-primary">
-          {send.isPending ? 'Надсилаємо…' : 'Надіслати'}
+          {send.isPending ? t('report.sending') : t('report.send')}
         </button>
         <button type="button" onClick={onClose} className="btn">
-          Скасувати
+          {t('report.cancel')}
         </button>
       </div>
     </form>

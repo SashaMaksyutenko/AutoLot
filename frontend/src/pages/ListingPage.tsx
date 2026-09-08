@@ -16,9 +16,12 @@ import { PriceInsight } from '../components/listing/PriceInsight'
 import { Questions } from '../components/listing/Questions'
 import { RatingLine } from '../components/listing/Stars'
 import { ReportButton } from '../components/listing/ReportButton'
-import { formatCount, formatMileage, formatPrice, plural } from '../format'
+import { formatCount, formatMileage, formatPrice } from '../format'
+import { useTranslation } from '../i18n/useTranslation'
 
 export function ListingPage() {
+  const { t } = useTranslation()
+
   const { id } = useParams()
   const listingId = Number(id)
 
@@ -29,15 +32,15 @@ export function ListingPage() {
   })
 
   if (listing.isPending) {
-    return <Notice>Завантажуємо…</Notice>
+    return <Notice>{t('listing.loading')}</Notice>
   }
 
   if (listing.isError || !listing.data) {
     return (
       <Notice>
-        Оголошення не знайдено або воно ще не опубліковане.{' '}
+        {t('listing.notFound')}{' '}
         <Link to="/" className="text-accent hover:underline">
-          Повернутися до каталогу
+          {t('listing.backToCatalog')}
         </Link>
       </Notice>
     )
@@ -47,6 +50,8 @@ export function ListingPage() {
 }
 
 function Loaded({ listing }: { listing: ListingDetails }) {
+  const { t, tPlural } = useTranslation()
+
   const auth = useAuth()
   const labelOf = useAttributeLabels()
   const car = listing.car
@@ -56,7 +61,7 @@ function Loaded({ listing }: { listing: ListingDetails }) {
     <div className="wrap grid gap-4 py-[26px]">
       <nav className="text-[13px] text-ink-2">
         <Link to="/" className="hover:text-accent hover:underline">
-          Каталог
+          {t('listing.catalogCrumb')}
         </Link>
         <span className="px-1.5 text-ink-3">/</span>
         <span>
@@ -75,74 +80,87 @@ function Loaded({ listing }: { listing: ListingDetails }) {
           */}
           <KeySpecs
             items={[
-              { label: 'Рік випуску', value: String(car.year) },
-              { label: 'Пробіг', value: formatMileage(car.mileage) },
-              { label: 'Кузов', value: labelOf('bodyTypes', car.bodyType) },
-              { label: 'Пальне', value: labelOf('fuelTypes', car.fuelType) },
-              { label: 'Коробка', value: labelOf('transmissions', car.transmission) },
-              { label: 'Привід', value: labelOf('driveTypes', car.drivetrain) },
+              { label: t('spec.year'), value: String(car.year) },
+              { label: t('spec.mileage'), value: formatMileage(car.mileage) },
+              { label: t('spec.body'), value: labelOf('bodyTypes', car.bodyType) },
+              { label: t('spec.fuel'), value: labelOf('fuelTypes', car.fuelType) },
+              { label: t('spec.transmission'), value: labelOf('transmissions', car.transmission) },
+              { label: t('spec.drivetrain'), value: labelOf('driveTypes', car.drivetrain) },
             ]}
           />
 
-          <Panel title="Технічні дані">
+          <Panel title={t('listing.techPanel')}>
             <dl className="grid gap-x-10 sm:grid-cols-2">
               {/* Стан не входить у довідник перелічень — значень лише два. */}
-              <Row label="Стан" value={car.condition === 'New' ? 'Новий' : 'Вживаний'} />
+              <Row label={t('spec.condition')} value={car.condition === 'New' ? t('spec.new') : t('spec.used')} />
               <Row
-                label="Колір"
-                value={`${labelOf('colors', car.color)}${car.isMetallic ? ', металік' : ''}`}
+                label={t('spec.colour')}
+                value={`${labelOf('colors', car.color)}${car.isMetallic ? t('spec.metallic') : ''}`}
               />
-              <Row label="Двигун" value={car.engineVolume ? `${car.engineVolume} л` : null} mono />
               <Row
-                label="Потужність"
-                value={car.enginePower ? `${car.enginePower} к.с.` : null}
+                label={t('spec.engine')}
+                value={car.engineVolume ? t('spec.litres', { value: car.engineVolume }) : null}
                 mono
               />
               <Row
-                label="Витрата, змішана"
+                label={t('spec.power')}
+                value={car.enginePower ? t('spec.horsepower', { value: car.enginePower }) : null}
+                mono
+              />
+              <Row
+                label={t('spec.consumption')}
                 value={
-                  car.fuelConsumptionCombined ? `${car.fuelConsumptionCombined} л/100 км` : null
+                  car.fuelConsumptionCombined
+                    ? t('spec.consumptionValue', { value: car.fuelConsumptionCombined })
+                    : null
                 }
                 mono
               />
               <Row
-                label="Батарея"
-                value={car.batteryCapacity ? `${car.batteryCapacity} кВт·год` : null}
+                label={t('spec.battery')}
+                value={
+                  car.batteryCapacity ? t('spec.batteryValue', { value: car.batteryCapacity }) : null
+                }
                 mono
               />
               <Row
-                label="Запас ходу"
-                value={car.electricRange ? `${car.electricRange} км` : null}
+                label={t('spec.range')}
+                value={car.electricRange ? t('spec.rangeValue', { value: car.electricRange }) : null}
                 mono
               />
-              <Row label="Місць" value={car.seatCount ? String(car.seatCount) : null} mono />
-              <Row label="Дверей" value={car.doorCount ? String(car.doorCount) : null} mono />
-              <Row label="Екостандарт" value={car.ecologyStandard} />
-              <Row label="Власників" value={car.ownerCount ? String(car.ownerCount) : null} mono />
+              <Row label={t('spec.seats')} value={car.seatCount ? String(car.seatCount) : null} mono />
+              <Row label={t('spec.doors')} value={car.doorCount ? String(car.doorCount) : null} mono />
+              <Row label={t('spec.ecology')} value={car.ecologyStandard} />
+              <Row label={t('spec.owners')} value={car.ownerCount ? String(car.ownerCount) : null} mono />
               <Row label="VIN" value={car.vin} mono />
             </dl>
           </Panel>
 
-          <Panel title="Стан та історія">
+          <Panel title={t('listing.historyPanel')}>
             <div className="flex flex-wrap gap-1.5">
-              <Fact ok={!car.wasInAccident} text={car.wasInAccident ? 'Був у ДТП' : 'Не був у ДТП'} />
+              <Fact
+                ok={!car.wasInAccident}
+                text={car.wasInAccident ? t('fact.accident') : t('fact.noAccident')}
+              />
               <Fact
                 ok={car.isCustomsCleared}
-                text={car.isCustomsCleared ? 'Розмитнений' : 'Не розмитнений'}
+                text={car.isCustomsCleared ? t('fact.customsCleared') : t('fact.notCustomsCleared')}
               />
               <Fact
                 ok={car.isLocatedInUkraine}
-                text={car.isLocatedInUkraine ? 'В Україні' : 'Під замовлення'}
+                text={car.isLocatedInUkraine ? t('fact.inUkraine') : t('fact.toOrder')}
               />
-              {car.hasServiceBook && <Fact ok text="Сервісна книжка" />}
-              {car.isGarageKept && <Fact ok text="Гаражне зберігання" />}
-              {car.isOnCredit && <Fact ok={false} text="У кредиті" />}
-              {car.importedFromCountry && <Fact ok text={`Пригнаний: ${car.importedFromCountry}`} />}
+              {car.hasServiceBook && <Fact ok text={t('fact.serviceBook')} />}
+              {car.isGarageKept && <Fact ok text={t('fact.garageKept')} />}
+              {car.isOnCredit && <Fact ok={false} text={t('fact.onCredit')} />}
+              {car.importedFromCountry && (
+                <Fact ok text={t('fact.importedFrom', { country: car.importedFromCountry })} />
+              )}
             </div>
           </Panel>
 
           {car.features.length > 0 && (
-            <Panel title={`Комплектація · ${car.features.length}`}>
+            <Panel title={t('listing.featuresPanel', { count: car.features.length })}>
               <ul className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2 lg:grid-cols-3">
                 {car.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-[13.5px]">
@@ -154,7 +172,7 @@ function Loaded({ listing }: { listing: ListingDetails }) {
             </Panel>
           )}
 
-          <Panel title="Опис">
+          <Panel title={t('listing.descriptionPanel')}>
             <p className="text-sm leading-relaxed whitespace-pre-line text-ink-2">
               {listing.description}
             </p>
@@ -205,9 +223,15 @@ function Loaded({ listing }: { listing: ListingDetails }) {
 
             {(listing.isNegotiable || listing.acceptsTrade || listing.isUrgent) && (
               <div className="flex flex-wrap gap-1.5">
-                {listing.isNegotiable && <span className="pill pill-accent">Торг доречний</span>}
-                {listing.acceptsTrade && <span className="pill pill-accent">Розглядаю обмін</span>}
-                {listing.isUrgent && <span className="pill pill-accent">Терміновий продаж</span>}
+                {listing.isNegotiable && (
+                  <span className="pill pill-accent">{t('listing.negotiable')}</span>
+                )}
+                {listing.acceptsTrade && (
+                  <span className="pill pill-accent">{t('listing.acceptsTrade')}</span>
+                )}
+                {listing.isUrgent && (
+                  <span className="pill pill-accent">{t('listing.urgent')}</span>
+                )}
               </div>
             )}
 
@@ -220,7 +244,7 @@ function Loaded({ listing }: { listing: ListingDetails }) {
           {isAuction && <AuctionPanel listingId={listing.id} />}
 
           <div className="card grid gap-3 p-4">
-            <span className="eyebrow">Продавець</span>
+            <span className="eyebrow">{t('listing.seller')}</span>
 
             {/*
               Коли продає салон, показуємо салон із посиланням на вітрину, а не
@@ -237,13 +261,13 @@ function Loaded({ listing }: { listing: ListingDetails }) {
                   {listing.dealer.name}
                 </Link>
                 <div className="text-[13px] text-ink-2">
-                  {listing.dealer.isVerified ? 'Перевірений автосалон' : 'Автосалон'}
+                  {listing.dealer.isVerified ? t('listing.verifiedDealer') : t('listing.dealer')}
                 </div>
               </div>
             ) : (
               <div>
                 <div className="text-[15px] font-semibold">{listing.seller.displayName}</div>
-                <div className="text-[13px] text-ink-2">Приватна особа</div>
+                <div className="text-[13px] text-ink-2">{t('listing.privateSeller')}</div>
               </div>
             )}
 
@@ -279,8 +303,9 @@ function Loaded({ listing }: { listing: ListingDetails }) {
           </div>
 
           <div className="px-1 text-[13px] text-ink-3">
-            {formatCount(listing.viewCount)}{' '}
-            {plural(listing.viewCount, 'перегляд', 'перегляди', 'переглядів')}
+            {tPlural('listing.views', listing.viewCount, {
+              count: formatCount(listing.viewCount),
+            })}
           </div>
         </aside>
       </div>
@@ -305,6 +330,8 @@ function Loaded({ listing }: { listing: ListingDetails }) {
  * просто гортає сторінки, і збирати номери стає дорожче.
  */
 function PhoneButton({ seller }: { seller: SellerSummary }) {
+  const { t } = useTranslation()
+
   const [shown, setShown] = useState(false)
   const auth = useAuth()
 
@@ -315,7 +342,7 @@ function PhoneButton({ seller }: { seller: SellerSummary }) {
         onClick={openSignIn}
         className="btn btn-primary w-full py-3 text-base"
       >
-        Увійдіть, щоб побачити телефон
+        {t('phone.signIn')}
       </button>
     )
   }
@@ -323,7 +350,7 @@ function PhoneButton({ seller }: { seller: SellerSummary }) {
   if (seller.phoneNumber === null) {
     return (
       <p className="rounded-control bg-surface-2 px-3 py-2 text-center text-[13px] text-ink-2">
-        Продавець не вказав телефон
+        {t('phone.none')}
       </p>
     )
   }
@@ -335,7 +362,7 @@ function PhoneButton({ seller }: { seller: SellerSummary }) {
         onClick={() => setShown(true)}
         className="btn btn-primary w-full py-3 text-base"
       >
-        Показати телефон
+        {t('phone.show')}
       </button>
     )
   }
@@ -358,6 +385,8 @@ function PhoneButton({ seller }: { seller: SellerSummary }) {
  * саме авто не з'явиться.
  */
 function WriteButton({ listingId }: { listingId: number }) {
+  const { t } = useTranslation()
+
   const auth = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
@@ -366,13 +395,13 @@ function WriteButton({ listingId }: { listingId: number }) {
     mutationFn: () => startConversation(listingId),
     onSuccess: (conversation) => navigate(`/chat?id=${conversation.id}`),
     onError: (caught) =>
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося почати розмову.'),
+      setError(caught instanceof ApiError ? caught.message : t('chat.startFailed')),
   })
 
   if (!auth.user) {
     return (
       <button type="button" onClick={openSignIn} className="btn w-full py-3">
-        Увійдіть, щоб написати
+        {t('chat.signInToWrite')}
       </button>
     )
   }
@@ -385,7 +414,7 @@ function WriteButton({ listingId }: { listingId: number }) {
         disabled={start.isPending}
         className="btn w-full py-3"
       >
-        {start.isPending ? 'Відкриваємо…' : 'Написати продавцю'}
+        {start.isPending ? t('chat.opening') : t('chat.writeToSeller')}
       </button>
 
       {error && <p className="text-[12px] text-danger">{error}</p>}

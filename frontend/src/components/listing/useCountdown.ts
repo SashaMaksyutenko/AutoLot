@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { translate } from '../../i18n/translate'
 
 /**
  * Скільки лишилося до кінця торгів — за годинником СЕРВЕРА, а не пристрою.
@@ -50,7 +51,7 @@ function untilEnd(endsAt: string, offset: number): number {
  * завжди: під кінець торгів саме вони й важливі.
  */
 export function formatRemaining(milliseconds: number): string {
-  if (milliseconds <= 0) return 'торги завершено'
+  if (milliseconds <= 0) return translate('countdown.finished')
 
   const total = Math.floor(milliseconds / 1000)
   const days = Math.floor(total / 86_400)
@@ -59,8 +60,9 @@ export function formatRemaining(milliseconds: number): string {
   const seconds = total % 60
 
   const pad = (value: number) => String(value).padStart(2, '0')
+  const clock = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
 
-  return days > 0
-    ? `${days} дн ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
-    : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+  // Годинник «02:14:33» однаковий усіма мовами — перекладається лише
+  // скорочення для днів, тож підставляємо готовий рядок у шаблон.
+  return days > 0 ? translate('countdown.withDays', { days, clock }) : clock
 }

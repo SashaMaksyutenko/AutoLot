@@ -4,6 +4,7 @@ import { fetchDealReviews, leaveReview, type ReviewRecord } from '../../api/revi
 import { ApiError } from '../../api/client'
 import { formatDateTime } from '../../format'
 import { Stars } from './Stars'
+import { useTranslation } from '../../i18n/useTranslation'
 
 /**
  * Відгуки під проданим лотом.
@@ -13,6 +14,8 @@ import { Stars } from './Stars'
  * ще нічого.
  */
 export function DealReviews({ listingId }: { listingId: number }) {
+  const { t } = useTranslation()
+
   const queryClient = useQueryClient()
 
   const state = useQuery({
@@ -33,7 +36,7 @@ export function DealReviews({ listingId }: { listingId: number }) {
 
   return (
     <section className="card grid gap-3 p-4">
-      <h2 className="font-display text-[17px] font-semibold">Відгуки про угоду</h2>
+      <h2 className="font-display text-[17px] font-semibold">{t('reviews.title')}</h2>
 
       {reviews.map((review) => (
         <ReviewCard
@@ -41,10 +44,10 @@ export function DealReviews({ listingId }: { listingId: number }) {
           review={review}
           label={
             review.id === mineId
-              ? 'Ваш відгук'
+              ? t('reviews.mine')
               : review.authorIsSeller
-                ? 'Продавець'
-                : 'Покупець'
+                ? t('reviews.fromSeller')
+                : t('reviews.fromBuyer')
           }
         />
       ))}
@@ -80,6 +83,8 @@ function ReviewCard({ review, label }: { review: ReviewRecord; label: string }) 
 }
 
 function ReviewForm({ listingId, onDone }: { listingId: number; onDone: () => void }) {
+  const { t } = useTranslation()
+
   const [rating, setRating] = useState(0)
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -88,7 +93,7 @@ function ReviewForm({ listingId, onDone }: { listingId: number; onDone: () => vo
     mutationFn: () => leaveReview(listingId, rating, text.trim()),
     onSuccess: onDone,
     onError: (caught) =>
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося зберегти відгук.'),
+      setError(caught instanceof ApiError ? caught.message : t('reviews.failed')),
   })
 
   return (
@@ -100,7 +105,7 @@ function ReviewForm({ listingId, onDone }: { listingId: number; onDone: () => vo
         send.mutate()
       }}
     >
-      <span className="eyebrow">Як пройшла угода?</span>
+      <span className="eyebrow">{t('reviews.prompt')}</span>
 
       <Stars value={rating} onPick={setRating} />
 
@@ -109,13 +114,13 @@ function ReviewForm({ listingId, onDone }: { listingId: number; onDone: () => vo
         onChange={(event) => setText(event.target.value)}
         rows={3}
         maxLength={1000}
-        placeholder="Кілька слів (не обов'язково)"
+        placeholder={t('reviews.placeholder')}
         className="control resize-y"
       />
 
       {/* Попереджаємо ДО натискання: після збереження виправити не вийде. */}
       <p className="text-[11.5px] text-ink-3">
-        Відгук публічний, і змінити його потім не можна.
+        {t('reviews.permanent')}
       </p>
 
       {error && <p className="text-[12px] text-danger">{error}</p>}
@@ -125,7 +130,7 @@ function ReviewForm({ listingId, onDone }: { listingId: number; onDone: () => vo
         disabled={send.isPending || rating === 0}
         className="btn btn-primary justify-self-start"
       >
-        {send.isPending ? 'Зберігаємо…' : 'Лишити відгук'}
+        {send.isPending ? t('reviews.saving') : t('reviews.submit')}
       </button>
     </form>
   )

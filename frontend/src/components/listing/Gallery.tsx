@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ListingPhoto } from '../../api/listing'
+import { useTranslation } from '../../i18n/useTranslation'
 
 /**
  * Галерея: велике фото й стрічка мініатюр. Мініатюри тягнуть окремий
@@ -7,12 +8,14 @@ import type { ListingPhoto } from '../../api/listing'
  * вантажила б десяток повнорозмірних зображень заради смужки внизу.
  */
 export function Gallery({ photos, alt }: { photos: ListingPhoto[]; alt: string }) {
+  const { t } = useTranslation()
+
   const [current, setCurrent] = useState(0)
 
   if (photos.length === 0) {
     return (
       <div className="card grid aspect-[16/10] place-items-center text-sm text-ink-3">
-        Фотографій немає
+        {t('gallery.empty')}
       </div>
     )
   }
@@ -37,7 +40,7 @@ export function Gallery({ photos, alt }: { photos: ListingPhoto[]; alt: string }
               key={photo.id}
               type="button"
               onClick={() => setCurrent(index)}
-              aria-label={`Фото ${index + 1}`}
+              aria-label={t('gallery.photo', { index: index + 1 })}
               // outline, а не border: обведення малюється поверх і не змінює
               // розміру кнопки, тож мініатюри не стрибають при виборі.
               className={`aspect-[4/3] overflow-hidden rounded-[5px] border border-line ${

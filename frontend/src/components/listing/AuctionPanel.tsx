@@ -13,13 +13,16 @@ import { watchAuction } from '../../api/auctionHub'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { openSignIn } from '../../auth/signInPrompt'
-import { formatPrice, plural } from '../../format'
+import { formatDateTime, formatPrice } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
 import { formatRemaining, useCountdown } from './useCountdown'
 
 /** Менше за стільки до кінця — торги вважаємо гарячими й підсвічуємо таймер. */
 const UrgentMilliseconds = 10 * 60 * 1000
 
 export function AuctionPanel({ listingId }: { listingId: number }) {
+  const { t } = useTranslation()
+
   const auth = useAuth()
 
   const initial = useQuery({
@@ -74,7 +77,7 @@ export function AuctionPanel({ listingId }: { listingId: number }) {
   }, [listingId, auth.user?.id])
 
   if (initial.isPending) {
-    return <div className="card p-4 text-sm text-ink-2">Завантажуємо торги…</div>
+    return <div className="card p-4 text-sm text-ink-2">{t('auction.loading')}</div>
   }
 
   if (!auction) {
@@ -101,14 +104,18 @@ function Outcome({
   outcome: AuctionOutcome
   isViewerWinner: boolean
 }) {
+  const { t } = useTranslation()
+
   if (isViewerWinner) {
     return (
       <div className="card border-good p-4">
-        <h2 className="eyebrow mb-1">Торги завершено</h2>
+        <h2 className="eyebrow mb-1">{t('auction.finished')}</h2>
         <p className="text-[15px] font-semibold text-good">
-          Ви виграли лот за {formatPrice(outcome.finalPrice, outcome.currency)}
+          {t('auction.youWon', {
+            price: formatPrice(outcome.finalPrice, outcome.currency),
+          })}
         </p>
-        <p className="mt-1 text-[13px] text-ink-2">Зв'яжіться з продавцем, щоб домовитися про огляд і оплату.</p>
+        <p className="mt-1 text-[13px] text-ink-2">{t('auction.contactSeller')}</p>
       </div>
     )
   }
@@ -116,9 +123,9 @@ function Outcome({
   if (outcome.winnerId !== null) {
     return (
       <div className="card p-4">
-        <h2 className="eyebrow mb-1">Торги завершено</h2>
+        <h2 className="eyebrow mb-1">{t('auction.finished')}</h2>
         <p className="text-[14px]">
-          Лот забрав {outcome.winnerName} за{' '}
+          {t('auction.wonBy', { name: outcome.winnerName ?? '' })}{' '}
           <span className="font-mono font-semibold tabular-nums">
             {formatPrice(outcome.finalPrice, outcome.currency)}
           </span>
@@ -130,11 +137,11 @@ function Outcome({
   // Переможця немає — і причини рівно дві.
   return (
     <div className="card p-4">
-      <h2 className="eyebrow mb-1">Торги завершено</h2>
+      <h2 className="eyebrow mb-1">{t('auction.finished')}</h2>
       <p className="text-[14px] text-ink-2">
         {outcome.bidCount === 0
-          ? 'Лот не отримав жодної ставки.'
-          : 'Ціна не дотягнула до резервної, тож лот лишився непроданим.'}
+          ? t('auction.noBidsAtAll')
+          : t('auction.reserveNotMet')}
       </p>
     </div>
   )
@@ -175,6 +182,8 @@ function Panel({
   isAuthenticated: boolean
   onSignIn: () => void
 }) {
+  const { t, tPlural } = useTranslation()
+
   const remaining = useCountdown(auction.endsAt, auction.serverTime)
   const isOver = remaining <= 0 || auction.status !== 'Active'
 
@@ -183,25 +192,29 @@ function Panel({
       <div className="flex items-center justify-between gap-2">
         <span className="pill pill-live">
           <i className="dot" />
-          Торги
+          {t('auction.badge')}
         </span>
         {auction.hasReserve ? (
           <span className={`pill ${auction.isReserveMet ? 'pill-good' : 'pill-danger'}`}>
-            {auction.isReserveMet ? 'Резерв досягнуто' : 'Резерв не досягнуто'}
+            {auction.isReserveMet ? t('auction.reserveMet') : t('auction.reserveUnmet')}
           </span>
         ) : (
-          <span className="pill pill-good">Без резерву</span>
+          <span className="pill pill-good">{t('auction.noReserve')}</span>
         )}
       </div>
 
       <div>
-        <div className="eyebrow">{auction.bidCount > 0 ? 'Поточна ставка' : 'Стартова ціна'}</div>
+        <div className="eyebrow">
+          {auction.bidCount > 0 ? t('auction.currentBid') : t('auction.startingPrice')}
+        </div>
         <div className="font-display text-[30px] leading-tight font-bold text-signal tabular-nums">
           {formatPrice(auction.currentPrice, auction.currency)}
         </div>
         <div className="text-[13px] text-ink-2">
-          {auction.bidCount} {plural(auction.bidCount, 'ставка', 'ставки', 'ставок')}
-          {auction.leaderName ? ` · попереду ${auction.leaderName}` : ''}
+          {tPlural('auction.bids', auction.bidCount)}
+          {auction.leaderName
+            ? t('auction.leader', { name: auction.leaderName })
+            : ''}
         </div>
       </div>
 
@@ -214,7 +227,7 @@ function Panel({
               : 'bg-surface-2 text-ink'
         }`}
       >
-        <div className="eyebrow">{isOver ? 'Завершено' : 'До завершення'}</div>
+        <div className="eyebrow">{isOver ? t('auction.over') : t('auction.timeLeft')}</div>
         <div className="font-mono text-[22px] font-semibold tabular-nums">
           {formatRemaining(remaining)}
         </div>
@@ -222,21 +235,21 @@ function Panel({
 
       {auction.isViewerLeading && !isOver && (
         <p className="rounded-control bg-good-soft px-3 py-2 text-[13px] text-good">
-          Ви попереду. Автоставка підніматиме ціну за вас, поки вистачає вашої стелі.
+          {t('auction.youLead')}
         </p>
       )}
 
       {isOver ? (
-        <p className="text-[13px] text-ink-2">Ставки більше не приймаються.</p>
+        <p className="text-[13px] text-ink-2">{t('auction.closed')}</p>
       ) : isAuthenticated ? (
         auction.canViewerBid ? (
           <BidForm auction={auction} />
         ) : (
-          <p className="text-[13px] text-ink-2">На власний лот ставити не можна.</p>
+          <p className="text-[13px] text-ink-2">{t('auction.ownLot')}</p>
         )
       ) : (
         <button type="button" onClick={onSignIn} className="btn btn-signal w-full py-3">
-          Увійти, щоб зробити ставку
+          {t('auction.signInToBid')}
         </button>
       )}
     </div>
@@ -244,6 +257,8 @@ function Panel({
 }
 
 function BidForm({ auction }: { auction: AuctionDetails }) {
+  const { t } = useTranslation()
+
   const [amount, setAmount] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -260,7 +275,7 @@ function BidForm({ auction }: { auction: AuctionDetails }) {
       await placeBid(auction.listingId, Number(amount))
       setAmount('')
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося зв’язатися з сервером.')
+      setError(caught instanceof ApiError ? caught.message : t('error.network'))
     } finally {
       setBusy(false)
     }
@@ -270,7 +285,7 @@ function BidForm({ auction }: { auction: AuctionDetails }) {
     <form onSubmit={submit} className="grid gap-2">
       <label className="grid gap-1">
         <span className="text-[11.5px] font-semibold text-ink-2">
-          Ваша максимальна ставка
+          {t('auction.yourMaximum')}
         </span>
         <input
           type="number"
@@ -300,8 +315,7 @@ function BidForm({ auction }: { auction: AuctionDetails }) {
       </div>
 
       <p className="text-[12px] text-ink-3">
-        Це стеля, а не сума платежу: система поставить рівно стільки, скільки потрібно, щоб
-        вести, і підніматиме сама, поки вашої стелі вистачає.
+        {t('auction.ceilingHint')}
       </p>
 
       {error && (
@@ -309,25 +323,27 @@ function BidForm({ auction }: { auction: AuctionDetails }) {
       )}
 
       <button type="submit" disabled={busy} className="btn btn-signal w-full py-3">
-        {busy ? 'Хвилинку…' : 'Поставити'}
+        {busy ? t('auction.placing') : t('auction.placeBid')}
       </button>
     </form>
   )
 }
 
 function History({ bids, currency }: { bids: BidRecord[]; currency: AuctionDetails['currency'] }) {
+  const { t } = useTranslation()
+
   if (bids.length === 0) {
     return (
       <div className="card p-4">
-        <h2 className="eyebrow mb-2">Історія ставок</h2>
-        <p className="text-[13px] text-ink-2">Ставок ще немає. Ваша може стати першою.</p>
+        <h2 className="eyebrow mb-2">{t('auction.history')}</h2>
+        <p className="text-[13px] text-ink-2">{t('auction.noBidsYet')}</p>
       </div>
     )
   }
 
   return (
     <div className="card p-4">
-      <h2 className="eyebrow mb-2">Історія ставок · {bids.length}</h2>
+      <h2 className="eyebrow mb-2">{t('auction.historyCount', { count: bids.length })}</h2>
 
       <ol className="grid">
         {bids.map((bid, index) => (
@@ -340,13 +356,13 @@ function History({ bids, currency }: { bids: BidRecord[]; currency: AuctionDetai
             <div className="min-w-0">
               <div className="truncate text-[13.5px]">{bid.bidderName}</div>
               <div className="text-[11.5px] text-ink-3">
-                {new Date(bid.createdAt).toLocaleString('uk-UA')}
+                {formatDateTime(bid.createdAt)}
               </div>
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
               {/* Бейдж потрібен, щоб не здавалося, ніби ціна стрибнула сама. */}
-              {bid.isAutomatic && <span className="pill">авто</span>}
+              {bid.isAutomatic && <span className="pill">{t('auction.automatic')}</span>}
               <span className={`font-mono tabular-nums ${index === 0 ? 'text-signal' : ''}`}>
                 {formatPrice(bid.amount, currency)}
               </span>
