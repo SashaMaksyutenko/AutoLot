@@ -4,13 +4,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { approveListing, fetchModerationQueue, rejectListing } from '../../api/admin'
 import { ApiError } from '../../api/client'
 import type { ListingSummary } from '../../api/catalog'
-import { formatMileage, formatPrice, plural } from '../../format'
+import { formatMileage, formatPrice } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
 
 /**
  * Черга модерації. Механіка на бекенді працювала від четвертого пункту, але
  * розбирати чергу доводилося через curl — робочого місця для неї не було.
  */
 export function ModerationQueuePage() {
+  const { t, tPlural } = useTranslation()
+
   const queryClient = useQueryClient()
 
   const queue = useQuery({
@@ -26,22 +29,17 @@ export function ModerationQueuePage() {
   return (
     <>
       <div>
-        <h1 className="font-display text-[25px] font-bold">Черга модерації</h1>
+        <h1 className="font-display text-[25px] font-bold">{t('queue.title')}</h1>
         <p className="text-[13px] text-ink-2">
           {queue.isPending
-            ? 'Завантажуємо…'
-            : `${queue.data?.length ?? 0} ${plural(
-                queue.data?.length ?? 0,
-                'оголошення чекає',
-                'оголошення чекають',
-                'оголошень чекають',
-              )}`}
+            ? t('admin.loading')
+            : tPlural('queue.waiting', queue.data?.length ?? 0)}
         </p>
       </div>
 
       {queue.data?.length === 0 && (
         <p className="card p-10 text-center text-sm text-ink-2">
-          Черга порожня — усе розглянуто.
+          {t('queue.empty')}
         </p>
       )}
 
@@ -61,6 +59,8 @@ function QueueRow({
   listing: ListingSummary
   onDecided: () => void
 }) {
+  const { t } = useTranslation()
+
   const [rejecting, setRejecting] = useState(false)
   const [reason, setReason] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -70,7 +70,7 @@ function QueueRow({
       decision === 'approve' ? approveListing(listing.id) : rejectListing(listing.id, reason),
     onSuccess: onDecided,
     onError: (caught) =>
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося зберегти рішення.'),
+      setError(caught instanceof ApiError ? caught.message : t('queue.decisionFailed')),
   })
 
   return (
@@ -102,7 +102,7 @@ function QueueRow({
             disabled={decide.isPending}
             className="btn btn-primary"
           >
-            Схвалити
+            {t('queue.approve')}
           </button>
           <button
             type="button"
@@ -110,7 +110,7 @@ function QueueRow({
             disabled={decide.isPending}
             className="btn"
           >
-            Відхилити
+            {t('queue.reject')}
           </button>
         </div>
       </div>
@@ -126,14 +126,14 @@ function QueueRow({
         >
           <label className="grid gap-1">
             <span className="text-[11.5px] font-semibold text-ink-2">
-              Причина — її побачить автор
+              {t('queue.reasonLabel')}
             </span>
             <textarea
               value={reason}
               onChange={(event) => setReason(event.target.value)}
               rows={2}
               maxLength={500}
-              placeholder="Наприклад: фото не відповідають опису авто"
+              placeholder={t('queue.reasonPlaceholder')}
               className="control resize-y"
             />
           </label>
@@ -147,10 +147,10 @@ function QueueRow({
               disabled={decide.isPending || reason.trim().length < 5}
               className="btn btn-primary"
             >
-              {decide.isPending ? 'Зберігаємо…' : 'Відхилити з причиною'}
+              {decide.isPending ? t('queue.saving') : t('queue.rejectWithReason')}
             </button>
             <button type="button" onClick={() => setRejecting(false)} className="btn">
-              Скасувати
+              {t('queue.cancel')}
             </button>
           </div>
         </form>
@@ -160,10 +160,12 @@ function QueueRow({
 }
 
 function Thumbnail({ listing }: { listing: ListingSummary }) {
+  const { t } = useTranslation()
+
   if (!listing.primaryPhotoPath) {
     return (
       <span className="grid h-[60px] w-[80px] shrink-0 place-items-center rounded-control border border-line bg-surface-2 text-[11px] text-ink-3">
-        без фото
+        {t('queue.noPhoto')}
       </span>
     )
   }

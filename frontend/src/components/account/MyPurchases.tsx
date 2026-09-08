@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchPurchases } from '../../api/myListings'
 import type { ListingSummary } from '../../api/catalog'
-import { formatMileage, formatPrice, plural } from '../../format'
+import { formatMileage, formatPrice } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
 import { ReviewPrompt } from './ReviewPrompt'
 
 /**
@@ -16,6 +17,8 @@ import { ReviewPrompt } from './ReviewPrompt'
  * купувала, і постійний блок «покупок немає» лише захаращував би кабінет.
  */
 export function MyPurchases() {
+  const { t, tPlural } = useTranslation()
+
   const purchases = useQuery({
     queryKey: ['my-purchases'],
     queryFn: ({ signal }) => fetchPurchases(signal),
@@ -30,9 +33,9 @@ export function MyPurchases() {
   return (
     <section className="grid gap-3">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="font-display text-[19px] font-bold">Мої покупки</h2>
+        <h2 className="font-display text-[19px] font-bold">{t('my.purchases')}</h2>
         <span className="text-[12.5px] text-ink-3">
-          {items.length} {plural(items.length, 'авто', 'авто', 'авто')}
+          {tPlural('my.cars', items.length)}
         </span>
       </div>
 
@@ -73,10 +76,12 @@ function PurchaseRow({ listing }: { listing: ListingSummary }) {
 }
 
 function Thumbnail({ listing }: { listing: ListingSummary }) {
+  const { t } = useTranslation()
+
   if (!listing.primaryPhotoPath) {
     return (
       <span className="grid h-[60px] w-[80px] shrink-0 place-items-center rounded-control border border-line bg-surface-2 text-[11px] text-ink-3">
-        без фото
+        {t('my.noPhoto')}
       </span>
     )
   }

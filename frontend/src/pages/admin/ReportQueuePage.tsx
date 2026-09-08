@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchReportQueue, resolveReport, type ReportSummary } from '../../api/reports'
 import { ApiError } from '../../api/client'
-import { formatDateTime, plural } from '../../format'
+import { formatDateTime } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
 
 /**
  * Черга скарг. Окрема від черги модерації, і це не дублювання: там рішення
@@ -11,6 +12,8 @@ import { formatDateTime, plural } from '../../format'
  * їх в одному списку означало б плутати два різні наміри модератора.
  */
 export function ReportQueuePage() {
+  const { t, tPlural } = useTranslation()
+
   const queryClient = useQueryClient()
 
   const queue = useQuery({
@@ -28,17 +31,17 @@ export function ReportQueuePage() {
   return (
     <>
       <div>
-        <h1 className="font-display text-[25px] font-bold">Скарги</h1>
+        <h1 className="font-display text-[25px] font-bold">{t('reports.title')}</h1>
         <p className="text-[13px] text-ink-2">
           {queue.isPending
-            ? 'Завантажуємо…'
-            : `${count} ${plural(count, 'скарга чекає', 'скарги чекають', 'скарг чекають')}`}
+            ? t('admin.loading')
+            : tPlural('reports.pending', count)}
         </p>
       </div>
 
       {count === 0 && !queue.isPending && (
         <p className="card p-10 text-center text-sm text-ink-2">
-          Скарг немає — на майданчику тихо.
+          {t('reports.empty')}
         </p>
       )}
 
@@ -52,6 +55,8 @@ export function ReportQueuePage() {
 }
 
 function ReportRow({ report, onDecided }: { report: ReportSummary; onDecided: () => void }) {
+  const { t, tPlural } = useTranslation()
+
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -59,7 +64,7 @@ function ReportRow({ report, onDecided }: { report: ReportSummary; onDecided: ()
     mutationFn: (accepted: boolean) => resolveReport(report.id, accepted, note),
     onSuccess: onDecided,
     onError: (caught) =>
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося зберегти рішення.'),
+      setError(caught instanceof ApiError ? caught.message : t('reports.decisionFailed')),
   })
 
   return (
@@ -74,8 +79,7 @@ function ReportRow({ report, onDecided }: { report: ReportSummary; onDecided: ()
             {/* Кілька скарг на один лот — це вже не суперечка смаків. */}
             {report.otherPendingForListing > 0 && (
               <span className="pill">
-                ще {report.otherPendingForListing}{' '}
-                {plural(report.otherPendingForListing, 'скарга', 'скарги', 'скарг')} на це авто
+                {tPlural('reports.more', report.otherPendingForListing)}
               </span>
             )}
           </div>
@@ -104,13 +108,13 @@ function ReportRow({ report, onDecided }: { report: ReportSummary; onDecided: ()
       <div className="grid gap-2 border-t border-line pt-3">
         <label className="grid gap-1">
           <span className="text-[11.5px] font-semibold text-ink-2">
-            Нотатка — її бачать лише модератори
+            {t('reports.noteLabel')}
           </span>
           <input
             value={note}
             onChange={(event) => setNote(event.target.value)}
             maxLength={1000}
-            placeholder="Наприклад: перевірив VIN, дані збігаються"
+            placeholder={t('reports.notePlaceholder')}
             className="control"
           />
         </label>
@@ -127,7 +131,7 @@ function ReportRow({ report, onDecided }: { report: ReportSummary; onDecided: ()
             disabled={decide.isPending}
             className="btn btn-signal"
           >
-            {decide.isPending ? 'Зберігаємо…' : 'Зняти оголошення'}
+            {decide.isPending ? t('reports.saving') : t('reports.takeDown')}
           </button>
 
           <button
@@ -139,7 +143,7 @@ function ReportRow({ report, onDecided }: { report: ReportSummary; onDecided: ()
             disabled={decide.isPending}
             className="btn"
           >
-            Порушення немає
+            {t('reports.noViolation')}
           </button>
         </div>
       </div>
@@ -148,10 +152,12 @@ function ReportRow({ report, onDecided }: { report: ReportSummary; onDecided: ()
 }
 
 function Thumbnail({ path }: { path: string | null }) {
+  const { t } = useTranslation()
+
   if (!path) {
     return (
       <span className="grid h-[60px] w-[80px] shrink-0 place-items-center rounded-control border border-line bg-surface-2 text-[11px] text-ink-3">
-        без фото
+        {t('reports.noPhoto')}
       </span>
     )
   }

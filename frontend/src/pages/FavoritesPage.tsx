@@ -5,9 +5,12 @@ import { fetchFavorites } from '../api/favorites'
 import { useAuth } from '../auth/useAuth'
 import { openSignIn } from '../auth/signInPrompt'
 import { ListingCard } from '../components/catalog/ListingCard'
-import { formatCount, plural } from '../format'
+import { formatCount } from '../format'
+import { useTranslation } from '../i18n/useTranslation'
 
 export function FavoritesPage() {
+  const { t, tPlural } = useTranslation()
+
   const auth = useAuth()
   const [page, setPage] = useState(1)
 
@@ -22,16 +25,15 @@ export function FavoritesPage() {
   })
 
   if (auth.isRestoring) {
-    return <Notice>Завантажуємо…</Notice>
+    return <Notice>{t('favorites.loading')}</Notice>
   }
 
   if (!auth.user) {
     return (
       <Notice>
-        Обране прив'язане до акаунта, а не до браузера — так воно лишається з
-        вами на будь-якому пристрої.{' '}
+        {t('favorites.signInLead')}{' '}
         <button type="button" onClick={openSignIn} className="text-accent hover:underline">
-          Увійти
+          {t('favorites.signIn')}
         </button>
       </Notice>
     )
@@ -42,30 +44,23 @@ export function FavoritesPage() {
   return (
     <div className="wrap grid gap-3.5 py-[26px]">
       <div>
-        <h1 className="font-display text-[25px] font-bold">Обране</h1>
+        <h1 className="font-display text-[25px] font-bold">{t('favorites.title')}</h1>
         <p className="text-[13px] text-ink-2">
-          {favorites.isPending ? (
-            'Завантажуємо…'
-          ) : (
-            <>
-              <span className="font-mono font-semibold text-ink tabular-nums">
-                {formatCount(total)}
-              </span>{' '}
-              {plural(total, 'оголошення', 'оголошення', 'оголошень')}
-            </>
-          )}
+          {favorites.isPending
+            ? t('favorites.loading')
+            : tPlural('favorites.count', total, { count: formatCount(total) })}
         </p>
       </div>
 
       {favorites.isError && (
-        <p className="card p-6 text-sm text-danger">Не вдалося отримати обране.</p>
+        <p className="card p-6 text-sm text-danger">{t('favorites.failed')}</p>
       )}
 
       {favorites.data && favorites.data.items.length === 0 && (
         <p className="card p-10 text-center text-sm text-ink-2">
-          Тут поки порожньо. Натисніть сердечко на будь-якому оголошенні —{' '}
+          {t('favorites.emptyLead')}{' '}
           <Link to="/" className="text-accent hover:underline">
-            перейти до каталогу
+            {t('favorites.toCatalog')}
           </Link>
           .
         </p>
@@ -84,6 +79,8 @@ export function FavoritesPage() {
             className="btn"
             disabled={!favorites.data.hasPrevious}
             onClick={() => setPage((current) => current - 1)}
+            title={t('favorites.previousPage')}
+            aria-label={t('favorites.previousPage')}
           >
             ←
           </button>
@@ -95,6 +92,8 @@ export function FavoritesPage() {
             className="btn"
             disabled={!favorites.data.hasNext}
             onClick={() => setPage((current) => current + 1)}
+            title={t('favorites.nextPage')}
+            aria-label={t('favorites.nextPage')}
           >
             →
           </button>

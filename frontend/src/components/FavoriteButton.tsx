@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { addFavorite, removeFavorite } from '../api/favorites'
 import { useAuth } from '../auth/useAuth'
 import { openSignIn } from '../auth/signInPrompt'
+import { useTranslation } from '../i18n/useTranslation'
 
 interface Props {
   listingId: number
@@ -18,6 +19,8 @@ interface Props {
  * вікно входу.
  */
 export function FavoriteButton({ listingId, isFavorite, size = 'small' }: Props) {
+  const { t } = useTranslation()
+
   const auth = useAuth()
   const queryClient = useQueryClient()
 
@@ -67,8 +70,8 @@ export function FavoriteButton({ listingId, isFavorite, size = 'small' }: Props)
       type="button"
       onClick={click}
       aria-pressed={active}
-      title={active ? 'Прибрати з обраного' : 'Додати в обране'}
-      aria-label={active ? 'Прибрати з обраного' : 'Додати в обране'}
+      title={active ? t('favorite.remove') : t('favorite.add')}
+      aria-label={active ? t('favorite.remove') : t('favorite.add')}
       className={`${box} grid shrink-0 place-items-center rounded-control border backdrop-blur-sm transition ${
         active
           ? 'border-signal bg-signal-soft text-signal'

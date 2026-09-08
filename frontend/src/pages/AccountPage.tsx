@@ -6,6 +6,8 @@ import { ApiError } from '../api/client'
 import { fetchMyDealerships } from '../api/dealership'
 import { useAuth } from '../auth/useAuth'
 import { openSignIn } from '../auth/signInPrompt'
+import { useTranslation } from '../i18n/useTranslation'
+import type { MessageKey } from '../i18n/messages'
 import { Billing } from '../components/account/Billing'
 import { MyListings } from '../components/account/MyListings'
 import { MyPurchases } from '../components/account/MyPurchases'
@@ -20,18 +22,20 @@ import { VerifiedMark } from '../components/catalog/ListingCard'
  * і салонами, де людина працює.
  */
 export function AccountPage() {
+  const { t } = useTranslation()
+
   const auth = useAuth()
 
   if (auth.isRestoring) {
-    return <Notice>Завантажуємо…</Notice>
+    return <Notice>{t('cabinet.loading')}</Notice>
   }
 
   if (!auth.user) {
     return (
       <Notice>
-        Щоб побачити кабінет,{' '}
+        {t('cabinet.signInLead')}{' '}
         <button type="button" onClick={openSignIn} className="text-accent hover:underline">
-          увійдіть
+          {t('cabinet.signIn')}
         </button>
         .
       </Notice>
@@ -40,7 +44,7 @@ export function AccountPage() {
 
   return (
     <div className="wrap grid gap-4 py-[26px]">
-      <h1 className="font-display text-[25px] font-bold">Кабінет</h1>
+      <h1 className="font-display text-[25px] font-bold">{t('cabinet.title')}</h1>
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="grid gap-4">
@@ -67,6 +71,8 @@ function ProfileForm({
   profile: UserProfile
   onSaved: () => void | Promise<void>
 }) {
+  const { t } = useTranslation()
+
   const [displayName, setDisplayName] = useState(profile.displayName)
   const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber ?? '')
   const [saved, setSaved] = useState(false)
@@ -94,14 +100,14 @@ function ProfileForm({
         setError(caught.message)
         setFieldErrors(caught.errors)
       } else {
-        setError('Не вдалося зберегти.')
+        setError(t('cabinet.saveFailed'))
       }
     },
   })
 
   return (
     <section className="card grid gap-3.5 p-5">
-      <h2 className="eyebrow">Профіль</h2>
+      <h2 className="eyebrow">{t('cabinet.profile')}</h2>
 
       <form
         className="grid gap-3.5"
@@ -110,7 +116,7 @@ function ProfileForm({
           save.mutate()
         }}
       >
-        <Field label="Як до вас звертатися" errors={fieldErrors.DisplayName}>
+        <Field label={t('cabinet.displayName')} errors={fieldErrors.DisplayName}>
           <input
             value={displayName}
             onChange={(event) => {
@@ -123,9 +129,9 @@ function ProfileForm({
         </Field>
 
         <Field
-          label="Телефон"
+          label={t('cabinet.phone')}
           errors={fieldErrors.PhoneNumber}
-          hint="У форматі +380XXXXXXXXX. Його побачать покупці на ваших оголошеннях."
+          hint={t('cabinet.phoneHint')}
         >
           <input
             value={phoneNumber}
@@ -140,7 +146,7 @@ function ProfileForm({
 
         {/* Пошту тут не міняють: це окремий сценарій із підтвердженням нової
             скриньки, інакше нею можна було б перехопити чужий акаунт. */}
-        <Field label="Пошта">
+        <Field label={t('cabinet.email')}>
           <input value={profile.email} disabled className="control" />
         </Field>
 
@@ -148,10 +154,10 @@ function ProfileForm({
           <p className="rounded-control bg-danger-soft px-3 py-2 text-[13px] text-danger">{error}</p>
         )}
 
-        {saved && <p className="text-[13px] text-good">Збережено.</p>}
+        {saved && <p className="text-[13px] text-good">{t('cabinet.saved')}</p>}
 
         <button type="submit" disabled={save.isPending} className="btn btn-primary justify-self-start">
-          {save.isPending ? 'Зберігаємо…' : 'Зберегти'}
+          {save.isPending ? t('cabinet.saving') : t('cabinet.save')}
         </button>
       </form>
     </section>
@@ -165,6 +171,8 @@ function ProfileForm({
  * запитом до бази.
  */
 function AccessCard({ profile }: { profile: UserProfile }) {
+  const { t } = useTranslation()
+
   const [sent, setSent] = useState(false)
 
   const resend = useMutation({
@@ -176,22 +184,24 @@ function AccessCard({ profile }: { profile: UserProfile }) {
 
   return (
     <section className="card grid gap-3 p-5">
-      <h2 className="eyebrow">Доступ</h2>
+      <h2 className="eyebrow">{t('cabinet.access')}</h2>
 
       <div className="flex flex-wrap gap-1.5">
         {profile.roles.map((role) => (
           <span key={role} className={`pill ${role === 'User' ? '' : 'pill-accent'}`}>
-            {roleLabel(role)}
+            {roleLabel(t, role)}
           </span>
         ))}
         <span className="pill">
-          {profile.accountType === 'Dealer' ? 'Акаунт салону' : 'Приватна особа'}
+          {profile.accountType === 'Dealer'
+            ? t('cabinet.dealerAccount')
+            : t('cabinet.privateAccount')}
         </span>
       </div>
 
       {isStaff && (
         <Link to="/admin" className="btn justify-self-start">
-          Перейти в адмінку
+          {t('cabinet.toAdmin')}
         </Link>
       )}
 
@@ -199,16 +209,16 @@ function AccessCard({ profile }: { profile: UserProfile }) {
         {profile.emailConfirmed ? (
           <p className="flex items-center gap-1.5 text-[13px] text-good">
             <VerifiedMark />
-            Пошту підтверджено
+            {t('cabinet.emailConfirmed')}
           </p>
         ) : (
           <div className="grid gap-2">
             <p className="text-[13px] text-ink-2">
-              Пошта не підтверджена — без цього ми не надсилаємо сповіщень про ставки.
+              {t('cabinet.emailUnconfirmed')}
             </p>
 
             {sent ? (
-              <p className="text-[13px] text-good">Лист надіслано — перевірте скриньку.</p>
+              <p className="text-[13px] text-good">{t('cabinet.letterSent')}</p>
             ) : (
               <button
                 type="button"
@@ -216,7 +226,7 @@ function AccessCard({ profile }: { profile: UserProfile }) {
                 disabled={resend.isPending}
                 className="btn justify-self-start"
               >
-                {resend.isPending ? 'Надсилаємо…' : 'Надіслати лист ще раз'}
+                {resend.isPending ? t('cabinet.sending') : t('cabinet.resend')}
               </button>
             )}
           </div>
@@ -228,6 +238,8 @@ function AccessCard({ profile }: { profile: UserProfile }) {
 
 /** Салони, де людина працює. Порожній блок не показуємо взагалі. */
 function DealershipsCard() {
+  const { t } = useTranslation()
+
   const dealerships = useQuery({
     queryKey: ['my-dealerships'],
     queryFn: ({ signal }) => fetchMyDealerships(signal),
@@ -239,7 +251,7 @@ function DealershipsCard() {
 
   return (
     <section className="card grid gap-2 p-5">
-      <h2 className="eyebrow">Мої салони</h2>
+      <h2 className="eyebrow">{t('cabinet.myDealerships')}</h2>
 
       {dealerships.data.map((membership) => (
         <div key={membership.dealershipId} className="flex items-center justify-between gap-3">
@@ -251,7 +263,7 @@ function DealershipsCard() {
             {membership.name}
           </Link>
           <span className="pill">
-            {membership.role === 'Owner' ? 'Власник' : 'Менеджер'}
+            {membership.role === 'Owner' ? t('cabinet.roleOwner') : t('cabinet.roleManager')}
           </span>
         </div>
       ))}
@@ -259,11 +271,11 @@ function DealershipsCard() {
   )
 }
 
-function roleLabel(role: string): string {
-  if (role === 'Admin') return 'Адміністратор'
-  if (role === 'Moderator') return 'Модератор'
+function roleLabel(t: (key: MessageKey) => string, role: string): string {
+  if (role === 'Admin') return t('role.Admin')
+  if (role === 'Moderator') return t('role.Moderator')
 
-  return 'Користувач'
+  return t('role.User')
 }
 
 function Field({

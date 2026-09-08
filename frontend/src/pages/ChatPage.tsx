@@ -13,6 +13,7 @@ import { ApiError } from '../api/client'
 import { useAuth } from '../auth/useAuth'
 import { openSignIn } from '../auth/signInPrompt'
 import { formatDateTime } from '../format'
+import { useTranslation } from '../i18n/useTranslation'
 
 /**
  * Листування: перелік розмов ліворуч, обрана — праворуч.
@@ -21,6 +22,8 @@ import { formatDateTime } from '../format'
  * кожен, бо стосується авто; тут — час огляду, торг, адреса.
  */
 export function ChatPage() {
+  const { t } = useTranslation()
+
   const auth = useAuth()
   const queryClient = useQueryClient()
   const [params, setParams] = useSearchParams()
@@ -46,15 +49,15 @@ export function ChatPage() {
   }, [auth.user, queryClient])
 
   if (auth.isRestoring) {
-    return <Notice>Завантажуємо…</Notice>
+    return <Notice>{t('chat.loading')}</Notice>
   }
 
   if (!auth.user) {
     return (
       <Notice>
-        Листування доступне після входу.{' '}
+        {t('chat.signInLead')}{' '}
         <button type="button" onClick={openSignIn} className="text-accent hover:underline">
-          Увійти
+          {t('chat.signIn')}
         </button>
       </Notice>
     )
@@ -64,13 +67,14 @@ export function ChatPage() {
     <div className="wrap grid items-start gap-[22px] py-[26px] lg:grid-cols-[300px_minmax(0,1fr)]">
       <aside className="card grid gap-1 self-start p-2 lg:sticky lg:top-[74px]">
         <h1 className="eyebrow px-2 pt-1 pb-2">
-          Розмови
-          {conversations.data?.length ? ` · ${conversations.data.length}` : ''}
+          {conversations.data?.length
+            ? t('chat.conversationsCount', { count: conversations.data.length })
+            : t('chat.conversations')}
         </h1>
 
         {conversations.data?.length === 0 && (
           <p className="px-2 pb-2 text-[13px] text-ink-2">
-            Розмов поки немає. Напишіть продавцю зі сторінки авто.
+            {t('chat.noConversations')}
           </p>
         )}
 
@@ -86,7 +90,7 @@ export function ChatPage() {
 
       {selectedId === null ? (
         <p className="card p-10 text-center text-sm text-ink-2">
-          Оберіть розмову зліва.
+          {t('chat.pickConversation')}
         </p>
       ) : (
         <Thread conversationId={selectedId} viewerId={auth.user.id} />
@@ -129,6 +133,8 @@ function ConversationRow({
 }
 
 function Thread({ conversationId, viewerId }: { conversationId: number; viewerId: number }) {
+  const { t } = useTranslation()
+
   const queryClient = useQueryClient()
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -147,7 +153,7 @@ function Thread({ conversationId, viewerId }: { conversationId: number; viewerId
       void queryClient.invalidateQueries({ queryKey: ['conversations'] })
     },
     onError: (caught) =>
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося надіслати.'),
+      setError(caught instanceof ApiError ? caught.message : t('chat.sendFailed')),
   })
 
   // Стрічка гортається донизу: у листуванні цікаве останнє, а не перше.
@@ -158,11 +164,11 @@ function Thread({ conversationId, viewerId }: { conversationId: number; viewerId
   }, [conversation.data?.messages.length])
 
   if (conversation.isPending) {
-    return <div className="card p-10 text-center text-sm text-ink-2">Завантажуємо…</div>
+    return <div className="card p-10 text-center text-sm text-ink-2">{t('chat.loading')}</div>
   }
 
   if (conversation.isError || !conversation.data) {
-    return <div className="card p-10 text-center text-sm text-danger">Розмову не знайдено.</div>
+    return <div className="card p-10 text-center text-sm text-danger">{t('chat.notFound')}</div>
   }
 
   const data = conversation.data
@@ -180,13 +186,15 @@ function Thread({ conversationId, viewerId }: { conversationId: number; viewerId
           </Link>
         </div>
 
-        <span className="pill">{data.viewerIsSeller ? 'Ви продавець' : 'Ви покупець'}</span>
+        <span className="pill">
+          {data.viewerIsSeller ? t('chat.youAreSeller') : t('chat.youAreBuyer')}
+        </span>
       </header>
 
       <div className="grid max-h-[52vh] gap-2 overflow-y-auto">
         {data.messages.length === 0 && (
           <p className="py-6 text-center text-[13px] text-ink-2">
-            Повідомлень ще немає — напишіть перше.
+            {t('chat.noMessages')}
           </p>
         )}
 
@@ -209,7 +217,7 @@ function Thread({ conversationId, viewerId }: { conversationId: number; viewerId
           onChange={(event) => setText(event.target.value)}
           rows={2}
           maxLength={4000}
-          placeholder="Повідомлення"
+          placeholder={t('chat.messagePlaceholder')}
           className="control resize-y"
         />
 
@@ -220,7 +228,7 @@ function Thread({ conversationId, viewerId }: { conversationId: number; viewerId
           disabled={send.isPending || text.trim().length === 0}
           className="btn btn-primary justify-self-end"
         >
-          {send.isPending ? 'Надсилаємо…' : 'Надіслати'}
+          {send.isPending ? t('chat.sending') : t('chat.send')}
         </button>
       </form>
     </section>
@@ -229,6 +237,8 @@ function Thread({ conversationId, viewerId }: { conversationId: number; viewerId
 
 /** Своє праворуч і акцентом, чуже ліворуч — так видно, хто що написав. */
 function Bubble({ message, mine }: { message: MessageRecord; mine: boolean }) {
+  const { t } = useTranslation()
+
   return (
     <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
       <div
@@ -239,7 +249,7 @@ function Bubble({ message, mine }: { message: MessageRecord; mine: boolean }) {
         <p className="text-[14px] whitespace-pre-line">{message.text}</p>
         <p className="mt-1 text-[11px] text-ink-3">
           {formatDateTime(message.createdAt)}
-          {mine && message.isRead ? ' · прочитано' : ''}
+          {mine && message.isRead ? t('chat.read') : ''}
         </p>
       </div>
     </div>

@@ -4,12 +4,15 @@ import { useMutation } from '@tanstack/react-query'
 import { resetPassword } from '../api/auth'
 import { ApiError } from '../api/client'
 import { openSignIn } from '../auth/signInPrompt'
+import { useTranslation } from '../i18n/useTranslation'
 
 /**
  * Сторінка, на яку веде посилання з листа. Пошта й токен приходять у
  * параметрах адреси — людина їх не вводить і навіть не бачить.
  */
 export function ResetPasswordPage() {
+  const { t } = useTranslation()
+
   const [params] = useSearchParams()
   const email = params.get('email') ?? ''
   const token = params.get('token') ?? ''
@@ -20,16 +23,16 @@ export function ResetPasswordPage() {
   const submit = useMutation({
     mutationFn: () => resetPassword(email, token, password),
     onError: (caught) =>
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося змінити пароль.'),
+      setError(caught instanceof ApiError ? caught.message : t('reset.failed')),
   })
 
   // Посилання без параметрів — найімовірніше, поштова програма обрізала його.
   if (!email || !token) {
     return (
       <Notice>
-        Посилання неповне. Скопіюйте його з листа повністю або{' '}
+        {t('reset.brokenLinkLead')}{' '}
         <Link to="/" className="text-accent hover:underline">
-          попросіть новий
+          {t('reset.askNew')}
         </Link>
         .
       </Notice>
@@ -39,10 +42,10 @@ export function ResetPasswordPage() {
   if (submit.isSuccess) {
     return (
       <Notice>
-        <span className="font-semibold text-good">Пароль змінено.</span>
+        <span className="font-semibold text-good">{t('reset.done')}</span>
         <br />
         <button type="button" onClick={openSignIn} className="mt-2 text-accent hover:underline">
-          Увійти з новим паролем
+          {t('reset.signInWithNew')}
         </button>
       </Notice>
     )
@@ -58,11 +61,11 @@ export function ResetPasswordPage() {
           submit.mutate()
         }}
       >
-        <h1 className="font-display text-xl font-bold">Новий пароль</h1>
-        <p className="text-[13px] text-ink-2">для {email}</p>
+        <h1 className="font-display text-xl font-bold">{t('reset.title')}</h1>
+        <p className="text-[13px] text-ink-2">{t('reset.forEmail', { email })}</p>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-[11.5px] font-semibold text-ink-2">Пароль</span>
+          <span className="text-[11.5px] font-semibold text-ink-2">{t('reset.password')}</span>
           <input
             type="password"
             value={password}
@@ -72,7 +75,7 @@ export function ResetPasswordPage() {
             className="control"
           />
           <span className="text-[12px] text-ink-3">
-            Щонайменше 8 символів, велика й мала літери та цифра
+            {t('reset.hint')}
           </span>
         </label>
 
@@ -85,7 +88,7 @@ export function ResetPasswordPage() {
           disabled={submit.isPending || password.length < 8}
           className="btn btn-primary w-full py-2.5"
         >
-          {submit.isPending ? 'Зберігаємо…' : 'Задати пароль'}
+          {submit.isPending ? t('reset.saving') : t('reset.submit')}
         </button>
       </form>
     </div>

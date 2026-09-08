@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { fetchBuyerCandidates, markSold } from '../../api/myListings'
 import { ApiError } from '../../api/client'
 import { formatDateTime } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
 
 /**
  * «Кому продали?» — крок між натисканням «Продано» і зміною статусу.
@@ -22,6 +23,8 @@ export function SoldForm({
   onDone: () => void
   onCancel: () => void
 }) {
+  const { t } = useTranslation()
+
   const [buyerId, setBuyerId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -34,7 +37,7 @@ export function SoldForm({
     mutationFn: (chosen: number | null) => markSold(listingId, chosen),
     onSuccess: onDone,
     onError: (caught) =>
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося зберегти.'),
+      setError(caught instanceof ApiError ? caught.message : t('sold.failed')),
   })
 
   const people = candidates.data ?? []
@@ -42,20 +45,20 @@ export function SoldForm({
 
   return (
     <div className="grid gap-2 border-t border-line pt-3">
-      <span className="eyebrow">Кому продали?</span>
+      <span className="eyebrow">{t('sold.whoBought')}</span>
 
-      {candidates.isPending && <p className="text-[13px] text-ink-2">Завантажуємо…</p>}
+      {candidates.isPending && <p className="text-[13px] text-ink-2">{t('sold.loading')}</p>}
 
       {/* Аукціонний лот: покупця визначили торги, вибирати нема з чого. */}
       {winner ? (
         <p className="text-[13px]">
-          Переможець торгів — <strong>{winner.displayName}</strong>.
+          {t('sold.auctionWinner')} <strong>{winner.displayName}</strong>.
         </p>
       ) : (
         !candidates.isPending &&
         (people.length === 0 ? (
           <p className="text-[13px] text-ink-2">
-            Про це авто вам ніхто не писав, тож покупця зі списку не обрати.
+            {t('sold.nobodyWrote')}
           </p>
         ) : (
           <div className="grid gap-1">
@@ -72,7 +75,7 @@ export function SoldForm({
                 />
                 <span className="text-[13.5px] font-semibold">{person.displayName}</span>
                 <span className="text-[12px] text-ink-3">
-                  писав {formatDateTime(person.lastMessageAt)}
+                  {t('sold.wroteAt', { date: formatDateTime(person.lastMessageAt) })}
                 </span>
               </label>
             ))}
@@ -90,7 +93,7 @@ export function SoldForm({
             disabled={confirm.isPending}
             className="btn btn-primary"
           >
-            {confirm.isPending ? 'Зберігаємо…' : 'Продано переможцю'}
+            {confirm.isPending ? t('sold.saving') : t('sold.toWinner')}
           </button>
         ) : (
           <button
@@ -99,7 +102,7 @@ export function SoldForm({
             disabled={confirm.isPending || buyerId === null}
             className="btn btn-primary"
           >
-            {confirm.isPending ? 'Зберігаємо…' : 'Продано цій людині'}
+            {confirm.isPending ? t('sold.saving') : t('sold.toPerson')}
           </button>
         )}
 
@@ -110,12 +113,12 @@ export function SoldForm({
             disabled={confirm.isPending}
             className="btn"
           >
-            Продав поза AutoLot
+            {t('sold.outsideAutoLot')}
           </button>
         )}
 
         <button type="button" onClick={onCancel} className="btn">
-          Скасувати
+          {t('sold.cancel')}
         </button>
       </div>
     </div>

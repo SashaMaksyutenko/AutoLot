@@ -3,7 +3,9 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchListingsForCompare, type ListingDetails } from '../api/listing'
 import { useAttributeLabels } from '../api/useAttributeLabels'
 import { useCompare } from '../compare/useCompare'
-import { formatMileage, formatPrice, plural } from '../format'
+import { formatMileage, formatPrice } from '../format'
+import { useTranslation } from '../i18n/useTranslation'
+import type { MessageKey } from '../i18n/messages'
 
 /**
  * Порівняння авто пліч-о-пліч.
@@ -13,6 +15,8 @@ import { formatMileage, formatPrice, plural } from '../format'
  * приглушені, а перемикач лишає самі відмінності.
  */
 export function ComparePage() {
+  const { t, tPlural } = useTranslation()
+
   const compare = useCompare()
   const labelOf = useAttributeLabels()
 
@@ -25,21 +29,21 @@ export function ComparePage() {
   if (compare.ids.length === 0) {
     return (
       <Notice>
-        Ви ще нічого не відклали для порівняння. Відкрийте{' '}
+        {t('compare.emptyLead')}{' '}
         <Link to="/" className="text-accent hover:underline">
-          каталог
+          {t('compare.catalog')}
         </Link>{' '}
-        і натисніть «Порівняти» на картці авто.
+        {t('compare.emptyTail')}
       </Notice>
     )
   }
 
   if (listings.isPending) {
-    return <Notice>Завантажуємо…</Notice>
+    return <Notice>{t('compare.loading')}</Notice>
   }
 
   if (listings.isError || !listings.data) {
-    return <Notice>Не вдалося отримати оголошення.</Notice>
+    return <Notice>{t('compare.failed')}</Notice>
   }
 
   const cars = listings.data
@@ -47,31 +51,31 @@ export function ComparePage() {
   if (cars.length === 0) {
     return (
       <Notice>
-        Жодне з відкладених авто вже не продається.{' '}
+        {t('compare.allGone')}{' '}
         <button type="button" onClick={compare.clear} className="text-accent hover:underline">
-          Очистити список
+          {t('compare.clearList')}
         </button>
       </Notice>
     )
   }
 
-  const rows = buildRows(cars, labelOf)
+  const rows = buildRows(cars, labelOf, t)
   const differing = rows.filter((row) => row.differs).length
 
   return (
     <div className="wrap grid gap-4 py-[26px]">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div>
-          <h1 className="font-display text-[25px] font-bold">Порівняння</h1>
+          <h1 className="font-display text-[25px] font-bold">{t('compare.title')}</h1>
           <p className="text-[13px] text-ink-2">
-            {cars.length} {plural(cars.length, 'авто', 'авто', 'авто')} ·{' '}
-            {differing} {plural(differing, 'відмінність', 'відмінності', 'відмінностей')}
-            {cars.length < compare.ids.length && ' · частина вже не продається'}
+            {tPlural('compare.cars', cars.length)} ·{' '}
+            {tPlural('compare.differences', differing)}
+            {cars.length < compare.ids.length && t('compare.somePulled')}
           </p>
         </div>
 
         <button type="button" onClick={compare.clear} className="btn">
-          Очистити
+          {t('compare.clear')}
         </button>
       </div>
 
@@ -85,7 +89,7 @@ export function ComparePage() {
           <thead>
             <tr>
               <th className="sticky left-0 z-10 bg-surface p-3 text-left align-bottom">
-                <span className="eyebrow">Характеристика</span>
+                <span className="eyebrow">{t('compare.characteristic')}</span>
               </th>
 
               {cars.map((car) => (
@@ -128,6 +132,8 @@ export function ComparePage() {
 }
 
 function CarHeader({ listing, onRemove }: { listing: ListingDetails; onRemove: () => void }) {
+  const { t } = useTranslation()
+
   return (
     <div className="grid gap-1">
       {listing.photos.length > 0 ? (
@@ -138,7 +144,7 @@ function CarHeader({ listing, onRemove }: { listing: ListingDetails; onRemove: (
         />
       ) : (
         <span className="grid h-[80px] place-items-center rounded-control border border-line bg-surface-2 text-[11px] text-ink-3">
-          без фото
+          {t('compare.noPhoto')}
         </span>
       )}
 
@@ -158,7 +164,7 @@ function CarHeader({ listing, onRemove }: { listing: ListingDetails; onRemove: (
         onClick={onRemove}
         className="justify-self-start text-[12px] text-ink-3 hover:text-danger"
       >
-        Прибрати
+        {t('compare.removeCar')}
       </button>
     </div>
   )
@@ -182,39 +188,71 @@ interface Row {
 function buildRows(
   cars: ListingDetails[],
   labelOf: ReturnType<typeof useAttributeLabels>,
+  t: (key: MessageKey, values?: Record<string, string | number>) => string,
 ): Row[] {
   const definitions: { label: string; of: (listing: ListingDetails) => string | null }[] = [
-    { label: 'Рік випуску', of: (l) => String(l.car.year) },
-    { label: 'Пробіг', of: (l) => formatMileage(l.car.mileage) },
-    { label: 'Стан', of: (l) => (l.car.condition === 'New' ? 'Новий' : 'Вживаний') },
-    { label: 'Кузов', of: (l) => labelOf('bodyTypes', l.car.bodyType) },
-    { label: 'Пальне', of: (l) => labelOf('fuelTypes', l.car.fuelType) },
-    { label: 'Коробка', of: (l) => labelOf('transmissions', l.car.transmission) },
-    { label: 'Привід', of: (l) => labelOf('driveTypes', l.car.drivetrain) },
-    { label: 'Колір', of: (l) => labelOf('colors', l.car.color) },
-    { label: "Об'єм двигуна", of: (l) => (l.car.engineVolume ? `${l.car.engineVolume} л` : null) },
-    { label: 'Потужність', of: (l) => (l.car.enginePower ? `${l.car.enginePower} к.с.` : null) },
+    { label: t('spec.year'), of: (l) => String(l.car.year) },
+    { label: t('spec.mileage'), of: (l) => formatMileage(l.car.mileage) },
     {
-      label: 'Витрата, змішана',
-      of: (l) => (l.car.fuelConsumptionCombined ? `${l.car.fuelConsumptionCombined} л/100 км` : null),
+      label: t('spec.condition'),
+      of: (l) => (l.car.condition === 'New' ? t('spec.new') : t('spec.used')),
+    },
+    { label: t('spec.body'), of: (l) => labelOf('bodyTypes', l.car.bodyType) },
+    { label: t('spec.fuel'), of: (l) => labelOf('fuelTypes', l.car.fuelType) },
+    { label: t('spec.transmission'), of: (l) => labelOf('transmissions', l.car.transmission) },
+    { label: t('spec.drivetrain'), of: (l) => labelOf('driveTypes', l.car.drivetrain) },
+    { label: t('spec.colour'), of: (l) => labelOf('colors', l.car.color) },
+    {
+      label: t('row.engineVolume'),
+      of: (l) => (l.car.engineVolume ? t('spec.litres', { value: l.car.engineVolume }) : null),
     },
     {
-      label: 'Батарея',
-      of: (l) => (l.car.batteryCapacity ? `${l.car.batteryCapacity} кВт·год` : null),
+      label: t('spec.power'),
+      of: (l) => (l.car.enginePower ? t('spec.horsepower', { value: l.car.enginePower }) : null),
     },
-    { label: 'Запас ходу', of: (l) => (l.car.electricRange ? `${l.car.electricRange} км` : null) },
-    { label: 'Місць', of: (l) => (l.car.seatCount ? String(l.car.seatCount) : null) },
-    { label: 'Дверей', of: (l) => (l.car.doorCount ? String(l.car.doorCount) : null) },
-    { label: 'Власників', of: (l) => (l.car.ownerCount ? String(l.car.ownerCount) : null) },
-    { label: 'Екостандарт', of: (l) => l.car.ecologyStandard },
-    { label: 'Був у ДТП', of: (l) => (l.car.wasInAccident ? 'Так' : 'Ні') },
-    { label: 'Розмитнений', of: (l) => (l.car.isCustomsCleared ? 'Так' : 'Ні') },
-    { label: 'В Україні', of: (l) => (l.car.isLocatedInUkraine ? 'Так' : 'Ні') },
-    { label: 'Сервісна книжка', of: (l) => (l.car.hasServiceBook ? 'Є' : 'Немає') },
-    { label: 'Пригнаний з', of: (l) => l.car.importedFromCountry },
-    { label: 'Місто', of: (l) => l.location?.cityName ?? null },
     {
-      label: 'Опцій у комплектації',
+      label: t('spec.consumption'),
+      of: (l) =>
+        l.car.fuelConsumptionCombined
+          ? t('spec.consumptionValue', { value: l.car.fuelConsumptionCombined })
+          : null,
+    },
+    {
+      label: t('spec.battery'),
+      of: (l) =>
+        l.car.batteryCapacity ? t('spec.batteryValue', { value: l.car.batteryCapacity }) : null,
+    },
+    {
+      label: t('spec.range'),
+      of: (l) => (l.car.electricRange ? t('spec.rangeValue', { value: l.car.electricRange }) : null),
+    },
+    { label: t('spec.seats'), of: (l) => (l.car.seatCount ? String(l.car.seatCount) : null) },
+    { label: t('spec.doors'), of: (l) => (l.car.doorCount ? String(l.car.doorCount) : null) },
+    {
+      label: t('spec.owners'),
+      of: (l) => (l.car.ownerCount ? String(l.car.ownerCount) : null),
+    },
+    { label: t('spec.ecology'), of: (l) => l.car.ecologyStandard },
+    {
+      label: t('row.wasInAccident'),
+      of: (l) => (l.car.wasInAccident ? t('row.yes') : t('row.no')),
+    },
+    {
+      label: t('row.customsCleared'),
+      of: (l) => (l.car.isCustomsCleared ? t('row.yes') : t('row.no')),
+    },
+    {
+      label: t('row.inUkraine'),
+      of: (l) => (l.car.isLocatedInUkraine ? t('row.yes') : t('row.no')),
+    },
+    {
+      label: t('row.serviceBook'),
+      of: (l) => (l.car.hasServiceBook ? t('row.has') : t('row.hasNot')),
+    },
+    { label: t('row.importedFrom'), of: (l) => l.car.importedFromCountry },
+    { label: t('row.city'), of: (l) => l.location?.cityName ?? null },
+    {
+      label: t('row.featureCount'),
       of: (l) => (l.car.features.length > 0 ? String(l.car.features.length) : null),
     },
   ]

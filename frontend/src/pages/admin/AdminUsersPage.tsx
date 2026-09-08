@@ -3,7 +3,8 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { fetchUsers, setUserBanned, setUserRole, type UserSummary } from '../../api/admin'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
-import { formatCount, formatDateTime, plural } from '../../format'
+import { formatCount, formatDateTime } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
 
 /**
  * Керування людьми: пошук, блокування, ролі.
@@ -13,6 +14,8 @@ import { formatCount, formatDateTime, plural } from '../../format'
  * правки конфігурації з перезапуском сервера.
  */
 export function AdminUsersPage() {
+  const { t, tPlural } = useTranslation()
+
   const [text, setText] = useState('')
   const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
@@ -31,22 +34,19 @@ export function AdminUsersPage() {
   }
 
   const onError = (caught: unknown) =>
-    setError(caught instanceof ApiError ? caught.message : 'Дію не виконано.')
+    setError(caught instanceof ApiError ? caught.message : t('users.actionFailed'))
 
   return (
     <>
       <div>
-        <h1 className="font-display text-[25px] font-bold">Користувачі</h1>
+        <h1 className="font-display text-[25px] font-bold">{t('users.title')}</h1>
         <p className="text-[13px] text-ink-2">
           {users.isPending ? (
-            'Завантажуємо…'
+            t('admin.loading')
           ) : (
-            <>
-              <span className="font-mono font-semibold text-ink tabular-nums">
-                {formatCount(users.data?.totalCount ?? 0)}
-              </span>{' '}
-              {plural(users.data?.totalCount ?? 0, 'людина', 'людини', 'людей')}
-            </>
+            tPlural('users.count', users.data?.totalCount ?? 0, {
+              count: formatCount(users.data?.totalCount ?? 0),
+            })
           )}
         </p>
       </div>
@@ -57,7 +57,7 @@ export function AdminUsersPage() {
           setText(event.target.value)
           setPage(1)
         }}
-        placeholder="Ім'я або пошта"
+        placeholder={t('users.searchPlaceholder')}
         className="control max-w-[320px]"
       />
 
@@ -78,6 +78,8 @@ export function AdminUsersPage() {
             className="btn"
             disabled={!users.data.hasPrevious}
             onClick={() => setPage((current) => current - 1)}
+            title={t('users.previousPage')}
+            aria-label={t('users.previousPage')}
           >
             ←
           </button>
@@ -89,6 +91,8 @@ export function AdminUsersPage() {
             className="btn"
             disabled={!users.data.hasNext}
             onClick={() => setPage((current) => current + 1)}
+            title={t('users.nextPage')}
+            aria-label={t('users.nextPage')}
           >
             →
           </button>
@@ -107,6 +111,8 @@ function UserRow({
   onChanged: () => void
   onError: (caught: unknown) => void
 }) {
+  const { t } = useTranslation()
+
   const auth = useAuth()
 
   // Себе не блокують і роль адміністратора з себе не знімають — бекенд це
@@ -133,19 +139,23 @@ function UserRow({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="font-semibold">{user.displayName}</span>
-          {isAdmin && <span className="pill pill-accent">Адмін</span>}
-          {isModerator && <span className="pill pill-accent">Модератор</span>}
-          {user.accountType === 'Dealer' && <span className="pill">Салон</span>}
-          {user.isBanned && <span className="pill pill-danger">Заблокований</span>}
-          {!user.emailConfirmed && <span className="pill">Пошта не підтверджена</span>}
+          {isAdmin && <span className="pill pill-accent">{t('users.admin')}</span>}
+          {isModerator && <span className="pill pill-accent">{t('users.moderator')}</span>}
+          {user.accountType === 'Dealer' && <span className="pill">{t('users.dealer')}</span>}
+          {user.isBanned && <span className="pill pill-danger">{t('users.banned')}</span>}
+          {!user.emailConfirmed && <span className="pill">{t('users.emailUnconfirmed')}</span>}
         </div>
 
         <p className="truncate text-[12.5px] text-ink-2">{user.email}</p>
 
         <p className="text-[11.5px] text-ink-3">
-          З {formatDateTime(user.createdAt)}
-          {user.lastLoginAt ? ` · заходив ${formatDateTime(user.lastLoginAt)}` : ' · ще не заходив'}
-          {user.activeListingCount > 0 ? ` · ${user.activeListingCount} оголошень` : ''}
+          {t('users.since', { date: formatDateTime(user.createdAt) })}
+          {user.lastLoginAt
+            ? t('users.lastLogin', { date: formatDateTime(user.lastLoginAt) })
+            : t('users.neverLoggedIn')}
+          {user.activeListingCount > 0
+            ? t('users.activeListings', { count: user.activeListingCount })
+            : ''}
         </p>
       </div>
 
@@ -159,7 +169,7 @@ function UserRow({
               disabled={role.isPending}
               className="btn"
             >
-              {isModerator ? 'Зняти модератора' : 'Зробити модератором'}
+              {isModerator ? t('users.demote') : t('users.promote')}
             </button>
           )}
 
@@ -169,7 +179,7 @@ function UserRow({
             disabled={ban.isPending}
             className={`btn ${user.isBanned ? '' : 'btn-signal'}`}
           >
-            {user.isBanned ? 'Розблокувати' : 'Заблокувати'}
+            {user.isBanned ? t('users.unban') : t('users.ban')}
           </button>
         </div>
       )}

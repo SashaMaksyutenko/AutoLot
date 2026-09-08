@@ -4,7 +4,8 @@ import { fetchPublicProfile } from '../api/users'
 import { fetchReviewsAbout, type ReviewRecord } from '../api/reviews'
 import { VerifiedMark } from '../components/catalog/ListingCard'
 import { RatingLine, Stars } from '../components/listing/Stars'
-import { formatDateTime, formatMonthYear, plural } from '../format'
+import { formatDateTime, formatMonthYear } from '../format'
+import { useTranslation } from '../i18n/useTranslation'
 
 /**
  * Публічний профіль продавця.
@@ -17,6 +18,8 @@ import { formatDateTime, formatMonthYear, plural } from '../format'
  * сервер їх не віддає: зв'язатися з продавцем можна лише через оголошення.
  */
 export function UserProfilePage() {
+  const { t, tPlural } = useTranslation()
+
   const { id } = useParams()
   const userId = Number(id)
 
@@ -33,11 +36,11 @@ export function UserProfilePage() {
   })
 
   if (profile.isPending) {
-    return <Notice>Завантажуємо…</Notice>
+    return <Notice>{t('profile.loading')}</Notice>
   }
 
   if (profile.isError || !profile.data) {
-    return <Notice>Такого продавця немає.</Notice>
+    return <Notice>{t('profile.notFound')}</Notice>
   }
 
   const person = profile.data
@@ -51,7 +54,7 @@ export function UserProfilePage() {
 
           <div className="flex flex-wrap items-center gap-2 text-[13px] text-ink-2">
             <span className="pill">
-              {person.accountType === 'Dealer' ? 'Автосалон' : 'Приватна особа'}
+              {person.accountType === 'Dealer' ? t('profile.dealer') : t('profile.private')}
             </span>
 
             {person.dealer && (
@@ -70,29 +73,25 @@ export function UserProfilePage() {
           <RatingLine count={person.rating.count} average={person.rating.average} size={16} />
 
           <p className="text-[12.5px] text-ink-3">
-            На AutoLot із {formatMonthYear(person.joinedAt)} ·{' '}
-            {person.activeListingCount}{' '}
-            {plural(
-              person.activeListingCount,
-              'активне оголошення',
-              'активні оголошення',
-              'активних оголошень',
-            )}
+            {t('profile.joined', { date: formatMonthYear(person.joinedAt) })}
+            {tPlural('profile.active', person.activeListingCount)}
           </p>
         </section>
 
         <section className="grid gap-3">
           <h2 className="font-display text-[19px] font-bold">
-            Відгуки{written.length > 0 ? ` · ${written.length}` : ''}
+            {written.length > 0
+              ? t('profile.reviewsCount', { count: written.length })
+              : t('profile.reviews')}
           </h2>
 
           {reviews.isPending && (
-            <p className="card p-6 text-sm text-ink-2">Завантажуємо…</p>
+            <p className="card p-6 text-sm text-ink-2">{t('profile.loading')}</p>
           )}
 
           {!reviews.isPending && written.length === 0 && (
             <p className="card p-8 text-center text-sm text-ink-2">
-              Відгуків ще немає. Вони з'являються після завершених угод.
+              {t('profile.noReviews')}
             </p>
           )}
 
@@ -103,14 +102,12 @@ export function UserProfilePage() {
       </main>
 
       <aside className="card grid gap-2 p-4 text-[13px] text-ink-2 lg:sticky lg:top-[74px]">
-        <span className="eyebrow">Як читати рейтинг</span>
+        <span className="eyebrow">{t('profile.howToRead')}</span>
         <p>
-          Відгук може лишити лише той, з ким угода справді відбулася, і лише
-          один раз. Змінити його потім не можна.
+          {t('profile.howToRead1')}
         </p>
         <p>
-          Тому «5,0» з одного відгуку й «4,7» із сорока — різні речі. Кількість
-          у дужках важить не менше за саму оцінку.
+          {t('profile.howToRead2')}
         </p>
       </aside>
     </div>
@@ -118,12 +115,16 @@ export function UserProfilePage() {
 }
 
 function ReviewCard({ review }: { review: ReviewRecord }) {
+  const { t } = useTranslation()
+
   return (
     <article className="card grid gap-1.5 p-3">
       <div className="flex flex-wrap items-center gap-2">
         <Stars value={review.rating} />
         <span className="text-[13.5px] font-semibold">{review.authorName}</span>
-        <span className="pill">{review.authorIsSeller ? 'Продавець' : 'Покупець'}</span>
+        <span className="pill">
+        {review.authorIsSeller ? t('profile.fromSeller') : t('profile.fromBuyer')}
+      </span>
         <span className="ml-auto text-[11.5px] text-ink-3">
           {formatDateTime(review.createdAt)}
         </span>

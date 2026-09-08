@@ -47,6 +47,19 @@ export type PluralKey =
   | 'listing.views'
   | 'price.basis'
   | 'auction.bids'
+  | 'my.count'
+  | 'my.cars'
+  | 'users.count'
+  | 'queue.waiting'
+  | 'reports.pending'
+  | 'reports.more'
+  | 'profile.active'
+  | 'dealer.onSale'
+  | 'dealers.count'
+  | 'dealers.cars'
+  | 'favorites.count'
+  | 'compare.cars'
+  | 'compare.differences'
 
 /** Усі чотири форми кожного такого ключа мають бути у словнику. */
 type PluralForms = `${PluralKey}.${'one' | 'few' | 'many' | 'other'}`

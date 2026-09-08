@@ -3,13 +3,16 @@ import { Link } from 'react-router-dom'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { fetchDealerships, type DealershipCard } from '../api/dealership'
 import { VerifiedMark } from '../components/catalog/ListingCard'
-import { formatCount, plural } from '../format'
+import { formatCount } from '../format'
+import { useTranslation } from '../i18n/useTranslation'
 
 /**
  * Каталог автосалонів. Перевірені йдуть першими — саме заради цього бейдж
  * і потрібен; порядок задає бекенд, тут його не переставляємо.
  */
 export function DealershipsPage() {
+  const { t, tPlural } = useTranslation()
+
   const [text, setText] = useState('')
   const [verifiedOnly, setVerifiedOnly] = useState(false)
 
@@ -22,16 +25,13 @@ export function DealershipsPage() {
   return (
     <div className="wrap grid gap-3.5 py-[26px]">
       <div>
-        <h1 className="font-display text-[25px] font-bold">Автосалони</h1>
+        <h1 className="font-display text-[25px] font-bold">{t('dealers.title')}</h1>
         <p className="text-[13px] text-ink-2">
           {dealerships.isPending
-            ? 'Завантажуємо…'
-            : `${formatCount(dealerships.data?.length ?? 0)} ${plural(
-                dealerships.data?.length ?? 0,
-                'салон',
-                'салони',
-                'салонів',
-              )}`}
+            ? t('dealers.loading')
+            : tPlural('dealers.count', dealerships.data?.length ?? 0, {
+                count: formatCount(dealerships.data?.length ?? 0),
+              })}
         </p>
       </div>
 
@@ -39,7 +39,7 @@ export function DealershipsPage() {
         <input
           value={text}
           onChange={(event) => setText(event.target.value)}
-          placeholder="Назва салону"
+          placeholder={t('dealers.searchPlaceholder')}
           className="control max-w-[320px]"
         />
 
@@ -50,13 +50,13 @@ export function DealershipsPage() {
             onChange={(event) => setVerifiedOnly(event.target.checked)}
             className="h-[15px] w-[15px] accent-accent"
           />
-          <span>Лише перевірені</span>
+          <span>{t('dealers.verifiedOnly')}</span>
         </label>
       </div>
 
       {dealerships.data?.length === 0 && (
         <p className="card p-10 text-center text-sm text-ink-2">
-          Салонів за такими умовами немає.
+          {t('dealers.empty')}
         </p>
       )}
 
@@ -70,6 +70,8 @@ export function DealershipsPage() {
 }
 
 function DealerTile({ dealership }: { dealership: DealershipCard }) {
+  const { tPlural } = useTranslation()
+
   return (
     <Link to={`/dealers/${dealership.slug}`} className="block">
       <article className="card grid gap-2 p-4 transition hover:-translate-y-px hover:border-ink-3">
@@ -89,7 +91,9 @@ function DealerTile({ dealership }: { dealership: DealershipCard }) {
           <span className="font-mono font-semibold text-ink tabular-nums">
             {formatCount(dealership.activeListingCount)}
           </span>{' '}
-          {plural(dealership.activeListingCount, 'авто', 'авто', 'авто')}
+          {tPlural('dealers.cars', dealership.activeListingCount, {
+            count: formatCount(dealership.activeListingCount),
+          })}
         </div>
       </article>
     </Link>

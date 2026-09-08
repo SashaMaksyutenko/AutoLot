@@ -79,29 +79,3 @@ export function formatDateTime(iso: string): string {
 export function formatMonthYear(iso: string): string {
   return monthYear(getLanguage()).format(new Date(iso))
 }
-
-/**
- * Українська форма множини: 1 оголошення, 2 оголошення, 5 оголошень.
- * Без цього видача писала б «знайдено 5 оголошення».
- *
- * ТИМЧАСОВА функція: перекладені екрани користуються translatePlural із
- * i18n, який знає правила обох мов від Intl. Ця лишається доти, доки не
- * перекладено решту екранів (пункт 17б плану) — там текст поки лише
- * український, і вигадувати для нього форми англійською нема з чого.
- */
-export function plural(count: number, one: string, few: string, many: string): string {
-  const mod100 = count % 100
-
-  if (mod100 >= 11 && mod100 <= 14) return many
-
-  switch (count % 10) {
-    case 1:
-      return one
-    case 2:
-    case 3:
-    case 4:
-      return few
-    default:
-      return many
-  }
-}

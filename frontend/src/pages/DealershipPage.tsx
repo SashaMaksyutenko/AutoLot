@@ -5,14 +5,16 @@ import { emptyFilters, searchCatalog, type CatalogSort } from '../api/catalog'
 import { fetchDealership } from '../api/dealership'
 import { ListingCard } from '../components/catalog/ListingCard'
 import { VerifiedMark } from '../components/catalog/ListingCard'
-import { formatCount, plural } from '../format'
+import { formatCount } from '../format'
+import { useTranslation } from '../i18n/useTranslation'
+import type { MessageKey } from '../i18n/messages'
 
-const sortLabels: Record<CatalogSort, string> = {
-  Newest: 'Найновіші',
-  PriceAscending: 'Спочатку дешевші',
-  PriceDescending: 'Спочатку дорожчі',
-  MileageAscending: 'Менший пробіг',
-  YearDescending: 'Свіжіший рік',
+const sortKeys: Record<CatalogSort, MessageKey> = {
+  Newest: 'sort.Newest',
+  PriceAscending: 'sort.PriceAscending',
+  PriceDescending: 'sort.PriceDescending',
+  MileageAscending: 'sort.MileageAscending',
+  YearDescending: 'sort.YearDescending',
 }
 
 /**
@@ -23,6 +25,8 @@ const sortLabels: Record<CatalogSort, string> = {
  * картки, а зміни в каталозі не доводиться дублювати.
  */
 export function DealershipPage() {
+  const { t, tPlural } = useTranslation()
+
   const { slug } = useParams()
   const [page, setPage] = useState(1)
   const [sort, setSort] = useState<CatalogSort>('Newest')
@@ -42,15 +46,15 @@ export function DealershipPage() {
   })
 
   if (dealership.isPending) {
-    return <Notice>Завантажуємо…</Notice>
+    return <Notice>{t('dealer.loading')}</Notice>
   }
 
   if (dealership.isError || !dealership.data) {
     return (
       <Notice>
-        Такого салону немає.{' '}
+        {t('dealer.notFound')}{' '}
         <Link to="/dealers" className="text-accent hover:underline">
-          Усі салони
+          {t('dealer.allDealers')}
         </Link>
       </Notice>
     )
@@ -62,7 +66,7 @@ export function DealershipPage() {
     <div className="wrap grid gap-4 py-[26px]">
       <nav className="text-[13px] text-ink-2">
         <Link to="/dealers" className="hover:text-accent hover:underline">
-          Автосалони
+          {t('dealer.crumb')}
         </Link>
         <span className="px-1.5 text-ink-3">/</span>
         <span>{salon.name}</span>
@@ -79,7 +83,7 @@ export function DealershipPage() {
           </div>
 
           <span className={`pill ${salon.isVerified ? 'pill-good' : ''}`}>
-            {salon.isVerified ? 'Перевірений салон' : 'Не перевірений'}
+            {salon.isVerified ? t('dealer.verified') : t('dealer.unverified')}
           </span>
         </div>
 
@@ -93,15 +97,17 @@ export function DealershipPage() {
           <span className="font-mono font-semibold text-ink tabular-nums">
             {formatCount(salon.activeListingCount)}
           </span>{' '}
-          {plural(salon.activeListingCount, 'авто в продажу', 'авто в продажу', 'авто в продажу')}
+          {tPlural('dealer.onSale', salon.activeListingCount, {
+            count: formatCount(salon.activeListingCount),
+          })}
         </div>
       </header>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-[19px] font-bold">Оголошення салону</h2>
+        <h2 className="font-display text-[19px] font-bold">{t('dealer.listings')}</h2>
 
         <label className="flex items-center gap-2 text-[13px] text-ink-2">
-          <span>Сортувати</span>
+          <span>{t('dealer.sort')}</span>
           <select
             value={sort}
             onChange={(event) => {
@@ -110,9 +116,9 @@ export function DealershipPage() {
             }}
             className="control w-auto"
           >
-            {Object.entries(sortLabels).map(([value, label]) => (
+            {Object.entries(sortKeys).map(([value, key]) => (
               <option key={value} value={value}>
-                {label}
+                {t(key)}
               </option>
             ))}
           </select>
@@ -121,7 +127,7 @@ export function DealershipPage() {
 
       {listings.data?.items.length === 0 && (
         <p className="card p-10 text-center text-sm text-ink-2">
-          У салону поки немає активних оголошень.
+          {t('dealer.noListings')}
         </p>
       )}
 
@@ -138,6 +144,8 @@ export function DealershipPage() {
             className="btn"
             disabled={!listings.data.hasPrevious}
             onClick={() => setPage((current) => current - 1)}
+            title={t('dealer.previousPage')}
+            aria-label={t('dealer.previousPage')}
           >
             ←
           </button>
@@ -149,6 +157,8 @@ export function DealershipPage() {
             className="btn"
             disabled={!listings.data.hasNext}
             onClick={() => setPage((current) => current + 1)}
+            title={t('dealer.nextPage')}
+            aria-label={t('dealer.nextPage')}
           >
             →
           </button>

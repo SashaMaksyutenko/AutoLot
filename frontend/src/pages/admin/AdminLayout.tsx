@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
+import { useTranslation } from '../../i18n/useTranslation'
 
 /**
  * Спільна оболонка адмінки: бічне меню й місце для розділу.
@@ -9,6 +10,8 @@ import { useAuth } from '../../auth/useAuth'
  * показувати модераторові розділ, куди його не пустять, було б обманом.
  */
 export function AdminLayout() {
+  const { t } = useTranslation()
+
   const auth = useAuth()
 
   const roles = auth.user?.roles ?? []
@@ -16,20 +19,20 @@ export function AdminLayout() {
   const isModerator = isAdmin || roles.includes('Moderator')
 
   if (auth.isRestoring) {
-    return <Notice>Завантажуємо…</Notice>
+    return <Notice>{t('admin.loading')}</Notice>
   }
 
   if (!isModerator) {
-    return <Notice>Цей розділ доступний лише модераторам і адміністраторам.</Notice>
+    return <Notice>{t('admin.forbidden')}</Notice>
   }
 
   return (
     <div className="wrap grid items-start gap-[22px] py-[26px] lg:grid-cols-[218px_minmax(0,1fr)]">
       <nav className="card grid gap-0.5 self-start p-2 lg:sticky lg:top-[74px]">
-        <Item to="/admin" label="Огляд" end />
-        {isModerator && <Item to="/admin/queue" label="Черга модерації" />}
-        {isModerator && <Item to="/admin/reports" label="Скарги" />}
-        {isAdmin && <Item to="/admin/users" label="Користувачі" />}
+        <Item to="/admin" label={t('admin.overview')} end />
+        {isModerator && <Item to="/admin/queue" label={t('admin.queue')} />}
+        {isModerator && <Item to="/admin/reports" label={t('admin.reports')} />}
+        {isAdmin && <Item to="/admin/users" label={t('admin.users')} />}
       </nav>
 
       <main className="grid min-w-0 gap-4">

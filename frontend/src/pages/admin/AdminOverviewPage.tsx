@@ -2,12 +2,15 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchStats } from '../../api/admin'
 import { useAuth } from '../../auth/useAuth'
 import { formatCount } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
 
 /**
  * Головна адмінки. Свідомо кілька чисел, а не звіт: вона має відповідати на
  * питання «чи все гаразд», а не заміняти аналітику.
  */
 export function AdminOverviewPage() {
+  const { t } = useTranslation()
+
   const auth = useAuth()
   const isAdmin = auth.user?.roles.includes('Admin') ?? false
 
@@ -22,53 +25,53 @@ export function AdminOverviewPage() {
   if (!isAdmin) {
     return (
       <section className="card p-6 text-sm text-ink-2">
-        Показники майданчика доступні адміністраторам. Ваш розділ — черга модерації.
+        {t('overview.moderatorOnly')}
       </section>
     )
   }
 
   if (stats.isPending) {
-    return <section className="card p-6 text-sm text-ink-2">Завантажуємо…</section>
+    return <section className="card p-6 text-sm text-ink-2">{t('admin.loading')}</section>
   }
 
   if (stats.isError || !stats.data) {
-    return <section className="card p-6 text-sm text-danger">Не вдалося отримати показники.</section>
+    return <section className="card p-6 text-sm text-danger">{t('overview.failed')}</section>
   }
 
   const data = stats.data
 
   return (
     <>
-      <h1 className="font-display text-[25px] font-bold">Огляд майданчика</h1>
+      <h1 className="font-display text-[25px] font-bold">{t('overview.title')}</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Tile
-          label="Чекають модерації"
+          label={t('overview.awaitingModeration')}
           value={data.pendingModeration}
-          hint="Що більше, то довша черга"
+          hint={t('overview.awaitingHint')}
           urgent={data.pendingModeration > 0}
         />
         <Tile
-          label="Скарги на розгляді"
+          label={t('overview.openReports')}
           value={data.pendingReports}
-          hint="Опубліковане, на що поскаржилися"
+          hint={t('overview.openReportsHint')}
           urgent={data.pendingReports > 0}
         />
-        <Tile label="Активні оголошення" value={data.activeListings} />
-        <Tile label="Активні торги" value={data.activeAuctions} />
-        <Tile label="Користувачі" value={data.totalUsers} />
+        <Tile label={t('overview.activeListings')} value={data.activeListings} />
+        <Tile label={t('overview.activeAuctions')} value={data.activeAuctions} />
+        <Tile label={t('overview.totalUsers')} value={data.totalUsers} />
         <Tile
-          label="Заблоковані"
+          label={t('overview.banned')}
           value={data.bannedUsers}
           urgent={data.bannedUsers > 0}
         />
         <Tile
-          label="Салони"
+          label={t('overview.dealerships')}
           value={data.dealerships}
           hint={
             data.unverifiedDealerships > 0
-              ? `${data.unverifiedDealerships} без перевірки`
-              : 'Усі перевірені'
+              ? t('overview.unverified', { count: data.unverifiedDealerships })
+              : t('overview.allVerified')
           }
           urgent={data.unverifiedDealerships > 0}
         />

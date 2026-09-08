@@ -20,7 +20,7 @@ export function LanguageToggle() {
       aria-label={t('language.switch')}
       className="font-mono grid h-[30px] shrink-0 place-items-center rounded-control border border-line bg-surface-2 px-2 text-[11px] font-semibold tracking-wide text-ink-2 hover:text-ink"
     >
-      {t('language.other')}
+      {t('language.otherCode')}
     </button>
   )
 }

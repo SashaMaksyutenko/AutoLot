@@ -10,7 +10,9 @@ import {
   type WalletEntry,
 } from '../../api/billing'
 import { ApiError } from '../../api/client'
-import { formatDateTime, plural } from '../../format'
+import { formatDateTime } from '../../format'
+import { useTranslation } from '../../i18n/useTranslation'
+import type { MessageKey } from '../../i18n/messages'
 
 /**
  * Гаманець і тарифи в кабінеті.
@@ -20,6 +22,8 @@ import { formatDateTime, plural } from '../../format'
  * ходити туди-сюди, щоб зрозуміти, чому кнопка «оформити» не спрацювала.
  */
 export function Billing() {
+  const { t } = useTranslation()
+
   const queryClient = useQueryClient()
 
   const wallet = useQuery({
@@ -44,11 +48,11 @@ export function Billing() {
   }
 
   if (wallet.isPending || subscription.isPending) {
-    return <section className="card p-6 text-sm text-ink-2">Завантажуємо…</section>
+    return <section className="card p-6 text-sm text-ink-2">{t('billing.loading')}</section>
   }
 
   if (wallet.isError || subscription.isError || !wallet.data || !subscription.data) {
-    return <section className="card p-6 text-sm text-danger">Не вдалося отримати баланс.</section>
+    return <section className="card p-6 text-sm text-danger">{t('billing.failed')}</section>
   }
 
   const state = subscription.data
@@ -56,17 +60,17 @@ export function Billing() {
 
   return (
     <section className="grid gap-3">
-      <h2 className="font-display text-[19px] font-bold">Тариф і баланс</h2>
+      <h2 className="font-display text-[19px] font-bold">{t('billing.title')}</h2>
 
       <div className="card grid gap-3 p-4">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
-            <span className="eyebrow">Ваш тариф</span>
+            <span className="eyebrow">{t('billing.yourPlan')}</span>
             <div className="font-display text-[21px] font-bold">{state.plan.name}</div>
           </div>
 
           <div className="text-right">
-            <span className="eyebrow">Баланс</span>
+            <span className="eyebrow">{t('billing.balance')}</span>
             <div className="font-display text-[21px] font-bold tabular-nums">
               {wallet.data.balance.toFixed(2)}
             </div>
@@ -75,9 +79,10 @@ export function Billing() {
 
         <p className="text-[13px] text-ink-2">
           {limit === null
-            ? `Оголошень без обмеження. Зараз активних: ${state.activeListings}.`
-            : `Використано ${state.activeListings} з ${limit} ${plural(limit, 'оголошення', 'оголошень', 'оголошень')}.`}
-          {state.activeUntil && ` Оплачено до ${formatDateTime(state.activeUntil)}.`}
+            ? t('billing.unlimited', { active: state.activeListings })
+            : t('billing.usedOf', { active: state.activeListings, limit })}
+          {state.activeUntil &&
+            t('billing.paidUntil', { date: formatDateTime(state.activeUntil) })}
         </p>
 
         <TopUpForm onDone={refresh} />
@@ -99,19 +104,21 @@ export function Billing() {
  * сума нікого не цікавить, а вводити її вручну — зайва робота.
  */
 function TopUpForm({ onDone }: { onDone: () => void }) {
+  const { t } = useTranslation()
+
   const [error, setError] = useState<string | null>(null)
 
   const top = useMutation({
     mutationFn: (amount: number) => topUpWallet(amount),
     onSuccess: onDone,
     onError: (caught) =>
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося поповнити.'),
+      setError(caught instanceof ApiError ? caught.message : t('billing.topUpFailed')),
   })
 
   return (
     <div className="grid gap-2 border-t border-line pt-3">
       <span className="text-[11.5px] font-semibold text-ink-2">
-        Поповнити — справжніх платежів у проєкті немає, сума нараховується одразу
+        {t('billing.topUpNote')}
       </span>
 
       <div className="flex flex-wrap gap-2">
@@ -145,13 +152,15 @@ function PlanTile({
   balance: number
   onDone: () => void
 }) {
+  const { t } = useTranslation()
+
   const [error, setError] = useState<string | null>(null)
 
   const buy = useMutation({
     mutationFn: () => subscribe(plan.code),
     onSuccess: onDone,
     onError: (caught) =>
-      setError(caught instanceof ApiError ? caught.message : 'Не вдалося оформити.'),
+      setError(caught instanceof ApiError ? caught.message : t('billing.buyFailed')),
   })
 
   const affordable = balance >= plan.price
@@ -164,11 +173,13 @@ function PlanTile({
     >
       <div className="flex items-center gap-2">
         <span className="font-display text-[17px] font-semibold">{plan.name}</span>
-        {plan.isCurrent && <span className="pill pill-accent">чинний</span>}
+        {plan.isCurrent && <span className="pill pill-accent">{t('billing.current')}</span>}
       </div>
 
       <div className="font-mono text-[15px] tabular-nums">
-        {plan.price === 0 ? 'безкоштовно' : `${plan.price} / ${plan.durationDays} днів`}
+        {plan.price === 0
+          ? t('billing.free')
+          : t('billing.pricePerDays', { price: plan.price, days: plan.durationDays })}
       </div>
 
       <p className="text-[12.5px] text-ink-2">{plan.description}</p>
@@ -185,9 +196,13 @@ function PlanTile({
           }}
           disabled={buy.isPending || !affordable}
           className="btn btn-primary justify-self-start"
-          title={affordable ? undefined : 'Поповніть баланс'}
+          title={affordable ? undefined : t('billing.topUpFirst')}
         >
-          {buy.isPending ? 'Оформлюємо…' : plan.isCurrent ? 'Продовжити' : 'Оформити'}
+          {buy.isPending
+            ? t('billing.processing')
+            : plan.isCurrent
+              ? t('billing.extend')
+              : t('billing.subscribe')}
         </button>
       )}
     </article>
@@ -195,19 +210,23 @@ function PlanTile({
 }
 
 function History({ entries }: { entries: WalletEntry[] }) {
-  const labels: Record<string, string> = {
-    TopUp: 'Поповнення',
-    SubscriptionCharge: 'Оплата тарифу',
-    Refund: 'Повернення',
+  const { t } = useTranslation()
+
+  const labels: Record<string, MessageKey> = {
+    TopUp: 'wallet.TopUp',
+    SubscriptionCharge: 'wallet.SubscriptionCharge',
+    Refund: 'wallet.Refund',
   }
 
   return (
     <div className="card grid gap-1 p-4">
-      <span className="eyebrow pb-1">Рух коштів</span>
+      <span className="eyebrow pb-1">{t('billing.movement')}</span>
 
       {entries.map((entry) => (
         <div key={entry.id} className="flex items-center gap-3 py-1 text-[13px]">
-          <span className="flex-1 truncate">{labels[entry.kind] ?? entry.kind}</span>
+          <span className="flex-1 truncate">
+            {labels[entry.kind] ? t(labels[entry.kind]) : entry.kind}
+          </span>
 
           <span className="text-[11.5px] text-ink-3">{formatDateTime(entry.createdAt)}</span>
 

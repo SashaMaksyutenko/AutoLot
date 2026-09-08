@@ -2,12 +2,15 @@ import { useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { confirmEmail } from '../api/auth'
+import { useTranslation } from '../i18n/useTranslation'
 
 /**
  * Підтвердження пошти за посиланням із листа. Людині тут нічого робити —
  * сторінка сама надсилає токен і показує, що вийшло.
  */
 export function ConfirmEmailPage() {
+  const { t } = useTranslation()
+
   const [params] = useSearchParams()
   const email = params.get('email') ?? ''
   const token = params.get('token') ?? ''
@@ -29,29 +32,29 @@ export function ConfirmEmailPage() {
   }, [email, token, confirm])
 
   if (!email || !token) {
-    return <Notice>Посилання неповне. Скопіюйте його з листа повністю.</Notice>
+    return <Notice>{t('confirm.brokenLink')}</Notice>
   }
 
   if (confirm.isPending) {
-    return <Notice>Підтверджуємо…</Notice>
+    return <Notice>{t('confirm.working')}</Notice>
   }
 
   if (confirm.isError) {
     return (
       <Notice>
-        Термін дії посилання минув або воно пошкоджене. Увійдіть і попросіть новий лист.
+        {t('confirm.expired')}
       </Notice>
     )
   }
 
   return (
     <Notice>
-      <span className="font-semibold text-good">Пошту підтверджено.</span>
+      <span className="font-semibold text-good">{t('confirm.done')}</span>
       <br />
-      Тепер ми зможемо надсилати вам сповіщення про ставки й відповіді продавців.
+      {t('confirm.doneTail')}
       <br />
       <Link to="/" className="mt-2 inline-block text-accent hover:underline">
-        До каталогу
+        {t('confirm.toCatalog')}
       </Link>
     </Notice>
   )

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchDealReviews } from '../../api/reviews'
+import { useTranslation } from '../../i18n/useTranslation'
 
 /**
  * «Оцініть угоду» — нагадування там, де людина бачить свій проданий чи
@@ -15,6 +16,8 @@ import { fetchDealReviews } from '../../api/reviews'
  * відгук» довелося б тримати синхронним із правилами доступу в двох місцях.
  */
 export function ReviewPrompt({ listingId }: { listingId: number }) {
+  const { t } = useTranslation()
+
   const state = useQuery({
     queryKey: ['deal-reviews', listingId],
     queryFn: ({ signal }) => fetchDealReviews(listingId, signal),
@@ -32,7 +35,7 @@ export function ReviewPrompt({ listingId }: { listingId: number }) {
         to={`/listing/${listingId}`}
         className="rounded-control bg-accent-soft px-2.5 py-2 text-[12.5px] font-semibold text-accent hover:underline"
       >
-        Оцініть угоду — відгук лишається лише раз
+        {t('prompt.rateDeal')}
       </Link>
     )
   }
@@ -41,7 +44,7 @@ export function ReviewPrompt({ listingId }: { listingId: number }) {
   // людина не знала б, чи вона вже писала.
   if (mineId !== null) {
     return (
-      <span className="px-1 text-[12px] text-ink-3">Ви вже оцінили цю угоду</span>
+      <span className="px-1 text-[12px] text-ink-3">{t('prompt.alreadyRated')}</span>
     )
   }
 
