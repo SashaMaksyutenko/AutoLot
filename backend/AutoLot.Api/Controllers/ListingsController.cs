@@ -86,6 +86,23 @@ public sealed class ListingsController(
     /// порівняння малюється цілком або не малюється зовсім, і чотири окремі
     /// відповіді лише дали б їй мигати по колонці.
     /// </summary>
+    /// <summary>Оголошення для форми редагування — лише власникові.</summary>
+    [HttpGet("{listingId:long}/edit")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetForEdit(long listingId, CancellationToken cancellationToken)
+    {
+        if (currentUser.Id is not { } actorId)
+        {
+            return Unauthorized();
+        }
+
+        var draft = await listingService.GetForEditAsync(listingId, actorId, cancellationToken);
+
+        return draft is null ? NotFound() : Ok(draft);
+    }
+
     [HttpGet("compare")]
     [AllowAnonymous]
     [ProducesResponseType<IReadOnlyList<ListingDetails>>(StatusCodes.Status200OK)]

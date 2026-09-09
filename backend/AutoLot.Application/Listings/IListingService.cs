@@ -31,6 +31,16 @@ public interface IListingService
         bool actorIsModerator,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Оголошення для форми редагування — з ідентифікаторами довідників
+    /// замість назв. Повертає <c>null</c>, якщо оголошення немає або воно
+    /// чуже: право на редагування перевіряє сам сервіс, не контролер.
+    /// </summary>
+    Task<ListingDraft?> GetForEditAsync(
+        long listingId,
+        long actorId,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ListingSummary>> GetOwnAsync(
         long sellerId,
         ListingStatus? status,

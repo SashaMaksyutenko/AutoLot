@@ -13,6 +13,7 @@ import { DealershipPage } from './pages/DealershipPage'
 import { DealershipsPage } from './pages/DealershipsPage'
 import { ConfirmEmailPage } from './pages/ConfirmEmailPage'
 import { FavoritesPage } from './pages/FavoritesPage'
+import { ListingFormPage } from './pages/ListingFormPage'
 import { ListingPage } from './pages/ListingPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { ComparePage } from './pages/ComparePage'
@@ -26,6 +27,13 @@ export default function App() {
           <Route element={<SiteLayout />}>
             <Route index element={<CatalogPage />} />
             <Route path="listing/:id" element={<ListingPage />} />
+
+            {/*
+              Подання й редагування — одна сторінка за двома адресами.
+              «sell» без ідентифікатора читається як дія, а не як розділ.
+            */}
+            <Route path="sell" element={<ListingFormPage />} />
+            <Route path="listing/:id/edit" element={<ListingFormPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
             <Route path="compare" element={<ComparePage />} />
             <Route path="account" element={<AccountPage />} />

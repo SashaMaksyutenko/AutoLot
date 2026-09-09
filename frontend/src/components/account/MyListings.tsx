@@ -89,7 +89,9 @@ function ListingRow({ listing }: { listing: ListingSummary }) {
   // Що можна зробити, вирішує статус — ті самі правила, що й у домені.
   // Тут вони лише малюються: сервер перевіряє їх заново й не покладається
   // на те, які кнопки показав браузер.
-  const canSubmit = listing.status === 'Draft' || listing.status === 'Rejected'
+  // Сервер дозволяє правити рівно ці два стани — див. Listing.IsEditable.
+  const canEdit = listing.status === 'Draft' || listing.status === 'Rejected'
+  const canSubmit = canEdit
   const canSell = listing.status === 'Active'
   const canArchive = listing.status !== 'Draft' && listing.status !== 'Archived'
   const canDelete = listing.status === 'Draft'
@@ -122,6 +124,16 @@ function ListingRow({ listing }: { listing: ListingSummary }) {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {/*
+            Редагувати можна те саме, що дозволяє сервер: чернетку й зняте.
+            Опубліковане правити не можна — покупці вже бачили інші умови.
+          */}
+          {canEdit && (
+            <Link to={`/listing/${listing.id}/edit`} className="btn">
+              {t('my.edit')}
+            </Link>
+          )}
+
           {canSubmit && (
             <button
               type="button"

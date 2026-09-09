@@ -169,6 +169,93 @@ internal sealed partial class ListingService(
         return await mapper.ToDetailsAsync(listing, isOwner || actorIsModerator, cancellationToken);
     }
 
+    public async Task<ListingDraft?> GetForEditAsync(
+        long listingId,
+        long actorId,
+        CancellationToken cancellationToken = default)
+    {
+        // Include на місто потрібен рівно заради області: форма показує
+        // спершу область, потім міста в ній.
+        var listing = await dbContext.Listings
+            .AsNoTracking()
+            .Include(item => item.City)
+            .Include(item => item.Car).ThenInclude(car => car.Features)
+            .FirstOrDefaultAsync(item => item.Id == listingId, cancellationToken);
+
+        if (listing is null)
+        {
+            return null;
+        }
+
+        // Чуже оголошення для стороннього не існує — так само, як у GetAsync.
+        // Кидати «немає прав» означало б підтвердити, що воно є.
+        if (!await access.CanManageAsync(listing, actorId, cancellationToken))
+        {
+            return null;
+        }
+
+        var car = listing.Car;
+
+        return new ListingDraft
+        {
+            Id = listing.Id,
+            Title = listing.Title,
+            Description = listing.Description,
+            RegionId = listing.City.RegionId,
+            CityId = listing.CityId,
+            CityDistrictId = listing.CityDistrictId,
+            Price = listing.Price,
+            Currency = listing.Currency,
+            ReservePrice = listing.ReservePrice,
+            Type = listing.Type,
+            IsNegotiable = listing.IsNegotiable,
+            AcceptsTrade = listing.AcceptsTrade,
+            IsUrgent = listing.IsUrgent,
+            DealershipId = listing.DealershipId,
+            Status = listing.Status,
+            RejectionReason = listing.RejectionReason,
+            Car = new CarSpecification
+            {
+                Vin = car.Vin,
+                Year = car.Year,
+                Condition = car.Condition,
+                MakeId = car.MakeId,
+                ModelId = car.ModelId,
+                GenerationId = car.GenerationId,
+                Mileage = car.Mileage,
+                OwnerCount = car.OwnerCount,
+                FuelType = car.FuelType,
+                EngineVolume = car.EngineVolume,
+                EnginePower = car.EnginePower,
+                FuelConsumptionCity = car.FuelConsumptionCity,
+                FuelConsumptionHighway = car.FuelConsumptionHighway,
+                FuelConsumptionCombined = car.FuelConsumptionCombined,
+                BatteryCapacity = car.BatteryCapacity,
+                ElectricRange = car.ElectricRange,
+                ChargingPort = car.ChargingPort,
+                Transmission = car.Transmission,
+                Drivetrain = car.Drivetrain,
+                BodyType = car.BodyType,
+                Color = car.Color,
+                IsMetallic = car.IsMetallic,
+                SeatCount = car.SeatCount,
+                DoorCount = car.DoorCount,
+                EcologyStandard = car.EcologyStandard,
+                ManufacturerCountryId = car.ManufacturerCountryId,
+                ImportedFromCountryId = car.ImportedFromCountryId,
+                IsCustomsCleared = car.IsCustomsCleared,
+                IsLocatedInUkraine = car.IsLocatedInUkraine,
+                WasInAccident = car.WasInAccident,
+                DamageState = car.DamageState,
+                PaintCondition = car.PaintCondition,
+                HasServiceBook = car.HasServiceBook,
+                IsGarageKept = car.IsGarageKept,
+                IsOnCredit = car.IsOnCredit,
+                FeatureIds = [.. car.Features.Select(link => link.FeatureId)],
+            },
+        };
+    }
+
     public async Task<IReadOnlyList<ListingSummary>> GetOwnAsync(
         long sellerId,
         ListingStatus? status,

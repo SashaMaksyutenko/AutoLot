@@ -173,7 +173,9 @@ function AccountTools({ auth }: { auth: ReturnType<typeof useAuth> }) {
       >
         {t('account.signOut')}
       </button>
-      <span className="btn btn-primary">{t('account.sell')}</span>
+      <Link to="/sell" className="btn btn-primary">
+        {t('account.sell')}
+      </Link>
 
       {/* Кружечок з ініціалами — найзвичніший вхід у кабінет. */}
       <Link
