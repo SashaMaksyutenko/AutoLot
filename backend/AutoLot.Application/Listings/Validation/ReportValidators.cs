@@ -1,6 +1,7 @@
 using AutoLot.Application.Listings.Dtos;
 using AutoLot.Domain.Enums;
 using FluentValidation;
+using AutoLot.Application.Common.Localization;
 
 namespace AutoLot.Application.Listings.Validation;
 
@@ -20,13 +21,13 @@ public sealed class SubmitReportRequestValidator : AbstractValidator<SubmitRepor
         // надіслати будь-яке число, і без перевірки воно мовчки лягло б
         // у базу причиною «17».
         RuleFor(request => request.Reason)
-            .IsInEnum().WithMessage("Оберіть причину зі списку.");
+            .IsInEnum().WithMessage(MessageCodes.ReportReasonRequired);
 
         RuleFor(request => request.Comment)
-            .MaximumLength(1000).WithMessage("Пояснення задовге — до 1000 символів.");
+            .MaximumLength(1000).WithMessage(MessageCodes.ReportCommentTooLong);
 
         RuleFor(request => request.Comment)
-            .NotEmpty().WithMessage("Опишіть, у чому річ.")
+            .NotEmpty().WithMessage(MessageCodes.ReportCommentRequired)
             .When(request => request.Reason == ListingReportReason.Other);
     }
 }
@@ -36,6 +37,6 @@ public sealed class ResolveReportRequestValidator : AbstractValidator<ResolveRep
     public ResolveReportRequestValidator()
     {
         RuleFor(request => request.Note)
-            .MaximumLength(1000).WithMessage("Нотатка задовга — до 1000 символів.");
+            .MaximumLength(1000).WithMessage(MessageCodes.ReportNoteTooLong);
     }
 }

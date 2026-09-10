@@ -1,3 +1,5 @@
+using AutoLot.Application.Common.Abstractions;
+using AutoLot.Application.Common.Localization;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -9,7 +11,9 @@ namespace AutoLot.Api.Filters;
 /// FluentValidation. Так вимога «валідація на всіх вхідних DTO» (SPEC §8)
 /// виконується автоматично, а не завдяки пам'яті автора контролера.
 /// </summary>
-internal sealed class FluentValidationFilter(IServiceProvider services) : IAsyncActionFilter
+internal sealed class FluentValidationFilter(
+    IServiceProvider services,
+    ICurrentLanguage language) : IAsyncActionFilter
 {
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
@@ -35,7 +39,12 @@ internal sealed class FluentValidationFilter(IServiceProvider services) : IAsync
 
             foreach (var failure in result.Errors)
             {
-                context.ModelState.AddModelError(failure.PropertyName, failure.ErrorMessage);
+                // Валідатор повернув КОД правила; у слова його переводимо тут,
+                // де вже відома мова запиту. Прикладний рівень про мову не знає
+                // й знати не повинен.
+                context.ModelState.AddModelError(
+                    failure.PropertyName,
+                    MessageCatalog.Translate(failure.ErrorMessage, language.Code));
             }
         }
 

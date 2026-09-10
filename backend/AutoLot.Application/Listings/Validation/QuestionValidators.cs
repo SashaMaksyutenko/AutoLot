@@ -1,5 +1,6 @@
 using AutoLot.Application.Listings.Dtos;
 using FluentValidation;
+using AutoLot.Application.Common.Localization;
 
 namespace AutoLot.Application.Listings.Validation;
 
@@ -12,9 +13,9 @@ public sealed class AskQuestionRequestValidator : AbstractValidator<AskQuestionR
     public AskQuestionRequestValidator()
     {
         RuleFor(request => request.Text)
-            .NotEmpty().WithMessage("Питання не може бути порожнім.")
-            .MinimumLength(5).WithMessage("Питання надто коротке.")
-            .MaximumLength(1000).WithMessage("Питання задовге — до 1000 символів.");
+            .NotEmpty().WithMessage(MessageCodes.QuestionTextRequired)
+            .MinimumLength(5).WithMessage(MessageCodes.QuestionTextTooShort)
+            .MaximumLength(1000).WithMessage(MessageCodes.QuestionTextTooLong);
     }
 }
 
@@ -23,7 +24,7 @@ public sealed class AnswerQuestionRequestValidator : AbstractValidator<AnswerQue
     public AnswerQuestionRequestValidator()
     {
         RuleFor(request => request.Text)
-            .NotEmpty().WithMessage("Відповідь не може бути порожньою.")
-            .MaximumLength(2000).WithMessage("Відповідь задовга — до 2000 символів.");
+            .NotEmpty().WithMessage(MessageCodes.QuestionAnswerRequired)
+            .MaximumLength(2000).WithMessage(MessageCodes.QuestionAnswerTooLong);
     }
 }

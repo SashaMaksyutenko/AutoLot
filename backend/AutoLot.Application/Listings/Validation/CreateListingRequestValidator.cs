@@ -1,6 +1,7 @@
 using AutoLot.Application.Listings.Dtos;
 using AutoLot.Domain.Enums;
 using FluentValidation;
+using AutoLot.Application.Common.Localization;
 
 namespace AutoLot.Application.Listings.Validation;
 
@@ -26,25 +27,25 @@ internal static class ListingRules
         Func<TRequest, decimal> price)
     {
         validator.RuleFor(request => title(request))
-            .NotEmpty().WithName("Title").WithMessage("Вкажіть заголовок.")
-            .MinimumLength(10).WithName("Title").WithMessage("Заголовок закороткий.")
-            .MaximumLength(MaxTitleLength).WithName("Title").WithMessage("Заголовок задовгий.");
+            .NotEmpty().WithName("Title").WithMessage(MessageCodes.ListingTitleRequired)
+            .MinimumLength(10).WithName("Title").WithMessage(MessageCodes.ListingTitleTooShort)
+            .MaximumLength(MaxTitleLength).WithName("Title").WithMessage(MessageCodes.ListingTitleTooLong);
 
         validator.RuleFor(request => description(request))
-            .NotEmpty().WithName("Description").WithMessage("Додайте опис.")
-            .MinimumLength(20).WithName("Description").WithMessage("Опис закороткий.")
-            .MaximumLength(MaxDescriptionLength).WithName("Description").WithMessage("Опис задовгий.");
+            .NotEmpty().WithName("Description").WithMessage(MessageCodes.ListingDescriptionRequired)
+            .MinimumLength(20).WithName("Description").WithMessage(MessageCodes.ListingDescriptionTooShort)
+            .MaximumLength(MaxDescriptionLength).WithName("Description").WithMessage(MessageCodes.ListingDescriptionTooLong);
 
         validator.RuleFor(request => cityId(request))
-            .GreaterThan(0).WithName("CityId").WithMessage("Оберіть місто.");
+            .GreaterThan(0).WithName("CityId").WithMessage(MessageCodes.ListingCityRequired);
 
         validator.RuleFor(request => cityDistrictId(request))
-            .GreaterThan(0).WithName("CityDistrictId").WithMessage("Некоректний район міста.")
+            .GreaterThan(0).WithName("CityDistrictId").WithMessage(MessageCodes.ListingDistrictInvalid)
             .When(request => cityDistrictId(request).HasValue);
 
         validator.RuleFor(request => price(request))
-            .GreaterThan(0).WithName("Price").WithMessage("Ціна має бути більшою за нуль.")
-            .LessThanOrEqualTo(MaxPrice).WithName("Price").WithMessage("Ціна виглядає помилковою.");
+            .GreaterThan(0).WithName("Price").WithMessage(MessageCodes.ListingPricePositive)
+            .LessThanOrEqualTo(MaxPrice).WithName("Price").WithMessage(MessageCodes.ListingPriceUnrealistic);
     }
 }
 
@@ -60,19 +61,19 @@ public sealed class CreateListingRequestValidator : AbstractValidator<CreateList
             request => request.CityDistrictId,
             request => request.Price);
 
-        RuleFor(request => request.Currency).IsInEnum().WithMessage("Невідома валюта.");
-        RuleFor(request => request.Type).IsInEnum().WithMessage("Невідомий тип оголошення.");
+        RuleFor(request => request.Currency).IsInEnum().WithMessage(MessageCodes.ListingCurrencyUnknown);
+        RuleFor(request => request.Type).IsInEnum().WithMessage(MessageCodes.ListingTypeUnknown);
 
         // Резерв нижчий за стартову ціну не має сенсу: він був би досягнутий
         // першою ж ставкою, тобто нічого не захищав би.
         RuleFor(request => request.ReservePrice)
             .GreaterThanOrEqualTo(request => request.Price)
-            .WithMessage("Резервна ціна не може бути нижчою за стартову.")
+            .WithMessage(MessageCodes.ListingReserveBelowStart)
             .When(request => request.ReservePrice.HasValue);
 
         RuleFor(request => request.ReservePrice)
             .Null()
-            .WithMessage("Резервна ціна буває лише в лота з торгами.")
+            .WithMessage(MessageCodes.ListingReserveAuctionOnly)
             .When(request => request.Type != ListingType.Auction);
 
         RuleFor(request => request.Car).NotNull().SetValidator(carValidator);
@@ -91,14 +92,14 @@ public sealed class UpdateListingRequestValidator : AbstractValidator<UpdateList
             request => request.CityDistrictId,
             request => request.Price);
 
-        RuleFor(request => request.Currency).IsInEnum().WithMessage("Невідома валюта.");
+        RuleFor(request => request.Currency).IsInEnum().WithMessage(MessageCodes.ListingCurrencyUnknown);
 
         // Тип оголошення при редагуванні не змінюється, тож перевірити
         // «резерв лише для торгів» тут нічим — це робить сервіс, коли знає
         // справжній тип збереженого лота.
         RuleFor(request => request.ReservePrice)
             .GreaterThanOrEqualTo(request => request.Price)
-            .WithMessage("Резервна ціна не може бути нижчою за стартову.")
+            .WithMessage(MessageCodes.ListingReserveBelowStart)
             .When(request => request.ReservePrice.HasValue);
 
         RuleFor(request => request.Car).NotNull().SetValidator(carValidator);
@@ -110,8 +111,8 @@ public sealed class RejectListingRequestValidator : AbstractValidator<RejectList
     public RejectListingRequestValidator()
     {
         RuleFor(request => request.Reason)
-            .NotEmpty().WithMessage("Вкажіть причину відмови.")
-            .MinimumLength(10).WithMessage("Причина має пояснювати, що виправити.")
-            .MaximumLength(500).WithMessage("Причина задовга.");
+            .NotEmpty().WithMessage(MessageCodes.ModerationReasonRequired)
+            .MinimumLength(10).WithMessage(MessageCodes.ModerationReasonTooShort)
+            .MaximumLength(500).WithMessage(MessageCodes.ModerationReasonTooLong);
     }
 }

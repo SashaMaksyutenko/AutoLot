@@ -1,5 +1,6 @@
 using FluentValidation;
 using AutoLot.Application.Auth.Dtos;
+using AutoLot.Application.Common.Localization;
 
 namespace AutoLot.Application.Auth.Validation;
 
@@ -11,30 +12,30 @@ public sealed class RegisterRequestValidator : AbstractValidator<RegisterRequest
     public RegisterRequestValidator()
     {
         RuleFor(request => request.Email)
-            .NotEmpty().WithMessage("Вкажіть email.")
-            .MaximumLength(256).WithMessage("Email задовгий.")
-            .EmailAddress().WithMessage("Email виглядає некоректним.");
+            .NotEmpty().WithMessage(MessageCodes.AuthEmailRequired)
+            .MaximumLength(256).WithMessage(MessageCodes.AuthEmailTooLong)
+            .EmailAddress().WithMessage(MessageCodes.AuthEmailMalformed);
 
         // Політика має збігатися з IdentityOptions у AddIdentityCore,
         // інакше користувач побачить помилку вже після проходження валідації.
         RuleFor(request => request.Password)
-            .NotEmpty().WithMessage("Вкажіть пароль.")
-            .MinimumLength(8).WithMessage("Пароль має містити щонайменше 8 символів.")
-            .MaximumLength(128).WithMessage("Пароль задовгий.")
-            .Matches("[a-z]").WithMessage("Пароль має містити малу літеру.")
-            .Matches("[A-Z]").WithMessage("Пароль має містити велику літеру.")
-            .Matches("[0-9]").WithMessage("Пароль має містити цифру.");
+            .NotEmpty().WithMessage(MessageCodes.AuthPasswordRequired)
+            .MinimumLength(8).WithMessage(MessageCodes.AuthPasswordTooShort)
+            .MaximumLength(128).WithMessage(MessageCodes.AuthPasswordTooLong)
+            .Matches("[a-z]").WithMessage(MessageCodes.AuthPasswordNeedsLower)
+            .Matches("[A-Z]").WithMessage(MessageCodes.AuthPasswordNeedsUpper)
+            .Matches("[0-9]").WithMessage(MessageCodes.AuthPasswordNeedsDigit);
 
         RuleFor(request => request.DisplayName)
-            .NotEmpty().WithMessage("Вкажіть ім'я або назву салону.")
-            .MinimumLength(2).WithMessage("Ім'я закоротке.")
-            .MaximumLength(100).WithMessage("Ім'я задовге.");
+            .NotEmpty().WithMessage(MessageCodes.AuthDisplayNameRequired)
+            .MinimumLength(2).WithMessage(MessageCodes.AuthDisplayNameTooShort)
+            .MaximumLength(100).WithMessage(MessageCodes.AuthDisplayNameTooLong);
 
         RuleFor(request => request.AccountType)
-            .IsInEnum().WithMessage("Невідомий тип акаунта.");
+            .IsInEnum().WithMessage(MessageCodes.AuthAccountTypeUnknown);
 
         RuleFor(request => request.PhoneNumber)
-            .Matches(PhonePattern).WithMessage("Телефон має бути у форматі +380XXXXXXXXX.")
+            .Matches(PhonePattern).WithMessage(MessageCodes.AuthPhoneFormat)
             .When(request => !string.IsNullOrWhiteSpace(request.PhoneNumber));
     }
 }

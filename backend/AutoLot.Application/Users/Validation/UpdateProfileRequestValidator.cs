@@ -1,5 +1,6 @@
 using AutoLot.Application.Users.Dtos;
 using FluentValidation;
+using AutoLot.Application.Common.Localization;
 
 namespace AutoLot.Application.Users.Validation;
 
@@ -14,13 +15,13 @@ public sealed class UpdateProfileRequestValidator : AbstractValidator<UpdateProf
     public UpdateProfileRequestValidator()
     {
         RuleFor(request => request.DisplayName)
-            .NotEmpty().WithMessage("Вкажіть, як до вас звертатися.")
-            .MinimumLength(2).WithMessage("Ім'я закоротке.")
-            .MaximumLength(100).WithMessage("Ім'я задовге.");
+            .NotEmpty().WithMessage(MessageCodes.ProfileDisplayNameRequired)
+            .MinimumLength(2).WithMessage(MessageCodes.AuthDisplayNameTooShort)
+            .MaximumLength(100).WithMessage(MessageCodes.AuthDisplayNameTooLong);
 
         // Порожній телефон дозволений: це спосіб його прибрати.
         RuleFor(request => request.PhoneNumber)
-            .Matches(PhonePattern).WithMessage("Телефон має бути у форматі +380XXXXXXXXX.")
+            .Matches(PhonePattern).WithMessage(MessageCodes.AuthPhoneFormat)
             .When(request => !string.IsNullOrWhiteSpace(request.PhoneNumber));
     }
 }

@@ -1,6 +1,7 @@
 using AutoLot.Application.Search.Dtos;
 using AutoLot.Domain.Search;
 using FluentValidation;
+using AutoLot.Application.Common.Localization;
 
 namespace AutoLot.Application.Search.Validation;
 
@@ -16,7 +17,7 @@ public sealed class SaveSearchRequestValidator : AbstractValidator<SaveSearchReq
     public SaveSearchRequestValidator()
     {
         RuleFor(request => request.Name)
-            .NotEmpty().WithMessage("Дайте пошуку назву.")
+            .NotEmpty().WithMessage(MessageCodes.SavedSearchNameRequired)
             .MaximumLength(SavedSearch.MaxNameLength)
             .WithMessage($"Назва задовга — до {SavedSearch.MaxNameLength} символів.");
     }
@@ -27,7 +28,7 @@ public sealed class RenameSearchRequestValidator : AbstractValidator<RenameSearc
     public RenameSearchRequestValidator()
     {
         RuleFor(request => request.Name)
-            .NotEmpty().WithMessage("Дайте пошуку назву.")
+            .NotEmpty().WithMessage(MessageCodes.SavedSearchNameRequired)
             .MaximumLength(SavedSearch.MaxNameLength)
             .WithMessage($"Назва задовга — до {SavedSearch.MaxNameLength} символів.");
     }
