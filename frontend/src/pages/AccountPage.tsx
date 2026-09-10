@@ -245,15 +245,28 @@ function DealershipsCard() {
     queryFn: ({ signal }) => fetchMyDealerships(signal),
   })
 
-  if (!dealerships.data?.length) {
+  // Поки відповідь не приїхала, картку не малюємо: інакше на секунду
+  // блимнуло б «створити салон» тому, у кого салон уже є.
+  if (dealerships.isPending) {
     return null
   }
+
+  const items = dealerships.data ?? []
 
   return (
     <section className="card grid gap-2 p-5">
       <h2 className="eyebrow">{t('cabinet.myDealerships')}</h2>
 
-      {dealerships.data.map((membership) => (
+      {/*
+        Картку показуємо навіть без жодного салону — саме звідси на нього
+        заводяться. Раніше вона зникала цілком, і створити салон із
+        інтерфейсу було нічим.
+      */}
+      <Link to="/my-dealership" className="justify-self-start text-[13px] text-accent hover:underline">
+        {items.length > 0 ? t('cabinet.manageDealership') : t('cabinet.createDealership')}
+      </Link>
+
+      {items.map((membership) => (
         <div key={membership.dealershipId} className="flex items-center justify-between gap-3">
           <Link
             to={`/dealers/${membership.slug}`}

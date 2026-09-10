@@ -32,6 +32,7 @@ export function AdminLayout() {
         <Item to="/admin" label={t('admin.overview')} end />
         {isModerator && <Item to="/admin/queue" label={t('admin.queue')} />}
         {isModerator && <Item to="/admin/reports" label={t('admin.reports')} />}
+        {isModerator && <Item to="/admin/dealerships" label={t('admin.dealerships')} />}
         {isAdmin && <Item to="/admin/users" label={t('admin.users')} />}
       </nav>
 

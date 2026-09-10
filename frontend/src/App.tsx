@@ -8,6 +8,7 @@ import { AdminLayout } from './pages/admin/AdminLayout'
 import { AdminOverviewPage } from './pages/admin/AdminOverviewPage'
 import { AdminUsersPage } from './pages/admin/AdminUsersPage'
 import { ModerationQueuePage } from './pages/admin/ModerationQueuePage'
+import { DealershipQueuePage } from './pages/admin/DealershipQueuePage'
 import { ReportQueuePage } from './pages/admin/ReportQueuePage'
 import { DealershipPage } from './pages/DealershipPage'
 import { DealershipsPage } from './pages/DealershipsPage'
@@ -15,6 +16,7 @@ import { ConfirmEmailPage } from './pages/ConfirmEmailPage'
 import { FavoritesPage } from './pages/FavoritesPage'
 import { ListingFormPage } from './pages/ListingFormPage'
 import { ListingPage } from './pages/ListingPage'
+import { MyDealershipPage } from './pages/MyDealershipPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { ComparePage } from './pages/ComparePage'
 import { UserProfilePage } from './pages/UserProfilePage'
@@ -40,6 +42,13 @@ export default function App() {
             <Route path="chat" element={<ChatPage />} />
             <Route path="dealers" element={<DealershipsPage />} />
             <Route path="dealers/:slug" element={<DealershipPage />} />
+
+            {/*
+              Керування салоном свідомо ПОЗА «dealers/…»: там живуть вітрини
+              за назвою, і «dealers/manage» збігся б із салоном, чий адресний
+              рядок хтось назвав саме так.
+            */}
+            <Route path="my-dealership" element={<MyDealershipPage />} />
             <Route path="users/:id" element={<UserProfilePage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
             <Route path="confirm-email" element={<ConfirmEmailPage />} />
@@ -48,6 +57,7 @@ export default function App() {
               <Route index element={<AdminOverviewPage />} />
               <Route path="queue" element={<ModerationQueuePage />} />
               <Route path="reports" element={<ReportQueuePage />} />
+              <Route path="dealerships" element={<DealershipQueuePage />} />
               <Route path="users" element={<AdminUsersPage />} />
             </Route>
           </Route>
