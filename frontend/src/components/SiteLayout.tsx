@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchUnreadCount } from '../api/chat'
 import { fetchFavoriteCount } from '../api/favorites'
@@ -14,6 +14,15 @@ import { ThemeToggle } from './ThemeToggle'
 export function SiteLayout() {
   const { t } = useTranslation()
   const auth = useAuth()
+
+  /*
+    Окремої сторінки аукціонів немає — це той самий каталог із фільтром.
+    Тому підсвічування рахуємо самі: NavLink дивиться лише на шлях, і на
+    «/» він вважав би активними обидві вкладки одразу.
+  */
+  const [params] = useSearchParams()
+  const onCatalog = useLocation().pathname === '/'
+  const auctionsOpen = onCatalog && params.get('Type') === 'Auction'
   const { ids: compared } = useCompare()
 
   // Вікно входу відкриває не лише кнопка в шапці, а й, скажімо, сердечко
@@ -32,7 +41,7 @@ export function SiteLayout() {
 
           {/* mr-auto відтісняє все наступне до правого краю. */}
           <nav className="mr-auto hidden gap-5 text-[14.5px] sm:flex">
-            <NavItem to="/" label={t('nav.buy')} />
+            <NavItem to="/" label={t('nav.buy')} active={onCatalog && !auctionsOpen} />
             {/*
               Порівняння доступне й гостю: воно живе в браузері, а не в
               акаунті. Показуємо пункт лише коли є що порівнювати — порожній
@@ -54,8 +63,7 @@ export function SiteLayout() {
             <NavItem to="/dealers" label={t('nav.dealers')} />
             {/* Адмінку показуємо лише тим, кого туди пустять. */}
             {isStaff(auth) && <NavItem to="/admin" label={t('nav.admin')} />}
-            {/* Окремої сторінки аукціонів ще немає — поки що це фільтр у каталозі. */}
-            <span className="pb-1 text-ink-3">{t('nav.auctions')}</span>
+            <NavItem to="/?Type=Auction" label={t('nav.auctions')} active={auctionsOpen} />
           </nav>
 
           <div className="flex flex-wrap items-center gap-2.5">
@@ -78,14 +86,28 @@ export function SiteLayout() {
  * передає це прапорцем isActive — інакше довелося б щоразу порівнювати
  * адресу вручну.
  */
-function NavItem({ to, label, badge }: { to: string; label: string; badge?: React.ReactNode }) {
+function NavItem({
+  to,
+  label,
+  badge,
+  active,
+}: {
+  to: string
+  label: string
+  badge?: React.ReactNode
+
+  /** Підсвічування ззовні — для вкладок, що різняться лише фільтром. */
+  active?: boolean
+}) {
   return (
     <NavLink
       to={to}
       end
       className={({ isActive }) =>
         `flex items-center gap-1.5 border-b-2 pb-1 ${
-          isActive ? 'border-accent text-ink' : 'border-transparent text-ink-2 hover:text-ink'
+          (active ?? isActive)
+            ? 'border-accent text-ink'
+            : 'border-transparent text-ink-2 hover:text-ink'
         }`
       }
     >

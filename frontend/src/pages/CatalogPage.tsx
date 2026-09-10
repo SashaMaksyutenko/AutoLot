@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   emptyFilters,
+  fromSearchParams,
   searchCatalog,
+  toBrowserParams,
   type CatalogFilters,
   type CatalogSort,
 } from '../api/catalog'
@@ -28,7 +31,17 @@ const sortKeys: Record<CatalogSort, MessageKey> = {
 export function CatalogPage() {
   const { t, tPlural } = useTranslation()
 
-  const [filters, setFilters] = useState<CatalogFilters>(emptyFilters)
+  /*
+    Фільтри живуть в адресному рядку, а не в стані компонента.
+
+    Це не ускладнення заради краси: посилання на пошук можна переслати,
+    сторінку — перезавантажити, а кнопка «назад» повертає попередній
+    фільтр, а не викидає з каталогу. Заразом вкладці «Аукціони» стало
+    куди вести — до того вона була написом без посилання.
+  */
+  const [params, setParams] = useSearchParams()
+
+  const filters = useMemo(() => fromSearchParams(params), [params])
 
   const results = useQuery({
     queryKey: ['catalog', filters],
@@ -39,9 +52,23 @@ export function CatalogPage() {
     placeholderData: keepPreviousData,
   })
 
+  function apply(next: CatalogFilters, replace = false) {
+    setParams(toBrowserParams(next), { replace })
+  }
+
   /** Будь-яка зміна фільтра повертає на першу сторінку — інакше можна опинитися на сьомій сторінці з трьох. */
   function patchFilters(patch: Partial<CatalogFilters>) {
-    setFilters((current) => ({ ...current, ...patch, page: patch.page ?? 1 }))
+    /*
+      Пошук за назвою змінюється на КОЖНУ натиснуту літеру. Якби кожна
+      лишала запис в історії, кнопка «назад» стала б непридатною: щоб
+      піти з каталогу, довелося б натиснути її стільки разів, скільки
+      літер набрано. Тому текст замінює поточний запис, а решта —
+      марка, ціна, сторінка — додає новий, і саме між ними ходить
+      «назад».
+    */
+    const onlyText = Object.keys(patch).length === 1 && 'text' in patch
+
+    apply({ ...filters, ...patch, page: patch.page ?? 1 }, onlyText)
   }
 
   const total = results.data?.totalCount ?? 0
@@ -53,8 +80,8 @@ export function CatalogPage() {
       <FilterRail
         filters={filters}
         onChange={patchFilters}
-        onApply={setFilters}
-        onReset={() => setFilters(emptyFilters)}
+        onApply={(next) => apply(next)}
+        onReset={() => apply(emptyFilters)}
         totalCount={total}
       />
 

@@ -173,6 +173,84 @@ export const emptyFilters: CatalogFilters = {
   page: 1,
 }
 
+/*
+  Один перелік полів на обидва напрямки — і в адресний рядок, і назад.
+  Раніше збирання жило окремо, а розбирання не існувало взагалі; щойно
+  з'явилося друге, два переліки почали б розходитися при кожному новому
+  фільтрі. Тепер новий фільтр, доданий сюди, одразу вміє і те, і те.
+
+  Ключ об'єкта — ім'я параметра, як його чекає бекенд; значення — назва поля
+  у фільтрах. Імена навмисно ті самі, що йдуть на сервер: тоді адреса в
+  браузері й запит до API читаються однаково.
+*/
+
+const textParams = {
+  Text: 'text',
+  Condition: 'condition',
+  PriceCurrency: 'priceCurrency',
+  Type: 'type',
+  Sort: 'sort',
+} as const
+
+const numberParams = {
+  MakeId: 'makeId',
+  ModelId: 'modelId',
+  GenerationId: 'generationId',
+  PriceFrom: 'priceFrom',
+  PriceTo: 'priceTo',
+  YearFrom: 'yearFrom',
+  YearTo: 'yearTo',
+  MileageFrom: 'mileageFrom',
+  MileageTo: 'mileageTo',
+  EngineVolumeFrom: 'engineVolumeFrom',
+  EngineVolumeTo: 'engineVolumeTo',
+  PowerFrom: 'powerFrom',
+  PowerTo: 'powerTo',
+  FuelConsumptionTo: 'fuelConsumptionTo',
+  OwnerCountTo: 'ownerCountTo',
+  SeatCountFrom: 'seatCountFrom',
+  SeatCountTo: 'seatCountTo',
+  DoorCountFrom: 'doorCountFrom',
+  BatteryCapacityFrom: 'batteryCapacityFrom',
+  ElectricRangeFrom: 'electricRangeFrom',
+  RegionId: 'regionId',
+  CityId: 'cityId',
+  CityDistrictId: 'cityDistrictId',
+  ImportedFromCountryId: 'importedFromCountryId',
+  ManufacturerCountryId: 'manufacturerCountryId',
+  DealershipId: 'dealershipId',
+  Page: 'page',
+} as const
+
+const booleanParams = {
+  IsMetallic: 'isMetallic',
+  WasInAccident: 'wasInAccident',
+  IsCustomsCleared: 'isCustomsCleared',
+  IsLocatedInUkraine: 'isLocatedInUkraine',
+  HasServiceBook: 'hasServiceBook',
+  IsGarageKept: 'isGarageKept',
+  IsOnCredit: 'isOnCredit',
+  IsNegotiable: 'isNegotiable',
+  AcceptsTrade: 'acceptsTrade',
+  IsUrgent: 'isUrgent',
+  HasPhotos: 'hasPhotos',
+  FromDealer: 'fromDealer',
+  VerifiedDealerOnly: 'verifiedDealerOnly',
+} as const
+
+/** Набори значень: ключ повторюється — FuelTypes=Diesel&FuelTypes=Electric. */
+const listParams = {
+  FuelTypes: 'fuelTypes',
+  BodyTypes: 'bodyTypes',
+  Transmissions: 'transmissions',
+  Drivetrains: 'drivetrains',
+  Colors: 'colors',
+  DamageStates: 'damageStates',
+  PaintConditions: 'paintConditions',
+  EcologyStandards: 'ecologyStandards',
+  ChargingPorts: 'chargingPorts',
+} as const
+
 /**
  * Збирає адресний рядок запиту. Порожні значення не додаються взагалі —
  * бекенд розрізняє «фільтр не вказаний» і «фільтр із порожнім значенням»,
@@ -181,73 +259,97 @@ export const emptyFilters: CatalogFilters = {
 export function toSearchParams(filters: CatalogFilters): URLSearchParams {
   const params = new URLSearchParams()
 
-  const single: Record<string, string | number | boolean | undefined> = {
-    Text: filters.text,
-    MakeId: filters.makeId,
-    ModelId: filters.modelId,
-    GenerationId: filters.generationId,
-    PriceFrom: filters.priceFrom,
-    PriceTo: filters.priceTo,
-    PriceCurrency: filters.priceCurrency,
-    YearFrom: filters.yearFrom,
-    YearTo: filters.yearTo,
-    MileageFrom: filters.mileageFrom,
-    MileageTo: filters.mileageTo,
-    EngineVolumeFrom: filters.engineVolumeFrom,
-    EngineVolumeTo: filters.engineVolumeTo,
-    PowerFrom: filters.powerFrom,
-    PowerTo: filters.powerTo,
-    FuelConsumptionTo: filters.fuelConsumptionTo,
-    OwnerCountTo: filters.ownerCountTo,
-    SeatCountFrom: filters.seatCountFrom,
-    SeatCountTo: filters.seatCountTo,
-    DoorCountFrom: filters.doorCountFrom,
-    BatteryCapacityFrom: filters.batteryCapacityFrom,
-    ElectricRangeFrom: filters.electricRangeFrom,
-    IsMetallic: filters.isMetallic,
-    Condition: filters.condition,
-    RegionId: filters.regionId,
-    CityId: filters.cityId,
-    CityDistrictId: filters.cityDistrictId,
-    Type: filters.type,
-    WasInAccident: filters.wasInAccident,
-    IsCustomsCleared: filters.isCustomsCleared,
-    IsLocatedInUkraine: filters.isLocatedInUkraine,
-    ImportedFromCountryId: filters.importedFromCountryId,
-    ManufacturerCountryId: filters.manufacturerCountryId,
-    HasServiceBook: filters.hasServiceBook,
-    IsGarageKept: filters.isGarageKept,
-    IsOnCredit: filters.isOnCredit,
-    IsNegotiable: filters.isNegotiable,
-    AcceptsTrade: filters.acceptsTrade,
-    IsUrgent: filters.isUrgent,
-    HasPhotos: filters.hasPhotos,
-    FromDealer: filters.fromDealer,
-    VerifiedDealerOnly: filters.verifiedDealerOnly,
-    DealershipId: filters.dealershipId,
-    Sort: filters.sort,
-    Page: filters.page,
-  }
-
-  for (const [key, value] of Object.entries(single)) {
-    if (value !== undefined && value !== '') {
-      params.append(key, String(value))
+  const put = (name: string, value: unknown) => {
+    if (value !== undefined && value !== null && value !== '') {
+      params.append(name, String(value))
     }
   }
 
-  // Набори повторюють ключ: FuelTypes=Diesel&FuelTypes=Electric.
-  for (const value of filters.fuelTypes) params.append('FuelTypes', value)
-  for (const value of filters.bodyTypes) params.append('BodyTypes', value)
-  for (const value of filters.transmissions) params.append('Transmissions', value)
-  for (const value of filters.drivetrains) params.append('Drivetrains', value)
-  for (const value of filters.colors) params.append('Colors', value)
-  for (const value of filters.damageStates) params.append('DamageStates', value)
-  for (const value of filters.paintConditions) params.append('PaintConditions', value)
-  for (const value of filters.ecologyStandards) params.append('EcologyStandards', value)
-  for (const value of filters.chargingPorts) params.append('ChargingPorts', value)
+  for (const [name, key] of Object.entries(textParams)) put(name, filters[key])
+  for (const [name, key] of Object.entries(numberParams)) put(name, filters[key])
+  for (const [name, key] of Object.entries(booleanParams)) put(name, filters[key])
+
+  for (const [name, key] of Object.entries(listParams)) {
+    for (const value of filters[key]) params.append(name, value)
+  }
 
   // Опції — числа, решта наборів рядкові. Ключ так само повторюється.
   for (const value of filters.featureIds) params.append('FeatureIds', String(value))
+
+  return params
+}
+
+/**
+ * Зворотний бік: відновлює фільтри з адресного рядка.
+ *
+ * Усе, чого не впізнали, просто ігнорується — адресу набирають руками, і
+ * зіпсована літера в назві параметра не повинна валити сторінку. З тієї ж
+ * причини числа, які не розібралися, лишаються порожніми: «MakeId=abc»
+ * означає «марка не вказана», а не помилку.
+ */
+export function fromSearchParams(params: URLSearchParams): CatalogFilters {
+  const filters: CatalogFilters = { ...emptyFilters }
+
+  for (const [name, key] of Object.entries(textParams)) {
+    const value = params.get(name)
+
+    // Приведення тут неминуче: у фільтрах ці поля мають вужчі типи —
+    // валюта, тип продажу, порядок. Значення з адреси перевіряє сервер,
+    // і незнайоме він просто відхилить.
+    if (value) (filters[key] as string) = value
+  }
+
+  for (const [name, key] of Object.entries(numberParams)) {
+    const raw = params.get(name)
+
+    // Порожній параметр («Page=») — це НЕ нуль: Number('') дає 0, і каталог
+    // попросив би в сервера нульову сторінку. Порожнє означає «не вказано».
+    if (raw === null || raw.trim() === '') continue
+
+    const value = Number(raw)
+
+    if (Number.isFinite(value)) {
+      (filters[key] as number) = value
+    }
+  }
+
+  for (const [name, key] of Object.entries(booleanParams)) {
+    const value = params.get(name)
+
+    if (value === 'true' || value === 'false') {
+      (filters[key] as boolean) = value === 'true'
+    }
+  }
+
+  for (const [name, key] of Object.entries(listParams)) {
+    const values = params.getAll(name)
+
+    if (values.length > 0) (filters[key] as string[]) = values
+  }
+
+  filters.featureIds = params
+    .getAll('FeatureIds')
+    .map(Number)
+    .filter((id) => Number.isFinite(id) && id > 0)
+
+  return filters
+}
+
+/**
+ * Те саме, але для адреси в браузері: значення за замовчуванням прибрані.
+ * «?Sort=Newest&Page=1» на чистому каталозі не несе змісту, а посилання
+ * захаращує — і люди пересилають його одне одному саме таким.
+ */
+export function toBrowserParams(filters: CatalogFilters): URLSearchParams {
+  const params = toSearchParams(filters)
+
+  if (filters.sort === 'Newest') params.delete('Sort')
+  if (filters.page === 1) params.delete('Page')
+
+  // Валюта має сенс лише разом із межами ціни.
+  if (filters.priceFrom === undefined && filters.priceTo === undefined) {
+    params.delete('PriceCurrency')
+  }
 
   return params
 }
