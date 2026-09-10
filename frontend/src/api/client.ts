@@ -86,7 +86,8 @@ async function send(path: string, init: RequestInit, retryOnUnauthorized: boolea
       // повідомляє браузер. Довідники — кузови, міста, опції — приходять
       // уже перекладеними, тож клієнту не треба тримати власних словників.
       'Accept-Language': getLanguage(),
-      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+      // JSON підписуємо самі, а FormData лишаємо браузеру — див. apiUpload.
+      ...(typeof init.body === 'string' ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init.headers,
     },
@@ -154,6 +155,28 @@ export async function apiPut<T>(path: string, body?: unknown, signal?: AbortSign
 
 export async function apiDelete<T>(path: string, signal?: AbortSignal): Promise<T> {
   return parse<T>(await send(path, { method: 'DELETE', signal }, true), path)
+}
+
+/**
+ * Надсилання файлу. Окремо від apiPost, бо тут НЕ можна ставити
+ * Content-Type самому: браузер має підписати запит як multipart і додати до
+ * заголовка межу між частинами — випадковий рядок, який він щойно вигадав.
+ * Проставивши 'multipart/form-data' вручну, ми залишили б запит без цієї
+ * межі, і сервер не зміг би розібрати жодного файлу.
+ *
+ * Тому FormData передається в тіло як є, а send не додає Content-Type,
+ * поки тіло не рядок.
+ */
+export async function apiUpload<T>(
+  path: string,
+  file: File,
+  fieldName = 'file',
+  signal?: AbortSignal,
+): Promise<T> {
+  const body = new FormData()
+  body.append(fieldName, file)
+
+  return parse<T>(await send(path, { method: 'POST', body, signal }, true), path)
 }
 
 /** Поновлює сесію з cookie при старті застосунку. */

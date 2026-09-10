@@ -25,6 +25,7 @@ import {
 import { useAuth } from '../auth/useAuth'
 import { openSignIn } from '../auth/signInPrompt'
 import { FeaturePicker } from '../components/catalog/FeaturePicker'
+import { PhotoManager } from '../components/listing/PhotoManager'
 import { useTranslation } from '../i18n/useTranslation'
 import type { MessageKey } from '../i18n/messages'
 
@@ -85,7 +86,11 @@ export function ListingFormPage() {
         ? updateListing(listingId, form).then(() => listingId)
         : createListing(form).then((created) => created.id),
 
-    onSuccess: (savedId) => navigate(`/account?listing=${savedId}`),
+    // Створене оголошення відкриваємо в редагуванні, а не в кабінеті:
+    // наступний крок — фото, а вони потребують ідентифікатора, якого до
+    // збереження ще не існувало.
+    onSuccess: (savedId) =>
+      navigate(`/listing/${savedId}/edit`, { replace: !isEditing }),
 
     onError: (caught) => {
       if (caught instanceof ApiError) {
@@ -189,6 +194,16 @@ export function ListingFormPage() {
         />
 
         <PriceSection form={form} patch={patch} fieldErrors={fieldErrors} />
+
+        {/*
+          Фото прив’язані до оголошення, тож до першого збереження їх нема
+          до чого чіпляти. Замість порожнього блока пояснюємо це рядком.
+        */}
+        {isEditing ? (
+          <PhotoManager listingId={listingId} />
+        ) : (
+          <p className="text-[12.5px] text-ink-3">{t('form.photosAfterSave')}</p>
+        )}
 
         {error && (
           <p className="rounded-control bg-danger-soft px-3 py-2 text-[13px] text-danger">
