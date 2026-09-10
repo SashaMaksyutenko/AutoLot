@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { resendConfirmation, updateProfile, type UserProfile } from '../api/auth'
+import {
+  resendConfirmation,
+  updateLocation,
+  updateProfile,
+  type UserProfile,
+} from '../api/auth'
 import { ApiError } from '../api/client'
+import { fetchCities, fetchCityDistricts, fetchRegions } from '../api/reference'
 import { fetchMyDealerships } from '../api/dealership'
 import { useAuth } from '../auth/useAuth'
 import { openSignIn } from '../auth/signInPrompt'
@@ -49,6 +55,7 @@ export function AccountPage() {
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="grid gap-4">
           <ProfileForm profile={auth.user} onSaved={auth.refreshProfile} />
+          <LocationForm profile={auth.user} onSaved={auth.refreshProfile} />
           <Billing />
           <MyListings />
           <MyPurchases />
@@ -170,6 +177,188 @@ function ProfileForm({
  * Ролі показуємо явно саме тому, що раніше перевірити їх можна було лише
  * запитом до бази.
  */
+/**
+ * Місто й район.
+ *
+ * Окремою карткою від імені й телефону, бо це окремий запит до сервера з
+ * власними правилами перевірки. Тримати їх в одній формі означало б, що
+ * помилка в місті скасовує збережене ім'я.
+ */
+function LocationForm({
+  profile,
+  onSaved,
+}: {
+  profile: UserProfile
+  onSaved: () => Promise<void> | void
+}) {
+  const { t } = useTranslation()
+
+  // Область у профілі не зберігається — місто знає її саме. Але вибір
+  // двоступеневий, тож при відкритті беремо її з наявного місця.
+  const [regionId, setRegionId] = useState<number | undefined>(profile.location?.regionId)
+  const [cityId, setCityId] = useState<number | null>(profile.location?.cityId ?? null)
+  const [districtId, setDistrictId] = useState<number | null>(
+    profile.location?.cityDistrictId ?? null,
+  )
+
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const regions = useQuery({
+    queryKey: ['regions'],
+    queryFn: ({ signal }) => fetchRegions(signal),
+    staleTime: Infinity,
+  })
+
+  const cities = useQuery({
+    queryKey: ['cities', regionId],
+    queryFn: ({ signal }) => fetchCities(regionId!, signal),
+    enabled: regionId !== undefined,
+    staleTime: Infinity,
+  })
+
+  const districts = useQuery({
+    queryKey: ['city-districts', cityId],
+    queryFn: ({ signal }) => fetchCityDistricts(cityId!, signal),
+    enabled: cityId !== null,
+    staleTime: Infinity,
+  })
+
+  /*
+    Що зберігати, мутація отримує АРГУМЕНТОМ, а не читає зі стану.
+
+    Різниця не косметична. setState не змінює значення миттєво — до кінця
+    поточного оброблення воно старе. Кнопка «прибрати» робить setCityId(null)
+    і одразу викликає збереження; якби mutationFn читала стан, вона взяла б
+    ще не скинуте місто й зберегла те саме, що й було.
+  */
+  const save = useMutation({
+    mutationFn: (place: { cityId: number | null; cityDistrictId: number | null }) =>
+      updateLocation(place),
+    onSuccess: async () => {
+      setError(null)
+      setSaved(true)
+      await onSaved()
+    },
+    onError: (caught) => {
+      setSaved(false)
+      setError(caught instanceof ApiError ? caught.message : t('place.failed'))
+    },
+  })
+
+  return (
+    <form
+      className="card grid gap-3 p-5"
+      onSubmit={(event) => {
+        event.preventDefault()
+        save.mutate({ cityId, cityDistrictId: districtId })
+      }}
+    >
+      <div>
+        <h2 className="eyebrow">{t('place.title')}</h2>
+        <p className="mt-1 text-[12.5px] text-ink-3">{t('place.lead')}</p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label={t('filter.region')}>
+          <select
+            value={regionId ?? ''}
+            // Місто належить області, район — місту: зміна старшого рівня
+            // скидає обидва молодші.
+            onChange={(event) => {
+              setRegionId(event.target.value ? Number(event.target.value) : undefined)
+              setCityId(null)
+              setDistrictId(null)
+              setSaved(false)
+            }}
+            className="control"
+          >
+            <option value="">{t('place.none')}</option>
+            {regions.data?.map((region) => (
+              <option key={region.id} value={region.id}>
+                {region.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label={t('form.city')}>
+          <select
+            value={cityId ?? ''}
+            disabled={regionId === undefined}
+            onChange={(event) => {
+              setCityId(event.target.value ? Number(event.target.value) : null)
+              setDistrictId(null)
+              setSaved(false)
+            }}
+            className="control"
+          >
+            <option value="">
+              {regionId ? t('filter.allCities') : t('filter.chooseRegionFirst')}
+            </option>
+            {cities.data?.map((city) => (
+              <option key={city.id} value={city.id}>
+                {city.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        {/* Райони є лише у великих містах, тож і вибір показуємо лише там. */}
+        {(districts.data?.length ?? 0) > 0 && (
+          <Field label={t('form.district')}>
+            <select
+              value={districtId ?? ''}
+              onChange={(event) => {
+                setDistrictId(event.target.value ? Number(event.target.value) : null)
+                setSaved(false)
+              }}
+              className="control"
+            >
+              <option value="">{t('filter.allDistricts')}</option>
+              {districts.data?.map((district) => (
+                <option key={district.id} value={district.id}>
+                  {district.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
+      </div>
+
+      {error && (
+        <p className="rounded-control bg-danger-soft px-3 py-2 text-[13px] text-danger">{error}</p>
+      )}
+
+      {saved && <p className="text-[13px] text-good">{t('place.saved')}</p>}
+
+      <div className="flex flex-wrap gap-2">
+        <button type="submit" disabled={save.isPending} className="btn btn-primary justify-self-start">
+          {save.isPending ? t('cabinet.saving') : t('cabinet.save')}
+        </button>
+
+        {/* Прибрати місто — окрема дія: порожній вибір і «зберегти» поспіль
+            читалися б як «нічого не робити». */}
+        {profile.location && (
+          <button
+            type="button"
+            disabled={save.isPending}
+            onClick={() => {
+              setRegionId(undefined)
+              setCityId(null)
+              setDistrictId(null)
+              save.mutate({ cityId: null, cityDistrictId: null })
+            }}
+            className="btn"
+          >
+            {t('place.clear')}
+          </button>
+        )}
+      </div>
+    </form>
+  )
+}
+
 function AccessCard({ profile }: { profile: UserProfile }) {
   const { t } = useTranslation()
 

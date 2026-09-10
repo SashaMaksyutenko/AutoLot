@@ -88,6 +88,20 @@ export function updateProfile(request: {
   return apiPut<UserProfile>('/api/profile', request)
 }
 
+/**
+ * Місцезнаходження. Окремим викликом, а не полем у updateProfile: сервер
+ * перевіряє тут інше — що місто існує й що район належить саме йому.
+ *
+ * Порожнє місто означає «прибрати» — тоді разом із ним обнуляється й район,
+ * бо район без міста ні про що не каже.
+ */
+export function updateLocation(request: {
+  cityId: number | null
+  cityDistrictId: number | null
+}): Promise<UserProfile> {
+  return apiPut<UserProfile>('/api/profile/location', request)
+}
+
 /** Надіслати лист підтвердження ще раз — для того, хто вже увійшов. */
 export function resendConfirmation(): Promise<void> {
   return apiPost<void>('/api/auth/resend-confirmation')

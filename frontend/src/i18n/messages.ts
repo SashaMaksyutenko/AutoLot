@@ -770,6 +770,14 @@ const uk = {
   'verify.revoke': 'Зняти перевірку',
   'admin.dealerships': 'Салони',
 
+
+  'place.title': 'Місцезнаходження',
+  'place.lead': 'Підставляється в нові оголошення й показується покупцям поруч із авто.',
+  'place.saved': 'Збережено.',
+  'place.failed': 'Не вдалося зберегти місцезнаходження.',
+  'place.clear': 'Прибрати',
+  'place.none': 'Не вказано',
+
   'error.network': 'Не вдалося зв’язатися з сервером.',
   'error.requestFailed': 'Запит {path} завершився помилкою',
   'error.badResponse': 'Некоректна відповідь від {path}',
@@ -1534,6 +1542,14 @@ const en: Record<MessageKey, string> = {
   'verify.grant': 'Verify',
   'verify.revoke': 'Revoke verification',
   'admin.dealerships': 'Dealerships',
+
+
+  'place.title': 'Where you are',
+  'place.lead': 'Filled into new listings and shown to buyers next to the car.',
+  'place.saved': 'Saved.',
+  'place.failed': 'Could not save your location.',
+  'place.clear': 'Clear',
+  'place.none': 'Not specified',
 
   'error.network': 'Could not reach the server.',
   'error.requestFailed': 'The request to {path} failed',
