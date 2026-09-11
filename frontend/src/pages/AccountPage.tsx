@@ -18,6 +18,7 @@ import { Billing } from '../components/account/Billing'
 import { MyListings } from '../components/account/MyListings'
 import { MyPurchases } from '../components/account/MyPurchases'
 import { MyReputation } from '../components/account/MyReputation'
+import { TelegramCard } from '../components/account/TelegramCard'
 import { VerifiedMark } from '../components/catalog/ListingCard'
 
 /**
@@ -64,6 +65,7 @@ export function AccountPage() {
         <div className="grid gap-4">
           <MyReputation userId={auth.user.id} />
           <AccessCard profile={auth.user} />
+          <TelegramCard />
           <DealershipsCard />
         </div>
       </div>

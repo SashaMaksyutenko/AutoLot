@@ -786,6 +786,16 @@ const uk = {
   'auth.googleUnverified': 'Google каже, що цю пошту не підтверджено. Підтвердьте її в Google і спробуйте знову.',
   'auth.googleBanned': 'Цей акаунт заблоковано на майданчику.',
 
+
+  'bot.title': 'Телеграм',
+  'bot.lead': 'Бот надсилатиме сповіщення про нові авто за вашими збереженими пошуками й про перебиті ставки.',
+  'bot.linked': 'прив’язано',
+  'bot.getCode': 'Отримати код',
+  'bot.issuing': 'Готуємо…',
+  'bot.howTo': 'Відкрийте бота й надішліть: /link {code}',
+  'bot.expiry': 'Код діє десять хвилин і лише один раз.',
+  'bot.unlinkHint': 'Щоб відв’язати — надішліть боту /stop.',
+
   'error.network': 'Не вдалося зв’язатися з сервером.',
   'error.requestFailed': 'Запит {path} завершився помилкою',
   'error.badResponse': 'Некоректна відповідь від {path}',
@@ -1566,6 +1576,16 @@ const en: Record<MessageKey, string> = {
   'auth.googleEmailTaken': 'That e-mail is already registered with a password. Sign in with it, and the accounts will be linked.',
   'auth.googleUnverified': 'Google says this e-mail is not verified. Verify it with Google and try again.',
   'auth.googleBanned': 'This account is banned from the site.',
+
+
+  'bot.title': 'Telegram',
+  'bot.lead': 'The bot will tell you about new cars matching your saved searches, and when your bid is outbid.',
+  'bot.linked': 'linked',
+  'bot.getCode': 'Get a code',
+  'bot.issuing': 'Preparing…',
+  'bot.howTo': 'Open the bot and send: /link {code}',
+  'bot.expiry': 'The code lasts ten minutes and works once.',
+  'bot.unlinkHint': 'To unlink, send /stop to the bot.',
 
   'error.network': 'Could not reach the server.',
   'error.requestFailed': 'The request to {path} failed',

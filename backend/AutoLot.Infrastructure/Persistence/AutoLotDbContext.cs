@@ -10,6 +10,7 @@ using AutoLot.Domain.Listings;
 using AutoLot.Domain.Search;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using AutoLot.Domain.Bots;
 
 namespace AutoLot.Infrastructure.Persistence;
 
@@ -73,6 +74,11 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
     public DbSet<Auction> Auctions => Set<Auction>();
 
     public DbSet<Bid> Bids => Set<Bid>();
+
+    /// <summary>Прив'язки акаунтів до чатів у месенджерах.</summary>
+    public DbSet<BotLink> BotLinks => Set<BotLink>();
+
+    public DbSet<BotLinkCode> BotLinkCodes => Set<BotLinkCode>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -35,6 +35,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Quartz;
+using AutoLot.Application.Bots;
+using AutoLot.Infrastructure.Bots;
+using Microsoft.Extensions.Options;
+using System.Net.Http;
 
 namespace AutoLot.Infrastructure;
 
@@ -64,12 +68,44 @@ public static class DependencyInjection
 
         services.Configure<PhotoStorageOptions>(configuration.GetSection(PhotoStorageOptions.SectionName));
         services.Configure<DemoDataOptions>(configuration.GetSection(DemoDataOptions.SectionName));
+        services.Configure<TelegramOptions>(configuration.GetSection(TelegramOptions.SectionName));
+
+        /*
+          Клієнт Telegram живе в одному примірнику на весь застосунок.
+
+          Зазвичай для цього беруть IHttpClientFactory, та вона живе в
+          окремому пакеті, якого в цьому проєкті немає. Тому робимо те
+          саме, заради чого її й радять: PooledConnectionLifetime змушує
+          з'єднання переоформлюватися кожні п'ять хвилин, і клієнт не
+          застрягає на адресі, яку сервер тим часом змінив.
+
+          Створювати ж новий HttpClient на кожен запит — гірша з усіх
+          можливостей: розетки лишаються зайнятими ще хвилини після
+          закриття, і їх швидко бракує.
+        */
+        services.AddSingleton(provider => new TelegramClient(
+            new HttpClient(new SocketsHttpHandler
+            {
+                PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+            })
+            {
+                BaseAddress = new Uri("https://api.telegram.org/"),
+
+                // Довше за саме опитування: інакше звичайне очікування
+                // новин виглядало б для клієнта як обрив.
+                Timeout = TimeSpan.FromSeconds(60),
+            },
+            provider.GetRequiredService<IOptions<TelegramOptions>>()));
+
+        services.AddHostedService<TelegramBotService>();
 
         services.AddScoped<IExchangeRateProvider, ConfiguredExchangeRateProvider>();
         services.AddScoped<IPhotoStorage, LocalPhotoStorage>();
         services.AddScoped<IListingPhotoService, ListingPhotoService>();
         services.AddScoped<ICatalogService, CatalogService>();
         services.AddScoped<ISavedSearchService, SavedSearchService>();
+        services.AddScoped<IBotLinkService, BotLinkService>();
+        services.AddSingleton<IBotDirectory, BotDirectory>();
         services.AddScoped<IPriceAnalyticsService, PriceAnalyticsService>();
         services.AddScoped<ISavedSearchNotifier, SavedSearchNotifier>();
         services.AddScoped<IDataSeeder, DemoDataSeeder>();
