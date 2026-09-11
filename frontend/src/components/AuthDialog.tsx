@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { ApiError } from '../api/client'
-import { requestPasswordReset, type AccountType } from '../api/auth'
+import {
+  fetchAuthProviders,
+  googleSignInUrl,
+  requestPasswordReset,
+  type AccountType,
+} from '../api/auth'
+import { useQuery } from '@tanstack/react-query'
+import { useSignInReason } from '../auth/signInPrompt'
 import { useAuth } from '../auth/useAuth'
 import { useTranslation } from '../i18n/useTranslation'
 
@@ -13,6 +20,18 @@ type Mode = 'login' | 'register' | 'forgot'
 export function AuthDialog({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
   const auth = useAuth()
+
+  // Причина, з якою вікно відкрилося саме по собі: людина щойно
+  // повернулася від Google і має дізнатися, чому нічого не вийшло.
+  const reason = useSignInReason()
+
+  const providers = useQuery({
+    queryKey: ['auth-providers'],
+    queryFn: ({ signal }) => fetchAuthProviders(signal),
+
+    // Набір способів входу не змінюється без перезапуску сервера.
+    staleTime: Infinity,
+  })
 
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState('')
@@ -64,12 +83,38 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
         className="card w-full max-w-[420px] p-6"
         onClick={(event) => event.stopPropagation()}
       >
+        {/*
+          Google показуємо лише коли сервер каже, що ключі на місці:
+          без них кнопка вела б у помилку 501.
+        */}
+        {mode !== 'forgot' && providers.data?.google && (
+          <div className="mb-4 grid gap-3">
+            <a href={googleSignInUrl()} className="btn w-full justify-center py-2.5">
+              <GoogleMark />
+              {t('auth.google')}
+            </a>
+
+            {/* Риска з написом посередині: дві лінії, що ростуть обабіч. */}
+            <div className="flex items-center gap-3 text-[12px] text-ink-3">
+              <span className="h-px flex-1 bg-line" />
+              {t('auth.or')}
+              <span className="h-px flex-1 bg-line" />
+            </div>
+          </div>
+        )}
+
         {/* У режимі відновлення вкладки ховаємо: там інша задача. */}
         {mode !== 'forgot' && (
           <div className="mb-5 flex gap-0.5 rounded-control border border-line bg-surface-2 p-0.5">
             <Tab active={mode === 'login'} onClick={() => setMode('login')} label={t('auth.tabSignIn')} />
             <Tab active={mode === 'register'} onClick={() => setMode('register')} label={t('auth.tabRegister')} />
           </div>
+        )}
+
+        {reason && (
+          <p className="mb-3 rounded-control bg-danger-soft px-3 py-2 text-[13px] text-danger">
+            {reason}
+          </p>
         )}
 
         {mode === 'forgot' ? (
@@ -233,6 +278,34 @@ function ForgotPassword({ onBack }: { onBack: () => void }) {
         {t('auth.resetRemembered')}
       </button>
     </form>
+  )
+}
+
+/*
+  Кольоровий значок Google. Намальований у коді, а не взятий файлом: одна
+  дрібна картинка не варта ані окремого запиту, ані сторонньої бібліотеки —
+  так само, як піктограми теми.
+
+  Кольори тут фіксовані навмисно: це чужий знак, і він має виглядати
+  однаково в обох темах.
+*/
+function GoogleMark() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true" className="shrink-0">
+      <path
+        fill="#4285F4"
+        d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.6h11.8a10 10 0 0 1-4.4 6.6v5.5h7.1c4.2-3.8 6.6-9.5 6.6-16.2z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 46c6 0 11-2 14.5-5.3l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.5-3.8-12.2-9H4.5v5.7A22 22 0 0 0 24 46z"
+      />
+      <path fill="#FBBC05" d="M11.8 28.3a13.2 13.2 0 0 1 0-8.6v-5.7H4.5a22 22 0 0 0 0 20l7.3-5.7z" />
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3A22 22 0 0 0 4.5 14l7.3 5.7c1.7-5.2 6.5-9 12.2-9z"
+      />
+    </svg>
   )
 }
 

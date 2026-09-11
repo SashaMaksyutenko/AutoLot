@@ -102,6 +102,32 @@ export function updateLocation(request: {
   return apiPut<UserProfile>('/api/profile/location', request)
 }
 
+/** Які способи входу підняті на сервері. */
+export interface AuthProviders {
+  google: boolean
+}
+
+export function fetchAuthProviders(signal?: AbortSignal): Promise<AuthProviders> {
+  return apiGet<AuthProviders>('/api/auth/providers', signal)
+}
+
+/**
+ * Адреса, куди веде кнопка «Увійти через Google».
+ *
+ * Це НЕ запит через fetch, а справжній перехід усього вікна: браузер має
+ * опинитися на сторінці згоди Google, а звідти повернутися назад. Зробити
+ * це запитом неможливо — чужий домен не пустить.
+ *
+ * returnUrl кажемо абсолютним і беремо з поточної адреси, щоб людина
+ * повернулася рівно туди, звідки пішла. Сервер його перевіряє за білим
+ * списком origin: підсунути чужий сайт не вийде.
+ */
+export function googleSignInUrl(): string {
+  const back = encodeURIComponent(window.location.href)
+
+  return `/api/auth/google/start?returnUrl=${back}`
+}
+
 /** Надіслати лист підтвердження ще раз — для того, хто вже увійшов. */
 export function resendConfirmation(): Promise<void> {
   return apiPost<void>('/api/auth/resend-confirmation')

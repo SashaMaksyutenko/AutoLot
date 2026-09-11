@@ -778,6 +778,14 @@ const uk = {
   'place.clear': 'Прибрати',
   'place.none': 'Не вказано',
 
+
+  'auth.google': 'Увійти через Google',
+  'auth.or': 'або',
+  'auth.googleFailed': 'Google не підтвердив вхід. Спробуйте ще раз або увійдіть паролем.',
+  'auth.googleEmailTaken': 'Ця пошта вже зареєстрована з паролем. Увійдіть паролем — акаунти прив’яжуться.',
+  'auth.googleUnverified': 'Google каже, що цю пошту не підтверджено. Підтвердьте її в Google і спробуйте знову.',
+  'auth.googleBanned': 'Цей акаунт заблоковано на майданчику.',
+
   'error.network': 'Не вдалося зв’язатися з сервером.',
   'error.requestFailed': 'Запит {path} завершився помилкою',
   'error.badResponse': 'Некоректна відповідь від {path}',
@@ -1550,6 +1558,14 @@ const en: Record<MessageKey, string> = {
   'place.failed': 'Could not save your location.',
   'place.clear': 'Clear',
   'place.none': 'Not specified',
+
+
+  'auth.google': 'Sign in with Google',
+  'auth.or': 'or',
+  'auth.googleFailed': 'Google did not confirm the sign-in. Try again, or sign in with a password.',
+  'auth.googleEmailTaken': 'That e-mail is already registered with a password. Sign in with it, and the accounts will be linked.',
+  'auth.googleUnverified': 'Google says this e-mail is not verified. Verify it with Google and try again.',
+  'auth.googleBanned': 'This account is banned from the site.',
 
   'error.network': 'Could not reach the server.',
   'error.requestFailed': 'The request to {path} failed',

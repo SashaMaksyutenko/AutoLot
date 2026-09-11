@@ -101,6 +101,22 @@ public sealed class AuthController(
         return profile is null ? NotFound() : Ok(profile);
     }
 
+    /// <summary>
+    /// Які способи входу доступні на цьому сервері.
+    ///
+    /// Потрібно фронтенду, щоб не малювати кнопку, яка нікуди не веде: без
+    /// ключів Google схема не реєструється взагалі. Проєкт відкритий, і той,
+    /// хто підніме його в себе без власних ключів, має побачити вікно входу
+    /// без мертвої кнопки, а не з нею.
+    /// </summary>
+    [HttpGet("providers")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult Providers()
+    {
+        return Ok(new { Google = AuthenticationSetup.IsGoogleConfigured(configuration) });
+    }
+
     /// <summary>Починає вхід через Google: віддає редірект на згоду користувача.</summary>
     [HttpGet("google/start")]
     [AllowAnonymous]

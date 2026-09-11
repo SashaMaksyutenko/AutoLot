@@ -4,7 +4,14 @@ import { fetchUnreadCount } from '../api/chat'
 import { fetchFavoriteCount } from '../api/favorites'
 import { useAuth } from '../auth/useAuth'
 import { useCompare } from '../compare/useCompare'
-import { closeSignIn, openSignIn, useSignInPrompt } from '../auth/signInPrompt'
+import {
+  closeSignIn,
+  openSignIn,
+  openSignInWithReason,
+  useSignInPrompt,
+} from '../auth/signInPrompt'
+import { useEffect } from 'react'
+import type { MessageKey } from '../i18n/messages'
 import { useTranslation } from '../i18n/useTranslation'
 import { AuthDialog } from './AuthDialog'
 import { LanguageToggle } from './LanguageToggle'
@@ -20,9 +27,31 @@ export function SiteLayout() {
     Тому підсвічування рахуємо самі: NavLink дивиться лише на шлях, і на
     «/» він вважав би активними обидві вкладки одразу.
   */
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const onCatalog = useLocation().pathname === '/'
   const auctionsOpen = onCatalog && params.get('Type') === 'Auction'
+
+  /*
+    Повернення від Google.
+
+    Сервер не може показати повідомлення сам: він відповідає редіректом, а
+    не сторінкою. Тому причину він додає параметром до адреси, а показуємо
+    її ми — відкривши вікно входу з поясненням.
+
+    Параметр одразу прибираємо з адреси: інакше та сама помилка спливала б
+    щоразу, коли людина оновить сторінку або поділиться посиланням.
+  */
+  const failure = params.get('authError')
+
+  useEffect(() => {
+    if (!failure) return
+
+    openSignInWithReason(t(signInFailures[failure] ?? 'auth.googleFailed'))
+
+    const rest = new URLSearchParams(params)
+    rest.delete('authError')
+    setParams(rest, { replace: true })
+  }, [failure, params, setParams, t])
   const { ids: compared } = useCompare()
 
   // Вікно входу відкриває не лише кнопка в шапці, а й, скажімо, сердечко
@@ -79,6 +108,20 @@ export function SiteLayout() {
       {authOpen && <AuthDialog onClose={closeSignIn} />}
     </div>
   )
+}
+
+/**
+ * Причина відмови від сервера → ключ словника.
+ *
+ * Сервер надсилає назву свого переліку AuthError; нам потрібен текст, який
+ * щось каже людині. Невідоме значення падає на загальне повідомлення — краще
+ * сказати «не вийшло, спробуйте ще раз», ніж показати «PasswordRejected».
+ */
+const signInFailures: Record<string, MessageKey> = {
+  external_failed: 'auth.googleFailed',
+  ExternalLoginFailed: 'auth.googleFailed',
+  EmailAlreadyUsed: 'auth.googleEmailTaken',
+  AccountBanned: 'auth.googleBanned',
 }
 
 /**
