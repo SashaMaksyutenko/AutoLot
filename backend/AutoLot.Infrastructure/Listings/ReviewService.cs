@@ -6,6 +6,7 @@ using AutoLot.Domain.Listings;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Infrastructure.Listings;
 
@@ -69,7 +70,7 @@ internal sealed partial class ReviewService(
 
         var side = await SideOfAsync(listing, authorId, cancellationToken)
             ?? throw new ReviewNotAllowedException(
-                "Відгук лишають сторони угоди — продавець і покупець.");
+                MessageCodes.ReviewPartiesOnly);
 
         var alreadyWritten = await dbContext.Reviews
             .AsNoTracking()
@@ -79,7 +80,7 @@ internal sealed partial class ReviewService(
 
         if (alreadyWritten)
         {
-            throw new ReviewNotAllowedException("Ви вже лишили відгук про цю угоду.");
+            throw new ReviewNotAllowedException(MessageCodes.ReviewAlready);
         }
 
         var review = Review.Create(

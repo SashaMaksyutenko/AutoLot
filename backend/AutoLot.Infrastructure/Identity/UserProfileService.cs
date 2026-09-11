@@ -7,6 +7,7 @@ using AutoLot.Domain.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Infrastructure.Identity;
 
@@ -79,7 +80,7 @@ internal sealed partial class UserProfileService(
             if (!exists)
             {
                 throw new InvalidLocationException(
-                    "Такого міста немає або вказаний район належить іншому місту.");
+                    MessageCodes.PlaceCityOrDistrictInvalid);
             }
 
             user.CityId = cityId;

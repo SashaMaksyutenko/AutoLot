@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using AutoLot.Domain.Common;
 
 namespace AutoLot.Application.Common.Localization;
@@ -9,7 +11,7 @@ namespace AutoLot.Application.Common.Localization;
 /// дають більше клопоту, ніж користі, а тут усе видно в одному місці — так
 /// само, як у словнику фронтенду.
 /// </summary>
-public static class MessageCatalog
+public static partial class MessageCatalog
 {
     private static readonly Dictionary<string, string> Ukrainian = new(StringComparer.Ordinal)
     {
@@ -112,6 +114,94 @@ public static class MessageCatalog
         [MessageCodes.ChatMessageRequired] = "Повідомлення не може бути порожнім.",
         [MessageCodes.ChatMessageTooLong] = "Повідомлення задовге — до 4000 символів.",
         [MessageCodes.SavedSearchNameRequired] = "Дайте пошуку назву.",
+        [MessageCodes.ListingSubmitWrongStatus] = "На модерацію можна подати лише чернетку або відхилене оголошення.",
+        [MessageCodes.ListingApproveWrongStatus] = "Схвалити можна лише оголошення, подане на модерацію.",
+        [MessageCodes.ListingRejectWrongStatus] = "Відхилити можна лише оголошення, подане на модерацію.",
+        [MessageCodes.ListingUnpublishWrongStatus] = "Зняти з публікації можна лише оголошення, яке в ній є.",
+        [MessageCodes.ListingSoldWrongStatus] = "Проданим можна позначити лише активне оголошення.",
+        [MessageCodes.ListingSoldSellerIsBuyer] = "Продавець не може бути покупцем.",
+        [MessageCodes.ListingArchiveAlready] = "Оголошення вже в архіві.",
+        [MessageCodes.ListingArchiveDraft] = "Чернетку не архівують — її видаляють.",
+        [MessageCodes.ListingRestoreWrongStatus] = "Відновити можна лише архівне оголошення.",
+        [MessageCodes.ListingEditWrongStatus] = "Редагувати можна лише чернетку або відхилене оголошення.",
+        [MessageCodes.ListingDeleteDraftOnly] = "Видалити можна лише чернетку; опубліковане оголошення архівують.",
+        [MessageCodes.ListingAccessOtherSeller] = "Це оголошення належить іншому продавцеві.",
+        [MessageCodes.ListingBuyerNeverWrote] = "Ця людина не листувалася про це авто, тож покупцем бути не може.",
+        [MessageCodes.ListingLimitReached] = "Ваш тариф дозволяє {limit} активних оголошень. Архівуйте старі або перейдіть на вищий тариф.",
+        [MessageCodes.CarModelWrongMake] = "Обрана модель не належить цій марці.",
+        [MessageCodes.CarGenerationWrongModel] = "Обране покоління не належить цій моделі.",
+        [MessageCodes.CarFeaturesUnknownSome] = "Серед обраних опцій є невідомі.",
+        [MessageCodes.PlaceCityOrDistrictInvalid] = "Такого міста немає або вказаний район належить іншому місту.",
+        [MessageCodes.PhotoNotAnImage] = "Файл не є зображенням.",
+        [MessageCodes.PhotoFormatUnsupported] = "Підтримуються лише JPEG, PNG і WebP.",
+        [MessageCodes.PhotoResolutionTooBig] = "Зображення завелике за роздільною здатністю.",
+        [MessageCodes.PhotoCorrupt] = "Файл пошкоджений або не є зображенням.",
+        [MessageCodes.PhotoOrderMustListAll] = "Перелік має містити всі фото оголошення рівно по разу.",
+        [MessageCodes.PhotoLimitReached] = "До оголошення можна додати не більше {limit} фото.",
+        [MessageCodes.PhotoTooLarge] = "Файл завеликий: максимум {limit} МБ.",
+        [MessageCodes.QuestionSelf] = "Питати самого себе не можна — відповідайте на чужі.",
+        [MessageCodes.QuestionAnswerSellerOnly] = "Відповідати на питання може лише продавець.",
+        [MessageCodes.ReportOwnListing] = "Це ваше оголошення.",
+        [MessageCodes.ReportAlreadyResolved] = "Скаргу вже розглянуто.",
+        [MessageCodes.ReviewSelf] = "Відгук самому собі не має сенсу.",
+        [MessageCodes.ReviewPartiesOnly] = "Відгук лишають сторони угоди — продавець і покупець.",
+        [MessageCodes.ReviewAlready] = "Ви вже лишили відгук про цю угоду.",
+        [MessageCodes.ReviewRatingRange] = "Оцінка має бути від {min} до {max}.",
+        [MessageCodes.AuctionBidTooLow] = "Ставка має бути щонайменше {minimum} — це поточна ціна плюс крок.",
+        [MessageCodes.AuctionCeilingTooLow] = "Нова стеля має бути вищою за попередню.",
+        [MessageCodes.AuctionFinished] = "Торги вже завершені.",
+        [MessageCodes.AuctionTimeUp] = "Час торгів вичерпано.",
+        [MessageCodes.AuctionStillRunning] = "Торги ще тривають — закривати зарано.",
+        [MessageCodes.AuctionOwnLot] = "Ставити на власний лот не можна.",
+        [MessageCodes.WalletTopUpPositive] = "Сума поповнення має бути додатною.",
+        [MessageCodes.WalletChargePositive] = "Сума списання має бути додатною.",
+        [MessageCodes.WalletTopUpMax] = "За раз можна поповнити не більше {limit}.",
+        [MessageCodes.BillingBasicNoOrder] = "Базовий тариф діє без оформлення — просто дочекайтеся кінця платного.",
+        [MessageCodes.BillingPlanWaitForEnd] = "Спершу має завершитися чинний тариф — переходи посеред періоду не передбачені.",
+        [MessageCodes.SavedSearchNameTooLong] = "Назва задовга — до {limit} символів.",
+        [MessageCodes.SavedSearchLimitReached] = "Більше {limit} збережених пошуків тримати не можна. Видаліть непотрібні.",
+        [MessageCodes.DealershipNotAMember] = "Ви не працюєте в цьому салоні.",
+        [MessageCodes.DealershipCityUnknown] = "Такого міста немає в довіднику.",
+        [MessageCodes.DealershipStaffNoSuchUser] = "Користувача з такою поштою немає.",
+        [MessageCodes.DealershipStaffAlready] = "Ця людина вже працює в салоні.",
+        [MessageCodes.DealershipStaffNotThere] = "Ця людина не працює в салоні.",
+        [MessageCodes.DealershipStaffLastOwner] = "Це єдиний власник салону. Спершу призначте іншого.",
+        [MessageCodes.DealershipStaffOwnerOnly] = "Керувати персоналом може лише власник салону.",
+        [MessageCodes.AdminBanSelf] = "Заблокувати власний акаунт не можна.",
+        [MessageCodes.AdminRoleSelfDemote] = "Зняти з себе роль адміністратора не можна.",
+        [MessageCodes.AdminRoleUnknown] = "Ролі «{role}» не існує.",
+        [MessageCodes.ChatOwnListing] = "Це ваше оголошення — писати нема кому.",
+        [MessageCodes.TitleListingNotFound] = "Оголошення не знайдено",
+        [MessageCodes.TitleQuestionNotFound] = "Питання не знайдено",
+        [MessageCodes.TitleReportNotFound] = "Скаргу не знайдено",
+        [MessageCodes.TitleReportNotAllowed] = "Скаржитися не можна",
+        [MessageCodes.TitleReviewNotAllowed] = "Відгук лишити не можна",
+        [MessageCodes.TitleSavedSearchNotFound] = "Збережений пошук не знайдено",
+        [MessageCodes.TitlePlanNotFound] = "Тариф не знайдено",
+        [MessageCodes.TitleSubscriptionNotAllowed] = "Оформити не можна",
+        [MessageCodes.TitleInsufficientFunds] = "Недостатньо коштів",
+        [MessageCodes.TitleNoAccess] = "Немає доступу",
+        [MessageCodes.TitleDealershipNotFound] = "Салон не знайдено",
+        [MessageCodes.TitleUserNotFound] = "Користувача не знайдено",
+        [MessageCodes.TitleAdminActionForbidden] = "Дію заборонено",
+        [MessageCodes.TitleConversationNotFound] = "Розмову не знайдено",
+        [MessageCodes.TitleChatNotAllowed] = "Листування неможливе",
+        [MessageCodes.TitleInvalidData] = "Некоректні дані",
+        [MessageCodes.TitleAuctionNotFound] = "Торгів не знайдено",
+        [MessageCodes.TitleBiddingNotAllowed] = "Ставити не можна",
+        [MessageCodes.TitleInvalidLocation] = "Некоректне місцезнаходження",
+        [MessageCodes.TitleRuleViolated] = "Дію зараз виконати не можна",
+        [MessageCodes.SavedSearchNameEmpty] = "Назва пошуку не може бути порожньою.",
+        [MessageCodes.DetailListingNotFound] = "Оголошення {id} не знайдено.",
+        [MessageCodes.DetailQuestionNotFound] = "Питання {id} не знайдено.",
+        [MessageCodes.DetailReportNotFound] = "Скаргу {id} не знайдено.",
+        [MessageCodes.DetailAuctionNotFound] = "Торгів для оголошення {id} не знайдено.",
+        [MessageCodes.DetailDealershipNotFound] = "Салон {id} не знайдено.",
+        [MessageCodes.DetailUserNotFound] = "Користувача {id} не знайдено.",
+        [MessageCodes.DetailConversationNotFound] = "Розмову {id} не знайдено.",
+        [MessageCodes.DetailPlanNotFound] = "Тарифного плану «{id}» не існує.",
+        [MessageCodes.DetailSavedSearchNotFound] = "Збережений пошук {id} не знайдено.",
+        [MessageCodes.DetailInsufficientFunds] = "На балансі {available}, а потрібно {required}.",
     };
 
     private static readonly Dictionary<string, string> English = new(StringComparer.Ordinal)
@@ -215,6 +305,94 @@ public static class MessageCatalog
         [MessageCodes.ChatMessageRequired] = "A message cannot be empty.",
         [MessageCodes.ChatMessageTooLong] = "That message is too long — 4000 characters at most.",
         [MessageCodes.SavedSearchNameRequired] = "Give the search a name.",
+        [MessageCodes.ListingSubmitWrongStatus] = "Only a draft or a rejected listing can be submitted for moderation.",
+        [MessageCodes.ListingApproveWrongStatus] = "Only a listing awaiting moderation can be approved.",
+        [MessageCodes.ListingRejectWrongStatus] = "Only a listing awaiting moderation can be rejected.",
+        [MessageCodes.ListingUnpublishWrongStatus] = "Only a published listing can be taken down.",
+        [MessageCodes.ListingSoldWrongStatus] = "Only an active listing can be marked as sold.",
+        [MessageCodes.ListingSoldSellerIsBuyer] = "The seller cannot be the buyer.",
+        [MessageCodes.ListingArchiveAlready] = "The listing is already archived.",
+        [MessageCodes.ListingArchiveDraft] = "A draft is not archived — it is deleted.",
+        [MessageCodes.ListingRestoreWrongStatus] = "Only an archived listing can be restored.",
+        [MessageCodes.ListingEditWrongStatus] = "Only a draft or a rejected listing can be edited.",
+        [MessageCodes.ListingDeleteDraftOnly] = "Only a draft can be deleted; a published listing is archived.",
+        [MessageCodes.ListingAccessOtherSeller] = "This listing belongs to another seller.",
+        [MessageCodes.ListingBuyerNeverWrote] = "This person never wrote to you about this car, so they cannot be the buyer.",
+        [MessageCodes.ListingLimitReached] = "Your plan allows {limit} active listings. Archive some, or move to a higher plan.",
+        [MessageCodes.CarModelWrongMake] = "The chosen model does not belong to that make.",
+        [MessageCodes.CarGenerationWrongModel] = "The chosen generation does not belong to that model.",
+        [MessageCodes.CarFeaturesUnknownSome] = "Some of the chosen features are unknown.",
+        [MessageCodes.PlaceCityOrDistrictInvalid] = "There is no such city, or that district belongs to a different one.",
+        [MessageCodes.PhotoNotAnImage] = "That file is not an image.",
+        [MessageCodes.PhotoFormatUnsupported] = "Only JPEG, PNG and WebP are supported.",
+        [MessageCodes.PhotoResolutionTooBig] = "That image has too high a resolution.",
+        [MessageCodes.PhotoCorrupt] = "The file is damaged, or it is not an image.",
+        [MessageCodes.PhotoOrderMustListAll] = "The list must contain every photograph of the listing exactly once.",
+        [MessageCodes.PhotoLimitReached] = "A listing takes no more than {limit} photographs.",
+        [MessageCodes.PhotoTooLarge] = "That file is too large: {limit} MB at most.",
+        [MessageCodes.QuestionSelf] = "You cannot ask yourself — answer other people's questions instead.",
+        [MessageCodes.QuestionAnswerSellerOnly] = "Only the seller can answer questions.",
+        [MessageCodes.ReportOwnListing] = "This is your own listing.",
+        [MessageCodes.ReportAlreadyResolved] = "That report has already been dealt with.",
+        [MessageCodes.ReviewSelf] = "Reviewing yourself makes no sense.",
+        [MessageCodes.ReviewPartiesOnly] = "Only the two sides of the deal — the seller and the buyer — can leave a review.",
+        [MessageCodes.ReviewAlready] = "You have already reviewed this deal.",
+        [MessageCodes.ReviewRatingRange] = "The rating must be between {min} and {max}.",
+        [MessageCodes.AuctionBidTooLow] = "The bid must be at least {minimum} — that is the current price plus the increment.",
+        [MessageCodes.AuctionCeilingTooLow] = "The new ceiling must be higher than the previous one.",
+        [MessageCodes.AuctionFinished] = "Bidding has already ended.",
+        [MessageCodes.AuctionTimeUp] = "Time for this auction has run out.",
+        [MessageCodes.AuctionStillRunning] = "Bidding is still under way — it is too early to close.",
+        [MessageCodes.AuctionOwnLot] = "You cannot bid on your own lot.",
+        [MessageCodes.WalletTopUpPositive] = "The top-up amount must be positive.",
+        [MessageCodes.WalletChargePositive] = "The amount charged must be positive.",
+        [MessageCodes.WalletTopUpMax] = "You can top up by no more than {limit} at a time.",
+        [MessageCodes.BillingBasicNoOrder] = "The basic plan needs no subscribing to — simply wait for the paid one to end.",
+        [MessageCodes.BillingPlanWaitForEnd] = "Your current plan has to end first — switching mid-period is not provided for.",
+        [MessageCodes.SavedSearchNameTooLong] = "That name is too long — {limit} characters at most.",
+        [MessageCodes.SavedSearchLimitReached] = "You cannot keep more than {limit} saved searches. Delete the ones you no longer need.",
+        [MessageCodes.DealershipNotAMember] = "You do not work at this dealership.",
+        [MessageCodes.DealershipCityUnknown] = "There is no such city in the reference data.",
+        [MessageCodes.DealershipStaffNoSuchUser] = "There is no user with that e-mail address.",
+        [MessageCodes.DealershipStaffAlready] = "This person already works at the dealership.",
+        [MessageCodes.DealershipStaffNotThere] = "This person does not work at the dealership.",
+        [MessageCodes.DealershipStaffLastOwner] = "This is the dealership's only owner. Appoint another one first.",
+        [MessageCodes.DealershipStaffOwnerOnly] = "Only the dealership's owner can manage its staff.",
+        [MessageCodes.AdminBanSelf] = "You cannot ban your own account.",
+        [MessageCodes.AdminRoleSelfDemote] = "You cannot take the administrator role away from yourself.",
+        [MessageCodes.AdminRoleUnknown] = "There is no role called “{role}”.",
+        [MessageCodes.ChatOwnListing] = "This is your own listing — there is no one to write to.",
+        [MessageCodes.TitleListingNotFound] = "Listing not found",
+        [MessageCodes.TitleQuestionNotFound] = "Question not found",
+        [MessageCodes.TitleReportNotFound] = "Report not found",
+        [MessageCodes.TitleReportNotAllowed] = "Reporting is not allowed",
+        [MessageCodes.TitleReviewNotAllowed] = "You cannot leave a review",
+        [MessageCodes.TitleSavedSearchNotFound] = "Saved search not found",
+        [MessageCodes.TitlePlanNotFound] = "Plan not found",
+        [MessageCodes.TitleSubscriptionNotAllowed] = "You cannot subscribe",
+        [MessageCodes.TitleInsufficientFunds] = "Not enough funds",
+        [MessageCodes.TitleNoAccess] = "No access",
+        [MessageCodes.TitleDealershipNotFound] = "Dealership not found",
+        [MessageCodes.TitleUserNotFound] = "User not found",
+        [MessageCodes.TitleAdminActionForbidden] = "That action is forbidden",
+        [MessageCodes.TitleConversationNotFound] = "Conversation not found",
+        [MessageCodes.TitleChatNotAllowed] = "Messaging is not possible",
+        [MessageCodes.TitleInvalidData] = "Invalid data",
+        [MessageCodes.TitleAuctionNotFound] = "Auction not found",
+        [MessageCodes.TitleBiddingNotAllowed] = "You cannot bid",
+        [MessageCodes.TitleInvalidLocation] = "Invalid location",
+        [MessageCodes.TitleRuleViolated] = "That action cannot be carried out right now",
+        [MessageCodes.SavedSearchNameEmpty] = "The search name cannot be empty.",
+        [MessageCodes.DetailListingNotFound] = "Listing {id} was not found.",
+        [MessageCodes.DetailQuestionNotFound] = "Question {id} was not found.",
+        [MessageCodes.DetailReportNotFound] = "Report {id} was not found.",
+        [MessageCodes.DetailAuctionNotFound] = "No auction was found for listing {id}.",
+        [MessageCodes.DetailDealershipNotFound] = "Dealership {id} was not found.",
+        [MessageCodes.DetailUserNotFound] = "User {id} was not found.",
+        [MessageCodes.DetailConversationNotFound] = "Conversation {id} was not found.",
+        [MessageCodes.DetailPlanNotFound] = "There is no plan called “{id}”.",
+        [MessageCodes.DetailSavedSearchNotFound] = "Saved search {id} was not found.",
+        [MessageCodes.DetailInsufficientFunds] = "Your balance is {available}, and {required} is needed.",
     };
 
     /// <summary>Коди, для яких є переклад. Потрібно тестам.</summary>
@@ -231,4 +409,36 @@ public static class MessageCatalog
 
         return table.TryGetValue(codeOrText, out var text) ? text : codeOrText;
     }
+
+    /// <summary>
+    /// Те саме з підстановкою значень: «до {limit} фото» перетворюється на
+    /// «до 20 фото». Невідоме ім'я лишається як є — краще побачити на екрані
+    /// «{limit}» і зрозуміти, де саме недогляд, ніж мовчазну порожнечу.
+    /// </summary>
+    public static string Translate(
+        string codeOrText,
+        string language,
+        IReadOnlyDictionary<string, object?> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+
+        var text = Translate(codeOrText, language);
+
+        if (values.Count == 0)
+        {
+            return text;
+        }
+
+        return PlaceholderPattern().Replace(text, match =>
+        {
+            var name = match.Groups[1].Value;
+
+            return values.TryGetValue(name, out var value)
+                ? Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty
+                : match.Value;
+        });
+    }
+
+    [GeneratedRegex(@"\{(\w+)\}")]
+    private static partial Regex PlaceholderPattern();
 }

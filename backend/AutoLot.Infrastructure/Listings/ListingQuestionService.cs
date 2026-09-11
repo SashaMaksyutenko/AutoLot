@@ -5,6 +5,7 @@ using AutoLot.Domain.Enums;
 using AutoLot.Domain.Listings;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Infrastructure.Listings;
 
@@ -61,7 +62,7 @@ internal sealed class ListingQuestionService(
         // саме тому перевірка йде через спільне правило, а не через SellerId.
         if (await IsOursAsync(listing.SellerId, listing.DealershipId, askerId, cancellationToken))
         {
-            throw new ListingAccessException("Питати самого себе не можна — відповідайте на чужі.");
+            throw new ListingAccessException(MessageCodes.QuestionSelf);
         }
 
         var question = new ListingQuestion
@@ -96,7 +97,7 @@ internal sealed class ListingQuestionService(
         // існування ні для кого не таємниця.
         if (!await access.CanManageAsync(question.Listing, sellerId, cancellationToken))
         {
-            throw new ListingAccessException("Відповідати на питання може лише продавець.");
+            throw new ListingAccessException(MessageCodes.QuestionAnswerSellerOnly);
         }
 
         question.Reply(text, clock.UtcNow);

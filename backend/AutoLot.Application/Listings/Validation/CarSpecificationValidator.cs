@@ -2,7 +2,7 @@ using AutoLot.Application.Common.Abstractions;
 using AutoLot.Application.Listings.Dtos;
 using AutoLot.Domain.Enums;
 using FluentValidation;
-using AutoLot.Application.Common.Localization;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Application.Listings.Validation;
 

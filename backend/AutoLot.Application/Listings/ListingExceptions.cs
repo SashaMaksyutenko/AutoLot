@@ -1,8 +1,9 @@
+using AutoLot.Domain.Common;
 namespace AutoLot.Application.Listings;
 
 /// <summary>Оголошення немає або воно недоступне тому, хто питає.</summary>
 public sealed class ListingNotFoundException(long listingId)
-    : Exception($"Оголошення {listingId} не знайдено.");
+    : NotFoundException(MessageCodes.DetailListingNotFound, listingId);
 
 /// <summary>
 /// У запиті вказані ідентифікатори, яким нічого не відповідає, або вони не

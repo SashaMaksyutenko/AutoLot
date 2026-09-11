@@ -8,6 +8,7 @@ using AutoLot.Domain.Listings;
 using AutoLot.Infrastructure.Listings;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Infrastructure.Chat;
 
@@ -107,7 +108,7 @@ internal sealed class ChatService(
         // власного салону.
         if (await access.CanManageAsync(listing, buyerId, cancellationToken))
         {
-            throw new ChatNotAllowedException("Це ваше оголошення — писати нема кому.");
+            throw new ChatNotAllowedException(MessageCodes.ChatOwnListing);
         }
 
         var existing = await dbContext.Conversations

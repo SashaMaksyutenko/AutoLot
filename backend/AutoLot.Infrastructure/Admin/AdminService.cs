@@ -7,6 +7,7 @@ using AutoLot.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Infrastructure.Admin;
 
@@ -95,7 +96,7 @@ internal sealed partial class AdminService(
         // Заблокувати себе означало б втратити доступ до адмінки назавжди.
         if (userId == adminId)
         {
-            throw new AdminActionException("Заблокувати власний акаунт не можна.");
+            throw new AdminActionException(MessageCodes.AdminBanSelf);
         }
 
         var user = await dbContext.Users
@@ -122,14 +123,14 @@ internal sealed partial class AdminService(
     {
         if (!RoleNames.All.Contains(role))
         {
-            throw new AdminActionException($"Ролі «{role}» не існує.");
+            throw new AdminActionException(MessageCodes.AdminRoleUnknown).With("role", role);
         }
 
         // Зняти з себе адміністратора — той самий спосіб замкнути двері
         // зсередини й лишити ключі всередині.
         if (userId == adminId && role == RoleNames.Admin && !granted)
         {
-            throw new AdminActionException("Зняти з себе роль адміністратора не можна.");
+            throw new AdminActionException(MessageCodes.AdminRoleSelfDemote);
         }
 
         var user = await userManager.FindByIdAsync(

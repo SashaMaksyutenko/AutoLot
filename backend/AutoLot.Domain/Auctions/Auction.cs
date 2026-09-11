@@ -2,6 +2,7 @@ using AutoLot.Domain.Common;
 using AutoLot.Domain.Enums;
 using AutoLot.Domain.Identity;
 using AutoLot.Domain.Listings;
+using System.Globalization;
 
 namespace AutoLot.Domain.Auctions;
 
@@ -110,8 +111,10 @@ public sealed class Auction : AuditableEntity
 
         if (maxAmount < minimum)
         {
-            throw new DomainRuleException(
-                $"Ставка має бути щонайменше {minimum:0.##} — це поточна ціна плюс крок.");
+            throw new DomainRuleException(MessageCodes.AuctionBidTooLow)
+                // Число форматуємо тут: у словнику лежить сам текст, і
+                // формат «0.##» до нього стосунку не має.
+                .With("minimum", minimum.ToString("0.##", CultureInfo.InvariantCulture));
         }
 
         var bids = HasBids ? Challenge(bidderId, maxAmount, now) : OpenBidding(bidderId, maxAmount, now);
@@ -197,7 +200,7 @@ public sealed class Auction : AuditableEntity
     {
         if (maxAmount <= LeaderMaxAmount)
         {
-            throw new DomainRuleException("Нова стеля має бути вищою за попередню.");
+            throw new DomainRuleException(MessageCodes.AuctionCeilingTooLow);
         }
 
         LeaderMaxAmount = maxAmount;
@@ -223,12 +226,12 @@ public sealed class Auction : AuditableEntity
     {
         if (Status != AuctionStatus.Active)
         {
-            throw new DomainRuleException("Торги вже завершені.");
+            throw new DomainRuleException(MessageCodes.AuctionFinished);
         }
 
         if (now >= EndsAt)
         {
-            throw new DomainRuleException("Час торгів вичерпано.");
+            throw new DomainRuleException(MessageCodes.AuctionTimeUp);
         }
     }
 
@@ -268,7 +271,7 @@ public sealed class Auction : AuditableEntity
 
         if (now < EndsAt)
         {
-            throw new DomainRuleException("Торги ще тривають — закривати зарано.");
+            throw new DomainRuleException(MessageCodes.AuctionStillRunning);
         }
 
         Status = AuctionStatus.Ended;

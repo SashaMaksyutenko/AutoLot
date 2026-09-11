@@ -57,8 +57,11 @@ public class ListingLimitTests : IDisposable
         var refused = await Assert.ThrowsAsync<DomainRuleException>(
             () => Service(limit: 1).SubmitForModerationAsync(draftId, SellerId));
 
-        // Повідомлення називає саме ліміт тарифу, а не сталу з коду.
-        Assert.Contains("1 активних", refused.Message, StringComparison.Ordinal);
+        // Виняток називає правило кодом, а сам ліміт везе окремо — саме
+        // той, що дав тариф, а не сталу з коду. Перевірка стала точнішою:
+        // раніше вона шукала підрядок у тексті й пройшла б і на «21 активних».
+        Assert.Equal(MessageCodes.ListingLimitReached, refused.Message);
+        Assert.Equal(1, refused.ValuesOf()["limit"]);
     }
 
     [Fact]

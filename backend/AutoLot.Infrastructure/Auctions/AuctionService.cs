@@ -8,6 +8,7 @@ using AutoLot.Infrastructure.Listings;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Infrastructure.Auctions;
 
@@ -101,7 +102,7 @@ internal sealed partial class AuctionService(
         // і вся публічність торгів утратила б сенс.
         if (await access.CanManageAsync(listing, bidderId, cancellationToken))
         {
-            throw new BiddingNotAllowedException("Ставити на власний лот не можна.");
+            throw new BiddingNotAllowedException(MessageCodes.AuctionOwnLot);
         }
 
         var endsAtBefore = auction.EndsAt;

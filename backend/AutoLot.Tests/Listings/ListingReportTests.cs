@@ -71,7 +71,7 @@ public class ListingReportTests
         var repeated = Assert.Throws<DomainRuleException>(
             () => report.Resolve(accepted: false, moderatorId: 8, Now.AddHours(1), note: null));
 
-        Assert.Contains("вже розглянуто", repeated.Message, StringComparison.Ordinal);
+        Assert.Equal(MessageCodes.ReportAlreadyResolved, repeated.Message);
         Assert.Equal(7, report.ReviewedById);
     }
 }

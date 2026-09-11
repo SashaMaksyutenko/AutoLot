@@ -1,5 +1,6 @@
 using AutoLot.Application.Admin.Dtos;
 using AutoLot.Application.Common;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Application.Admin;
 
@@ -45,7 +46,7 @@ public interface IAdminService
 
 /// <summary>Такого користувача немає.</summary>
 public sealed class UserNotFoundException(long userId)
-    : Exception($"Користувача {userId} не знайдено.");
+    : NotFoundException(MessageCodes.DetailUserNotFound, userId);
 
 /// <summary>Дію заборонено правилами адміністрування.</summary>
 public sealed class AdminActionException(string message) : Exception(message);

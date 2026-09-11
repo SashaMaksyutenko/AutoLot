@@ -1,13 +1,16 @@
-namespace AutoLot.Application.Common.Localization;
+namespace AutoLot.Domain.Common;
 
 /// <summary>
 /// Коди повідомлень про помилки.
 ///
-/// Валідатори називають ПРАВИЛО, яке порушено, а не готовий текст: перевести
-/// код у слова — робота крайнього шару, який єдиний знає мову запиту. Через
-/// це прикладний рівень лишається без жодного рядка, призначеного людині.
+/// Правило називає СЕБЕ, а не свій текст: перевести код у слова — робота
+/// крайнього шару, який єдиний знає мову запиту. Через це ні домен, ні
+/// прикладний рівень не тримають жодного рядка, призначеного людині.
 ///
-/// Кожна константа тут зобов'язана мати переклад обома мовами — це перевіряє
+/// Коди лежать саме тут, поруч із <see cref="LanguageCodes"/>, бо правила
+/// порушує й домен теж, а залежати від шарів вище він не може.
+///
+/// Кожна константа зобов'язана мати переклад обома мовами — це перевіряє
 /// окремий тест, тож забути половину не вийде.
 /// </summary>
 public static class MessageCodes
@@ -111,4 +114,92 @@ public static class MessageCodes
     public const string ChatMessageRequired = "chat.message.required";
     public const string ChatMessageTooLong = "chat.message.tooLong";
     public const string SavedSearchNameRequired = "savedSearch.name.required";
+    public const string ListingSubmitWrongStatus = "listing.submit.wrongStatus";
+    public const string ListingApproveWrongStatus = "listing.approve.wrongStatus";
+    public const string ListingRejectWrongStatus = "listing.reject.wrongStatus";
+    public const string ListingUnpublishWrongStatus = "listing.unpublish.wrongStatus";
+    public const string ListingSoldWrongStatus = "listing.sold.wrongStatus";
+    public const string ListingSoldSellerIsBuyer = "listing.sold.sellerIsBuyer";
+    public const string ListingArchiveAlready = "listing.archive.already";
+    public const string ListingArchiveDraft = "listing.archive.draft";
+    public const string ListingRestoreWrongStatus = "listing.restore.wrongStatus";
+    public const string ListingEditWrongStatus = "listing.edit.wrongStatus";
+    public const string ListingDeleteDraftOnly = "listing.delete.draftOnly";
+    public const string ListingAccessOtherSeller = "listing.access.otherSeller";
+    public const string ListingBuyerNeverWrote = "listing.buyer.neverWrote";
+    public const string ListingLimitReached = "listing.limit.reached";
+    public const string CarModelWrongMake = "car.model.wrongMake";
+    public const string CarGenerationWrongModel = "car.generation.wrongModel";
+    public const string CarFeaturesUnknownSome = "car.features.unknownSome";
+    public const string PlaceCityOrDistrictInvalid = "place.cityOrDistrict.invalid";
+    public const string PhotoNotAnImage = "photo.notAnImage";
+    public const string PhotoFormatUnsupported = "photo.formatUnsupported";
+    public const string PhotoResolutionTooBig = "photo.resolutionTooBig";
+    public const string PhotoCorrupt = "photo.corrupt";
+    public const string PhotoOrderMustListAll = "photo.order.mustListAll";
+    public const string PhotoLimitReached = "photo.limit.reached";
+    public const string PhotoTooLarge = "photo.tooLarge";
+    public const string QuestionSelf = "question.self";
+    public const string QuestionAnswerSellerOnly = "question.answer.sellerOnly";
+    public const string ReportOwnListing = "report.ownListing";
+    public const string ReportAlreadyResolved = "report.alreadyResolved";
+    public const string ReviewSelf = "review.self";
+    public const string ReviewPartiesOnly = "review.partiesOnly";
+    public const string ReviewAlready = "review.already";
+    public const string ReviewRatingRange = "review.rating.range";
+    public const string AuctionBidTooLow = "auction.bid.tooLow";
+    public const string AuctionCeilingTooLow = "auction.ceiling.tooLow";
+    public const string AuctionFinished = "auction.finished";
+    public const string AuctionTimeUp = "auction.timeUp";
+    public const string AuctionStillRunning = "auction.stillRunning";
+    public const string AuctionOwnLot = "auction.ownLot";
+    public const string WalletTopUpPositive = "wallet.topUp.positive";
+    public const string WalletChargePositive = "wallet.charge.positive";
+    public const string WalletTopUpMax = "wallet.topUp.max";
+    public const string BillingBasicNoOrder = "billing.basic.noOrder";
+    public const string BillingPlanWaitForEnd = "billing.plan.waitForEnd";
+    public const string SavedSearchNameTooLong = "savedSearch.name.tooLong";
+    public const string SavedSearchLimitReached = "savedSearch.limit.reached";
+    public const string DealershipNotAMember = "dealership.notAMember";
+    public const string DealershipCityUnknown = "dealership.city.unknown";
+    public const string DealershipStaffNoSuchUser = "dealership.staff.noSuchUser";
+    public const string DealershipStaffAlready = "dealership.staff.already";
+    public const string DealershipStaffNotThere = "dealership.staff.notThere";
+    public const string DealershipStaffLastOwner = "dealership.staff.lastOwner";
+    public const string DealershipStaffOwnerOnly = "dealership.staff.ownerOnly";
+    public const string AdminBanSelf = "admin.ban.self";
+    public const string AdminRoleSelfDemote = "admin.role.selfDemote";
+    public const string AdminRoleUnknown = "admin.role.unknown";
+    public const string ChatOwnListing = "chat.ownListing";
+    public const string TitleListingNotFound = "title.listingNotFound";
+    public const string TitleQuestionNotFound = "title.questionNotFound";
+    public const string TitleReportNotFound = "title.reportNotFound";
+    public const string TitleReportNotAllowed = "title.reportNotAllowed";
+    public const string TitleReviewNotAllowed = "title.reviewNotAllowed";
+    public const string TitleSavedSearchNotFound = "title.savedSearchNotFound";
+    public const string TitlePlanNotFound = "title.planNotFound";
+    public const string TitleSubscriptionNotAllowed = "title.subscriptionNotAllowed";
+    public const string TitleInsufficientFunds = "title.insufficientFunds";
+    public const string TitleNoAccess = "title.noAccess";
+    public const string TitleDealershipNotFound = "title.dealershipNotFound";
+    public const string TitleUserNotFound = "title.userNotFound";
+    public const string TitleAdminActionForbidden = "title.adminActionForbidden";
+    public const string TitleConversationNotFound = "title.conversationNotFound";
+    public const string TitleChatNotAllowed = "title.chatNotAllowed";
+    public const string TitleInvalidData = "title.invalidData";
+    public const string TitleAuctionNotFound = "title.auctionNotFound";
+    public const string TitleBiddingNotAllowed = "title.biddingNotAllowed";
+    public const string TitleInvalidLocation = "title.invalidLocation";
+    public const string TitleRuleViolated = "title.ruleViolated";
+    public const string SavedSearchNameEmpty = "savedSearch.name.empty";
+    public const string DetailListingNotFound = "detail.listingNotFound";
+    public const string DetailQuestionNotFound = "detail.questionNotFound";
+    public const string DetailReportNotFound = "detail.reportNotFound";
+    public const string DetailAuctionNotFound = "detail.auctionNotFound";
+    public const string DetailDealershipNotFound = "detail.dealershipNotFound";
+    public const string DetailUserNotFound = "detail.userNotFound";
+    public const string DetailConversationNotFound = "detail.conversationNotFound";
+    public const string DetailPlanNotFound = "detail.planNotFound";
+    public const string DetailSavedSearchNotFound = "detail.savedSearchNotFound";
+    public const string DetailInsufficientFunds = "detail.insufficientFunds";
 }

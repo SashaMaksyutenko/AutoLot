@@ -147,7 +147,7 @@ public sealed class Listing : AuditableEntity
         if (!IsEditable)
         {
             throw new DomainRuleException(
-                "На модерацію можна подати лише чернетку або відхилене оголошення.");
+                MessageCodes.ListingSubmitWrongStatus);
         }
 
         Status = ListingStatus.PendingModeration;
@@ -161,7 +161,7 @@ public sealed class Listing : AuditableEntity
     {
         if (Status is not ListingStatus.PendingModeration)
         {
-            throw new DomainRuleException("Схвалити можна лише оголошення, подане на модерацію.");
+            throw new DomainRuleException(MessageCodes.ListingApproveWrongStatus);
         }
 
         Status = ListingStatus.Active;
@@ -177,7 +177,7 @@ public sealed class Listing : AuditableEntity
     {
         if (Status is not ListingStatus.PendingModeration)
         {
-            throw new DomainRuleException("Відхилити можна лише оголошення, подане на модерацію.");
+            throw new DomainRuleException(MessageCodes.ListingRejectWrongStatus);
         }
 
         Status = ListingStatus.Rejected;
@@ -202,7 +202,7 @@ public sealed class Listing : AuditableEntity
         if (!IsPublic)
         {
             throw new DomainRuleException(
-                "Зняти з публікації можна лише оголошення, яке в ній є.");
+                MessageCodes.ListingUnpublishWrongStatus);
         }
 
         Status = ListingStatus.Rejected;
@@ -219,7 +219,7 @@ public sealed class Listing : AuditableEntity
     {
         if (Status is not ListingStatus.Active)
         {
-            throw new DomainRuleException("Проданим можна позначити лише активне оголошення.");
+            throw new DomainRuleException(MessageCodes.ListingSoldWrongStatus);
         }
 
         // Продати самому собі не можна. Перевірка тут, бо це правило самого
@@ -227,7 +227,7 @@ public sealed class Listing : AuditableEntity
         // питання до бази, тож ними опікується сервіс.
         if (buyerId == SellerId)
         {
-            throw new DomainRuleException("Продавець не може бути покупцем.");
+            throw new DomainRuleException(MessageCodes.ListingSoldSellerIsBuyer);
         }
 
         Status = ListingStatus.Sold;
@@ -240,12 +240,12 @@ public sealed class Listing : AuditableEntity
     {
         if (Status is ListingStatus.Archived)
         {
-            throw new DomainRuleException("Оголошення вже в архіві.");
+            throw new DomainRuleException(MessageCodes.ListingArchiveAlready);
         }
 
         if (Status is ListingStatus.Draft)
         {
-            throw new DomainRuleException("Чернетку не архівують — її видаляють.");
+            throw new DomainRuleException(MessageCodes.ListingArchiveDraft);
         }
 
         Status = ListingStatus.Archived;
@@ -256,7 +256,7 @@ public sealed class Listing : AuditableEntity
     {
         if (Status is not ListingStatus.Archived)
         {
-            throw new DomainRuleException("Відновити можна лише архівне оголошення.");
+            throw new DomainRuleException(MessageCodes.ListingRestoreWrongStatus);
         }
 
         Status = ListingStatus.Draft;

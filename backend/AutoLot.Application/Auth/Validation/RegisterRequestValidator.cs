@@ -1,6 +1,6 @@
 using FluentValidation;
 using AutoLot.Application.Auth.Dtos;
-using AutoLot.Application.Common.Localization;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Application.Auth.Validation;
 

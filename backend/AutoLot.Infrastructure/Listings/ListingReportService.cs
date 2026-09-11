@@ -7,6 +7,7 @@ using AutoLot.Domain.Listings;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Infrastructure.Listings;
 
@@ -60,7 +61,7 @@ internal sealed partial class ListingReportService(
         // оголошенням, тож живе в одному місці.
         if (await access.CanManageAsync(listing, reporterId, cancellationToken))
         {
-            throw new ReportNotAllowedException("Це ваше оголошення.");
+            throw new ReportNotAllowedException(MessageCodes.ReportOwnListing);
         }
 
         var existing = await dbContext.ListingReports

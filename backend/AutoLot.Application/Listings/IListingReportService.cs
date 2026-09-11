@@ -1,5 +1,6 @@
 using AutoLot.Application.Cars.Dtos;
 using AutoLot.Application.Listings.Dtos;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Application.Listings;
 
@@ -42,7 +43,7 @@ public interface IListingReportService
 
 /// <summary>Такої скарги немає.</summary>
 public sealed class ReportNotFoundException(long reportId)
-    : Exception($"Скаргу {reportId} не знайдено.");
+    : NotFoundException(MessageCodes.DetailReportNotFound, reportId);
 
 /// <summary>Скаржитися в цьому випадку не можна — наприклад, на власний лот.</summary>
 public sealed class ReportNotAllowedException(string message) : Exception(message);

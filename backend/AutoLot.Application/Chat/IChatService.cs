@@ -1,4 +1,5 @@
 using AutoLot.Application.Chat.Dtos;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Application.Chat;
 
@@ -49,7 +50,7 @@ public interface IChatService
 
 /// <summary>Розмови немає або питальник до неї не належить.</summary>
 public sealed class ConversationNotFoundException(long conversationId)
-    : Exception($"Розмову {conversationId} не знайдено.");
+    : NotFoundException(MessageCodes.DetailConversationNotFound, conversationId);
 
 /// <summary>Листування в цьому випадку неможливе — наприклад, самому із собою.</summary>
 public sealed class ChatNotAllowedException(string message) : Exception(message);

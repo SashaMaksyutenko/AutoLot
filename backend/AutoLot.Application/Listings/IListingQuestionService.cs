@@ -1,4 +1,5 @@
 using AutoLot.Application.Listings.Dtos;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Application.Listings;
 
@@ -34,4 +35,4 @@ public interface IListingQuestionService
 
 /// <summary>Питання немає або воно під недоступним оголошенням.</summary>
 public sealed class QuestionNotFoundException(long questionId)
-    : Exception($"Питання {questionId} не знайдено.");
+    : NotFoundException(MessageCodes.DetailQuestionNotFound, questionId);

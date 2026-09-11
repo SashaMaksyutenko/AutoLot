@@ -8,6 +8,7 @@ using AutoLot.Domain.Listings;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Infrastructure.Listings;
 
@@ -39,7 +40,7 @@ internal sealed partial class ListingService(
         if (request.DealershipId is { } dealershipId
             && !await access.IsMemberAsync(dealershipId, sellerId, cancellationToken))
         {
-            throw new ListingAccessException("Ви не працюєте в цьому салоні.");
+            throw new ListingAccessException(MessageCodes.DealershipNotAMember);
         }
 
         var listing = new Listing
@@ -85,7 +86,7 @@ internal sealed partial class ListingService(
         if (!listing.IsEditable)
         {
             throw new Domain.Common.DomainRuleException(
-                "Редагувати можна лише чернетку або відхилене оголошення.");
+                MessageCodes.ListingEditWrongStatus);
         }
 
         await EnsureLocationExistsAsync(request.CityId, request.CityDistrictId, cancellationToken);
@@ -396,7 +397,7 @@ internal sealed partial class ListingService(
             if (!candidates.Any(candidate => candidate.Id == wanted))
             {
                 throw new ListingDataException(
-                    "Ця людина не листувалася про це авто, тож покупцем бути не може.");
+                    MessageCodes.ListingBuyerNeverWrote);
             }
         }
 
@@ -476,7 +477,7 @@ internal sealed partial class ListingService(
         if (listing.Status is not ListingStatus.Draft)
         {
             throw new Domain.Common.DomainRuleException(
-                "Видалити можна лише чернетку; опубліковане оголошення архівують.");
+                MessageCodes.ListingDeleteDraftOnly);
         }
 
         dbContext.Listings.Remove(listing);
@@ -506,7 +507,7 @@ internal sealed partial class ListingService(
     {
         if (!await access.CanManageAsync(listing, actorId, cancellationToken))
         {
-            throw new ListingAccessException("Це оголошення належить іншому продавцеві.");
+            throw new ListingAccessException(MessageCodes.ListingAccessOtherSeller);
         }
     }
 
@@ -538,9 +539,8 @@ internal sealed partial class ListingService(
 
         if (active >= maximum)
         {
-            throw new Domain.Common.DomainRuleException(
-                $"Ваш тариф дозволяє {maximum} активних оголошень. " +
-                "Архівуйте старі або перейдіть на вищий тариф.");
+            throw new Domain.Common.DomainRuleException(MessageCodes.ListingLimitReached)
+                .With("limit", maximum);
         }
     }
 
@@ -552,7 +552,7 @@ internal sealed partial class ListingService(
         if (!await geoCatalog.LocationExistsAsync(cityId, cityDistrictId, cancellationToken))
         {
             throw new ListingDataException(
-                "Такого міста немає або вказаний район належить іншому місту.");
+                MessageCodes.PlaceCityOrDistrictInvalid);
         }
     }
 
@@ -571,7 +571,7 @@ internal sealed partial class ListingService(
 
         if (!modelBelongsToMake)
         {
-            throw new ListingDataException("Обрана модель не належить цій марці.");
+            throw new ListingDataException(MessageCodes.CarModelWrongMake);
         }
 
         if (car.GenerationId is { } generationId)
@@ -583,12 +583,19 @@ internal sealed partial class ListingService(
 
             if (!generationBelongsToModel)
             {
-                throw new ListingDataException("Обране покоління не належить цій моделі.");
+                throw new ListingDataException(MessageCodes.CarGenerationWrongModel);
             }
         }
 
-        await EnsureCountryExistsAsync(car.ManufacturerCountryId, "країна-виробник", cancellationToken);
-        await EnsureCountryExistsAsync(car.ImportedFromCountryId, "країна пригону", cancellationToken);
+        await EnsureCountryExistsAsync(
+            car.ManufacturerCountryId,
+            MessageCodes.CarManufacturerCountryInvalid,
+            cancellationToken);
+
+        await EnsureCountryExistsAsync(
+            car.ImportedFromCountryId,
+            MessageCodes.CarImportedFromInvalid,
+            cancellationToken);
 
         if (car.FeatureIds.Count > 0)
         {
@@ -597,14 +604,14 @@ internal sealed partial class ListingService(
 
             if (known != car.FeatureIds.Count)
             {
-                throw new ListingDataException("Серед обраних опцій є невідомі.");
+                throw new ListingDataException(MessageCodes.CarFeaturesUnknownSome);
             }
         }
     }
 
     private async Task EnsureCountryExistsAsync(
         long? countryId,
-        string field,
+        string messageCode,
         CancellationToken cancellationToken)
     {
         if (countryId is not { } id)
@@ -614,7 +621,7 @@ internal sealed partial class ListingService(
 
         if (!await dbContext.Countries.AnyAsync(country => country.Id == id, cancellationToken))
         {
-            throw new ListingDataException($"Невідома {field}.");
+            throw new ListingDataException(messageCode);
         }
     }
 

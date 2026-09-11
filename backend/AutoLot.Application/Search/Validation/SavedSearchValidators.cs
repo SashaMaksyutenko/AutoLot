@@ -1,7 +1,7 @@
 using AutoLot.Application.Search.Dtos;
 using AutoLot.Domain.Search;
 using FluentValidation;
-using AutoLot.Application.Common.Localization;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Application.Search.Validation;
 

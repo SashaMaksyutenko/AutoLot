@@ -71,14 +71,16 @@ public sealed class Review : Entity
     {
         if (rating is < MinRating or > MaxRating)
         {
-            throw new DomainRuleException($"Оцінка має бути від {MinRating} до {MaxRating}.");
+            throw new DomainRuleException(MessageCodes.ReviewRatingRange)
+                .With("min", MinRating)
+                .With("max", MaxRating);
         }
 
         // Сам собі відгук не пишуть. Дійти сюди можна лише помилкою в коді,
         // але правило зберігається поруч із рештою — там, де його шукатимуть.
         if (authorId == subjectId)
         {
-            throw new DomainRuleException("Відгук самому собі не має сенсу.");
+            throw new DomainRuleException(MessageCodes.ReviewSelf);
         }
 
         var trimmed = text?.Trim();

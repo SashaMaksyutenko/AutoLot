@@ -97,7 +97,7 @@ internal sealed partial class DealershipService(
 
         if (!cityExists)
         {
-            throw new DomainRuleException("Такого міста немає в довіднику.");
+            throw new DomainRuleException(MessageCodes.DealershipCityUnknown);
         }
 
         var dealership = new Dealership
@@ -188,7 +188,7 @@ internal sealed partial class DealershipService(
 
         var user = await dbContext.Users
             .FirstOrDefaultAsync(item => item.NormalizedEmail == normalized, cancellationToken)
-            ?? throw new DomainRuleException("Користувача з такою поштою немає.");
+            ?? throw new DomainRuleException(MessageCodes.DealershipStaffNoSuchUser);
 
         var alreadyThere = await dbContext.DealershipMembers
             .AsNoTracking()
@@ -198,7 +198,7 @@ internal sealed partial class DealershipService(
 
         if (alreadyThere)
         {
-            throw new DomainRuleException("Ця людина вже працює в салоні.");
+            throw new DomainRuleException(MessageCodes.DealershipStaffAlready);
         }
 
         dbContext.DealershipMembers.Add(new DealershipMember
@@ -228,7 +228,7 @@ internal sealed partial class DealershipService(
             .FirstOrDefaultAsync(
                 item => item.DealershipId == dealershipId && item.UserId == userId,
                 cancellationToken)
-            ?? throw new DomainRuleException("Ця людина не працює в салоні.");
+            ?? throw new DomainRuleException(MessageCodes.DealershipStaffNotThere);
 
         // Останнього власника прибирати не можна — салон лишився б без нікого,
         // хто може керувати персоналом.
@@ -243,7 +243,7 @@ internal sealed partial class DealershipService(
             if (owners <= 1)
             {
                 throw new DomainRuleException(
-                    "Це єдиний власник салону. Спершу призначте іншого.");
+                    MessageCodes.DealershipStaffLastOwner);
             }
         }
 
@@ -293,7 +293,7 @@ internal sealed partial class DealershipService(
 
         if (!isMember)
         {
-            throw new DealershipAccessException("Ви не працюєте в цьому салоні.");
+            throw new DealershipAccessException(MessageCodes.DealershipNotAMember);
         }
     }
 
@@ -310,7 +310,7 @@ internal sealed partial class DealershipService(
 
         if (role != DealershipRole.Owner)
         {
-            throw new DealershipAccessException("Керувати персоналом може лише власник салону.");
+            throw new DealershipAccessException(MessageCodes.DealershipStaffOwnerOnly);
         }
     }
 

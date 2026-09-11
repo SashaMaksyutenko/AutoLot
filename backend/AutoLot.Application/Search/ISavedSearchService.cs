@@ -1,5 +1,6 @@
 using AutoLot.Application.Catalog;
 using AutoLot.Application.Search.Dtos;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Application.Search;
 
@@ -45,4 +46,4 @@ public interface ISavedSearchService
 
 /// <summary>Такого збереженого пошуку немає — або він чужий.</summary>
 public sealed class SavedSearchNotFoundException(long searchId)
-    : Exception($"Збережений пошук {searchId} не знайдено.");
+    : NotFoundException(MessageCodes.DetailSavedSearchNotFound, searchId);

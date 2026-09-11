@@ -1,5 +1,6 @@
 using AutoLot.Application.Listings;
 using SkiaSharp;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Infrastructure.Listings;
 
@@ -60,20 +61,20 @@ internal static class ImageProcessor
     private static SKBitmap Decode(Stream content)
     {
         using var codec = SKCodec.Create(content)
-            ?? throw new ListingDataException("Файл не є зображенням.");
+            ?? throw new ListingDataException(MessageCodes.PhotoNotAnImage);
 
         if (!AllowedFormats.Contains(codec.EncodedFormat))
         {
-            throw new ListingDataException("Підтримуються лише JPEG, PNG і WebP.");
+            throw new ListingDataException(MessageCodes.PhotoFormatUnsupported);
         }
 
         if ((long)codec.Info.Width * codec.Info.Height > MaxPixels)
         {
-            throw new ListingDataException("Зображення завелике за роздільною здатністю.");
+            throw new ListingDataException(MessageCodes.PhotoResolutionTooBig);
         }
 
         var bitmap = SKBitmap.Decode(codec)
-            ?? throw new ListingDataException("Файл пошкоджений або не є зображенням.");
+            ?? throw new ListingDataException(MessageCodes.PhotoCorrupt);
 
         // Знімки з телефона часто «лежать на боці»: правильний поворот
         // записаний лише в EXIF, і після перекодування він зникне. Тому

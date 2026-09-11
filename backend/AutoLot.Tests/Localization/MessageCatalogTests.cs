@@ -77,6 +77,60 @@ public class MessageCatalogTests
     }
 
     [Fact]
+    public void Values_are_substituted_into_the_text()
+    {
+        var text = MessageCatalog.Translate(
+            MessageCodes.PhotoLimitReached,
+            LanguageCodes.Ukrainian,
+            new Dictionary<string, object?> { ["limit"] = 20 });
+
+        Assert.Contains("20", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("{limit}", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_missing_value_leaves_the_placeholder_visible()
+    {
+        var text = MessageCatalog.Translate(
+            MessageCodes.PhotoLimitReached,
+            LanguageCodes.Ukrainian,
+            new Dictionary<string, object?>());
+
+        // Порожнє місце в реченні виглядало б як недогляд верстки, а «{limit}»
+        // одразу каже, де саме недогляд, і в кого його шукати.
+        Assert.Contains("{limit}", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_number_is_written_the_same_way_in_both_languages()
+    {
+        var values = new Dictionary<string, object?> { ["limit"] = 1234.5m };
+
+        // Кома проти крапки залежить від культури потоку. Якби підстановка
+        // йшла за нею, те саме число в логах і на екрані виглядало б по-різному
+        // залежно від того, хто запустив застосунок.
+        Assert.Contains(
+            "1234.5",
+            MessageCatalog.Translate(MessageCodes.PhotoLimitReached, LanguageCodes.Ukrainian, values),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_exception_carries_its_values()
+    {
+        var thrown = new DomainRuleException(MessageCodes.PhotoLimitReached).With("limit", 20);
+
+        Assert.Equal(MessageCodes.PhotoLimitReached, thrown.Message);
+        Assert.Equal(20, thrown.ValuesOf()["limit"]);
+    }
+
+    [Fact]
+    public void An_exception_without_values_gives_an_empty_set()
+    {
+        Assert.Empty(new DomainRuleException(MessageCodes.AuctionFinished).ValuesOf());
+    }
+
+    [Fact]
     public void An_unsupported_language_falls_back_to_ukrainian()
     {
         Assert.Equal(

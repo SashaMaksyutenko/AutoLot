@@ -1,4 +1,5 @@
 using AutoLot.Application.Billing.Dtos;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Application.Billing;
 
@@ -46,7 +47,7 @@ public interface IBillingService
 
 /// <summary>Такого тарифного плану немає.</summary>
 public sealed class PlanNotFoundException(string code)
-    : Exception($"Тарифного плану «{code}» не існує.");
+    : NotFoundException(MessageCodes.DetailPlanNotFound, code);
 
 /// <summary>Оформити цей план зараз не можна.</summary>
 public sealed class SubscriptionNotAllowedException(string message) : Exception(message);

@@ -1,4 +1,5 @@
 using AutoLot.Application.Auctions.Dtos;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Application.Auctions;
 
@@ -33,7 +34,7 @@ public interface IAuctionService
 
 /// <summary>У цього оголошення немає торгів або воно недоступне.</summary>
 public sealed class AuctionNotFoundException(long listingId)
-    : Exception($"Торгів для оголошення {listingId} не знайдено.");
+    : NotFoundException(MessageCodes.DetailAuctionNotFound, listingId);
 
 /// <summary>Ставити не можна — наприклад, це власний лот того, хто ставить.</summary>
 public sealed class BiddingNotAllowedException(string message) : Exception(message);

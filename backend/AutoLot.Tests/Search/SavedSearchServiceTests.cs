@@ -202,10 +202,8 @@ public class SavedSearchServiceTests : IDisposable
         var refused = await Assert.ThrowsAsync<DomainRuleException>(
             () => Service().SaveAsync(OwnerId, "Ще один", new CatalogQuery()));
 
-        Assert.Contains(
-            SavedSearch.PerUserLimit.ToString(CultureInfo.InvariantCulture),
-            refused.Message,
-            StringComparison.Ordinal);
+        Assert.Equal(MessageCodes.SavedSearchLimitReached, refused.Message);
+        Assert.Equal(SavedSearch.PerUserLimit, refused.ValuesOf()["limit"]);
     }
 
     [Fact]

@@ -7,6 +7,7 @@ using AutoLot.Domain.Enums;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace AutoLot.Infrastructure.Billing;
 
@@ -45,7 +46,8 @@ internal sealed partial class BillingService(
     {
         if (amount > MaxTopUp)
         {
-            throw new DomainRuleException($"За раз можна поповнити не більше {MaxTopUp:0}.");
+            throw new DomainRuleException(MessageCodes.WalletTopUpMax)
+                .With("limit", MaxTopUp.ToString("0", CultureInfo.InvariantCulture));
         }
 
         var wallet = await LoadWalletAsync(userId, cancellationToken);
@@ -101,7 +103,7 @@ internal sealed partial class BillingService(
         if (plan.IsDefault)
         {
             throw new SubscriptionNotAllowedException(
-                "Базовий тариф діє без оформлення — просто дочекайтеся кінця платного.");
+                MessageCodes.BillingBasicNoOrder);
         }
 
         var now = clock.UtcNow;
@@ -113,7 +115,7 @@ internal sealed partial class BillingService(
         if (active is not null && active.PlanId != plan.Id)
         {
             throw new SubscriptionNotAllowedException(
-                "Спершу має завершитися чинний тариф — переходи посеред періоду не передбачені.");
+                MessageCodes.BillingPlanWaitForEnd);
         }
 
         var wallet = await LoadWalletAsync(userId, cancellationToken);

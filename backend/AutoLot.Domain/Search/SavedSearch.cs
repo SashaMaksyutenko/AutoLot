@@ -109,12 +109,13 @@ public sealed class SavedSearch : Entity
 
         if (string.IsNullOrEmpty(trimmed))
         {
-            throw new DomainRuleException("Назва пошуку не може бути порожньою.");
+            throw new DomainRuleException(MessageCodes.SavedSearchNameEmpty);
         }
 
         if (trimmed.Length > MaxNameLength)
         {
-            throw new DomainRuleException($"Назва задовга — до {MaxNameLength} символів.");
+            throw new DomainRuleException(MessageCodes.SavedSearchNameTooLong)
+                .With("limit", MaxNameLength);
         }
 
         Name = trimmed;

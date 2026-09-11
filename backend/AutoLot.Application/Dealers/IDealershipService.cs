@@ -1,5 +1,6 @@
 using AutoLot.Application.Dealers.Dtos;
 using AutoLot.Domain.Dealers;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Application.Dealers;
 
@@ -70,7 +71,7 @@ public interface IDealershipService
 
 /// <summary>Салону немає.</summary>
 public sealed class DealershipNotFoundException(string what)
-    : Exception($"Салон {what} не знайдено.");
+    : NotFoundException(MessageCodes.DetailDealershipNotFound, what);
 
 /// <summary>Дію намагається виконати не той, кому вона належить.</summary>
 public sealed class DealershipAccessException(string message) : Exception(message);

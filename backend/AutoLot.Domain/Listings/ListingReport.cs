@@ -64,7 +64,7 @@ public sealed class ListingReport : Entity
     {
         if (!IsPending)
         {
-            throw new DomainRuleException("Скаргу вже розглянуто.");
+            throw new DomainRuleException(MessageCodes.ReportAlreadyResolved);
         }
 
         Status = accepted ? ListingReportStatus.Accepted : ListingReportStatus.Dismissed;

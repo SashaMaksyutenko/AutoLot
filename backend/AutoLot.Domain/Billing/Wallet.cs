@@ -1,5 +1,6 @@
 using AutoLot.Domain.Common;
 using AutoLot.Domain.Identity;
+using System.Globalization;
 
 namespace AutoLot.Domain.Billing;
 
@@ -36,7 +37,7 @@ public sealed class Wallet : Entity
     {
         if (amount <= 0)
         {
-            throw new DomainRuleException("Сума поповнення має бути додатною.");
+            throw new DomainRuleException(MessageCodes.WalletTopUpPositive);
         }
 
         Balance += amount;
@@ -52,7 +53,7 @@ public sealed class Wallet : Entity
     {
         if (amount <= 0)
         {
-            throw new DomainRuleException("Сума списання має бути додатною.");
+            throw new DomainRuleException(MessageCodes.WalletChargePositive);
         }
 
         if (Balance < amount)
@@ -89,10 +90,21 @@ public sealed class Wallet : Entity
 }
 
 /// <summary>Коштів на рахунку не вистачає.</summary>
-public sealed class InsufficientFundsException(decimal required, decimal available)
-    : Exception($"На балансі {available:0.00}, а потрібно {required:0.00}.")
+public sealed class InsufficientFundsException : Exception
 {
-    public decimal Required { get; } = required;
+    public InsufficientFundsException(decimal required, decimal available)
+        : base(MessageCodes.DetailInsufficientFunds)
+    {
+        Required = required;
+        Available = available;
 
-    public decimal Available { get; } = available;
+        // Суми форматуємо тут: у словнику лежить сам текст, а «0.00» — це
+        // спосіб показу грошей, який до перекладу стосунку не має.
+        this.With("required", required.ToString("0.00", CultureInfo.InvariantCulture));
+        this.With("available", available.ToString("0.00", CultureInfo.InvariantCulture));
+    }
+
+    public decimal Required { get; }
+
+    public decimal Available { get; }
 }

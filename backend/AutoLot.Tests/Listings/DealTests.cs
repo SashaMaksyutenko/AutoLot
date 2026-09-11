@@ -12,6 +12,7 @@ using AutoLot.Infrastructure.Persistence;
 using AutoLot.Tests.TestDoubles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Tests.Listings;
 
@@ -121,7 +122,7 @@ public class DealTests : IDisposable
         var refused = await Assert.ThrowsAsync<ListingDataException>(
             () => Service().MarkSoldAsync(listingId, SellerId, SilentId));
 
-        Assert.Contains("не листувалася", refused.Message, StringComparison.Ordinal);
+        Assert.Equal(MessageCodes.ListingBuyerNeverWrote, refused.Message);
 
         var listing = await context.Listings.AsNoTracking().SingleAsync(item => item.Id == listingId);
         Assert.Equal(ListingStatus.Active, listing.Status);

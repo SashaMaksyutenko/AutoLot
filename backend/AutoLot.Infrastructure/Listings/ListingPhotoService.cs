@@ -5,6 +5,7 @@ using AutoLot.Domain.Listings;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using AutoLot.Domain.Common;
 
 namespace AutoLot.Infrastructure.Listings;
 
@@ -38,14 +39,14 @@ internal sealed class ListingPhotoService(
 
         if (car.Photos.Count >= settings.MaxPhotosPerListing)
         {
-            throw new Domain.Common.DomainRuleException(
-                $"До оголошення можна додати не більше {settings.MaxPhotosPerListing} фото.");
+            throw new Domain.Common.DomainRuleException(MessageCodes.PhotoLimitReached)
+                .With("limit", settings.MaxPhotosPerListing);
         }
 
         if (upload.Length > settings.MaxFileSizeBytes)
         {
-            throw new ListingDataException(
-                $"Файл завеликий: максимум {settings.MaxFileSizeBytes / (1024 * 1024)} МБ.");
+            throw new ListingDataException(MessageCodes.PhotoTooLarge)
+                .With("limit", settings.MaxFileSizeBytes / (1024 * 1024));
         }
 
         var (full, thumbnail) = await ImageProcessor.ProcessAsync(upload.Content, cancellationToken);
@@ -123,7 +124,7 @@ internal sealed class ListingPhotoService(
         // фото з однаковим порядком, і видача малювала б їх як пощастить.
         if (photoIdsInOrder.Count != known.Count || !photoIdsInOrder.All(known.Contains))
         {
-            throw new ListingDataException("Перелік має містити всі фото оголошення рівно по разу.");
+            throw new ListingDataException(MessageCodes.PhotoOrderMustListAll);
         }
 
         for (var index = 0; index < photoIdsInOrder.Count; index++)
@@ -171,7 +172,7 @@ internal sealed class ListingPhotoService(
 
         if (!await access.CanManageAsync(listing, actorId, cancellationToken))
         {
-            throw new ListingAccessException("Це оголошення належить іншому продавцеві.");
+            throw new ListingAccessException(MessageCodes.ListingAccessOtherSeller);
         }
 
         return listing.Car;

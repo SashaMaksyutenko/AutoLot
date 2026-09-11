@@ -66,9 +66,8 @@ internal sealed class SavedSearchService(
 
         if (count >= SavedSearch.PerUserLimit)
         {
-            throw new DomainRuleException(
-                $"Більше {SavedSearch.PerUserLimit} збережених пошуків тримати не можна. " +
-                "Видаліть непотрібні.");
+            throw new DomainRuleException(MessageCodes.SavedSearchLimitReached)
+                .With("limit", SavedSearch.PerUserLimit);
         }
 
         var now = clock.UtcNow;

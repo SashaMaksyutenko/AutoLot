@@ -48,7 +48,7 @@ public sealed class ListingQuestion : Entity
 
         if (string.IsNullOrEmpty(trimmed))
         {
-            throw new DomainRuleException("Відповідь не може бути порожньою.");
+            throw new DomainRuleException(MessageCodes.QuestionAnswerRequired);
         }
 
         Answer = trimmed;
