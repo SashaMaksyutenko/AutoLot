@@ -149,6 +149,22 @@ public class SavedSearchNotifierTests : IDisposable
     }
 
     [Fact]
+    public async Task A_linked_chat_gets_the_news_without_a_confirmed_mailbox()
+    {
+        var owner = await context.Users.SingleAsync(user => user.Id == OwnerId);
+        owner.EmailConfirmed = false;
+        await context.SaveChangesAsync();
+
+        await SaveSearch(notify: true);
+        NewListing(publishedAt: Now.AddMinutes(5));
+
+        // Канали незалежні: пошта без підтвердження мовчить, а месенджер
+        // працює — його прив'язали окремо й свідомо.
+        Assert.Equal(1, await Notifier(Now.AddHours(1), chats: 1).NotifyAsync());
+        Assert.Empty(mail.Messages);
+    }
+
+    [Fact]
     public async Task The_letter_lists_a_few_and_counts_the_rest()
     {
         await SaveSearch(notify: true);
@@ -228,7 +244,7 @@ public class SavedSearchNotifierTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private SavedSearchNotifier Notifier(DateTimeOffset now)
+    private SavedSearchNotifier Notifier(DateTimeOffset now, int chats = 0)
     {
         var options = Options.Create(new EmailOptions
         {
@@ -242,6 +258,7 @@ public class SavedSearchNotifierTests : IDisposable
             Catalog(),
             mail,
             new SearchEmails(options),
+            new StubBotNotifier { Chats = chats },
             NullLogger<SavedSearchNotifier>.Instance);
     }
 

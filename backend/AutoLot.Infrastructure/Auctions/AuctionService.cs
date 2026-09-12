@@ -9,6 +9,7 @@ using AutoLot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using AutoLot.Domain.Common;
+using AutoLot.Application.Bots;
 
 namespace AutoLot.Infrastructure.Auctions;
 
@@ -33,6 +34,7 @@ internal sealed partial class AuctionService(
     ListingAccess access,
     IEmailSender emailSender,
     AccountEmails emails,
+    IBotNotifier bots,
     ILogger<AuctionService> logger) : IAuctionService
 {
     /// <summary>Антиснайпінг: ставка в останню хвилину продовжує торги на хвилину (SPEC §4).</summary>
@@ -264,8 +266,18 @@ internal sealed partial class AuctionService(
 
             var price = $"{auction.CurrentPrice:0.##} {auction.Currency}";
 
-            await emailSender.SendAsync(
-                emails.Outbid(recipient, listing.Title, price, listing.Id),
+            if (recipient is not null)
+            {
+                await emailSender.SendAsync(
+                    emails.Outbid(recipient, listing.Title, price, listing.Id),
+                    cancellationToken);
+            }
+
+            await bots.NotifyOutbidAsync(
+                displacedUserId,
+                listing.Title,
+                price,
+                listing.Id,
                 cancellationToken);
         }
         catch (Exception error)

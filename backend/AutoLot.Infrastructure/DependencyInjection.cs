@@ -106,6 +106,7 @@ public static class DependencyInjection
         services.AddScoped<ISavedSearchService, SavedSearchService>();
         services.AddScoped<IBotLinkService, BotLinkService>();
         services.AddSingleton<IBotDirectory, BotDirectory>();
+        services.AddScoped<IBotNotifier, BotNotifier>();
         services.AddScoped<IPriceAnalyticsService, PriceAnalyticsService>();
         services.AddScoped<ISavedSearchNotifier, SavedSearchNotifier>();
         services.AddScoped<IDataSeeder, DemoDataSeeder>();

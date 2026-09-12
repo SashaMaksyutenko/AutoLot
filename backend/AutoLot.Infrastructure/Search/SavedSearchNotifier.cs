@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AutoLot.Application.Bots;
 using AutoLot.Application.Catalog;
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Application.Search;
@@ -23,6 +24,7 @@ internal sealed partial class SavedSearchNotifier(
     ICatalogService catalog,
     IEmailSender email,
     SearchEmails emails,
+    IBotNotifier bots,
     ILogger<SavedSearchNotifier> logger) : ISavedSearchNotifier
 {
     /// <summary>
@@ -81,14 +83,19 @@ internal sealed partial class SavedSearchNotifier(
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
+        /*
+          Канали незалежні: пошта потребує підтвердженої адреси, месенджер —
+          прив'язаного чату, і одне без одного цілком можливе. Тому спершу
+          шукаємо, а вже потім вирішуємо, куди це надсилати.
+
+          Раніше метод виходив на самому початку, коли бачив непідтверджену
+          скриньку, — і разом із листом мовчки зникало б сповіщення в бота.
+        */
         var address = search.User.Email;
 
         // Непідтверджена скринька — не адреса. Слати на неї означає
         // годувати спам-фільтри й псувати репутацію відправника.
-        if (string.IsNullOrEmpty(address) || !search.User.EmailConfirmed)
-        {
-            return false;
-        }
+        var canEmail = !string.IsNullOrEmpty(address) && search.User.EmailConfirmed;
 
         var query = Deserialize(search.QueryJson) with
         {
@@ -111,9 +118,27 @@ internal sealed partial class SavedSearchNotifier(
             return false;
         }
 
-        await email.SendAsync(
-            emails.NewMatches(address, search.Name, search.Id, found.Items, found.TotalCount),
+        if (canEmail)
+        {
+            await email.SendAsync(
+                emails.NewMatches(address!, search.Name, search.Id, found.Items, found.TotalCount),
+                cancellationToken);
+        }
+
+        var chats = await bots.NotifyNewMatchesAsync(
+            search.UserId,
+            search.Name,
+            found.Items,
+            found.TotalCount,
             cancellationToken);
+
+        // Ні пошти, ні жодного чату — значить, нікого й не сповістили.
+        // Повертати тут «так» означало б рахувати знахідки замість
+        // надісланого.
+        if (!canEmail && chats == 0)
+        {
+            return false;
+        }
 
         LogSent(logger, search.Id, found.TotalCount);
 
