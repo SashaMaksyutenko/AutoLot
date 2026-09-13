@@ -5,6 +5,7 @@ import { useAttributeLabels } from '../api/useAttributeLabels'
 import { useCompare } from '../compare/useCompare'
 import { formatMileage, formatPrice } from '../format'
 import { useTranslation } from '../i18n/useTranslation'
+import { usePageMeta } from '../seo/usePageMeta'
 import type { MessageKey } from '../i18n/messages'
 
 /**
@@ -16,6 +17,8 @@ import type { MessageKey } from '../i18n/messages'
  */
 export function ComparePage() {
   const { t, tPlural } = useTranslation()
+
+  usePageMeta(t('compare.title'))
 
   const compare = useCompare()
   const labelOf = useAttributeLabels()

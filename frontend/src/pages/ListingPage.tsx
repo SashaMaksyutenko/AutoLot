@@ -18,6 +18,8 @@ import { RatingLine } from '../components/listing/Stars'
 import { ReportButton } from '../components/listing/ReportButton'
 import { formatCount, formatMileage, formatPrice } from '../format'
 import { useTranslation } from '../i18n/useTranslation'
+import { ListingSchema } from '../seo/ListingSchema'
+import { usePageMeta } from '../seo/usePageMeta'
 
 export function ListingPage() {
   const { t } = useTranslation()
@@ -52,6 +54,10 @@ export function ListingPage() {
 function Loaded({ listing }: { listing: ListingDetails }) {
   const { t, tPlural } = useTranslation()
 
+  // Заголовок вкладки — назва авто: у історії браузера десяток однакових
+  // «AutoLot» не дає зрозуміти, що з них що.
+  usePageMeta(listing.title, listing.description)
+
   const auth = useAuth()
   const labelOf = useAttributeLabels()
   const car = listing.car
@@ -59,6 +65,8 @@ function Loaded({ listing }: { listing: ListingDetails }) {
 
   return (
     <div className="wrap grid gap-4 py-[26px]">
+      <ListingSchema listing={listing} />
+
       <nav className="text-[13px] text-ink-2">
         <Link to="/" className="hover:text-accent hover:underline">
           {t('listing.catalogCrumb')}

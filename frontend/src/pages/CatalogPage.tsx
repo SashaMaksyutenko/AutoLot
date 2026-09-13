@@ -13,6 +13,7 @@ import { FilterRail } from '../components/catalog/FilterRail'
 import { ListingCard } from '../components/catalog/ListingCard'
 import { formatCount } from '../format'
 import { useTranslation } from '../i18n/useTranslation'
+import { usePageMeta } from '../seo/usePageMeta'
 import type { MessageKey } from '../i18n/messages'
 
 /**
@@ -42,6 +43,8 @@ export function CatalogPage() {
   const [params, setParams] = useSearchParams()
 
   const filters = useMemo(() => fromSearchParams(params), [params])
+
+  usePageMeta(t('catalog.title'), t('seo.catalog'))
 
   const results = useQuery({
     queryKey: ['catalog', filters],

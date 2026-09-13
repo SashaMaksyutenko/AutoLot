@@ -39,6 +39,8 @@ using AutoLot.Application.Bots;
 using AutoLot.Infrastructure.Bots;
 using Microsoft.Extensions.Options;
 using System.Net.Http;
+using AutoLot.Application.Seo;
+using AutoLot.Infrastructure.Seo;
 
 namespace AutoLot.Infrastructure;
 
@@ -107,6 +109,7 @@ public static class DependencyInjection
         services.AddScoped<IBotLinkService, BotLinkService>();
         services.AddSingleton<IBotDirectory, BotDirectory>();
         services.AddScoped<IBotNotifier, BotNotifier>();
+        services.AddScoped<ISitemapSource, SitemapSource>();
         services.AddScoped<IPriceAnalyticsService, PriceAnalyticsService>();
         services.AddScoped<ISavedSearchNotifier, SavedSearchNotifier>();
         services.AddScoped<IDataSeeder, DemoDataSeeder>();

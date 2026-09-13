@@ -113,6 +113,10 @@ app.UseListingPhotos();
 
 app.MapControllers();
 
+// Зібраний фронтенд, якщо його шлях задано. Має стояти ПІСЛЯ контролерів:
+// інакше запасний маршрут перехопив би /api/... і віддав на них сторінку.
+app.UseFrontend();
+
 // Адреса живого каналу. Фронтенд підключається сюди й підписується на лот.
 app.MapHub<AuctionHub>("/hubs/auction");
 app.MapHub<ChatHub>("/hubs/chat");

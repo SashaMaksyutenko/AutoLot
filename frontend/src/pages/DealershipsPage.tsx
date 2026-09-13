@@ -5,6 +5,7 @@ import { fetchDealerships, type DealershipCard } from '../api/dealership'
 import { VerifiedMark } from '../components/catalog/ListingCard'
 import { formatCount } from '../format'
 import { useTranslation } from '../i18n/useTranslation'
+import { usePageMeta } from '../seo/usePageMeta'
 
 /**
  * Каталог автосалонів. Перевірені йдуть першими — саме заради цього бейдж
@@ -12,6 +13,8 @@ import { useTranslation } from '../i18n/useTranslation'
  */
 export function DealershipsPage() {
   const { t, tPlural } = useTranslation()
+
+  usePageMeta(t('dealers.title'), t('seo.dealers'))
 
   const [text, setText] = useState('')
   const [verifiedOnly, setVerifiedOnly] = useState(false)

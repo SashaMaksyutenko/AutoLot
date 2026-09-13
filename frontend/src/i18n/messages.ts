@@ -796,6 +796,9 @@ const uk = {
   'bot.expiry': 'Код діє десять хвилин і лише один раз.',
   'bot.unlinkHint': 'Щоб відв’язати — надішліть боту /stop.',
 
+  'seo.catalog': 'Пошук авто за тридцятьма фільтрами: марка, ціна, рік, пробіг, кузов, пальне, регіон. Торги з автоставкою та перевірені салони.',
+  'seo.dealers': 'Автосалони на AutoLot: вітрини, бейдж перевіреного, кількість авто в продажу.',
+
   'error.network': 'Не вдалося зв’язатися з сервером.',
   'error.requestFailed': 'Запит {path} завершився помилкою',
   'error.badResponse': 'Некоректна відповідь від {path}',
@@ -1586,6 +1589,9 @@ const en: Record<MessageKey, string> = {
   'bot.howTo': 'Open the bot and send: /link {code}',
   'bot.expiry': 'The code lasts ten minutes and works once.',
   'bot.unlinkHint': 'To unlink, send /stop to the bot.',
+
+  'seo.catalog': 'Search cars across thirty filters: make, price, year, mileage, body, fuel, region. Auctions with automatic bidding and verified dealerships.',
+  'seo.dealers': 'Dealerships on AutoLot: showcases, the verified badge, how many cars each has for sale.',
 
   'error.network': 'Could not reach the server.',
   'error.requestFailed': 'The request to {path} failed',
