@@ -24,6 +24,10 @@ const uk = {
   'nav.admin': 'Адмінка',
   'nav.auctions': 'Аукціони',
 
+  'page.loading': 'Завантажуємо сторінку…',
+  'page.loadFailed': 'Сторінку не вдалося завантажити. Найчастіше це минає після оновлення.',
+  'page.reload': 'Оновити сторінку',
+
   'account.signIn': 'Увійти',
   'account.signOut': 'Вийти',
   'account.sell': 'Продати авто',
@@ -830,6 +834,10 @@ const en: Record<MessageKey, string> = {
   'nav.dealers': 'Dealerships',
   'nav.admin': 'Admin',
   'nav.auctions': 'Auctions',
+
+  'page.loading': 'Loading the page…',
+  'page.loadFailed': 'The page could not be loaded. A refresh usually fixes it.',
+  'page.reload': 'Refresh the page',
 
   'account.signIn': 'Sign in',
   'account.signOut': 'Sign out',

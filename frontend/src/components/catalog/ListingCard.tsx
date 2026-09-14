@@ -3,6 +3,7 @@ import type { ListingSummary } from '../../api/catalog'
 import type { DealerBadge } from '../../api/dealership'
 import { useAttributeLabels } from '../../api/useAttributeLabels'
 import { formatMileage, formatPrice } from '../../format'
+import { prefetchListingPage } from '../../prefetch'
 import { useTranslation } from '../../i18n/useTranslation'
 import { FavoriteButton } from '../FavoriteButton'
 import { CompareButton } from './CompareButton'
@@ -17,8 +18,22 @@ export function ListingCard({ listing }: { listing: ListingSummary }) {
   const isAuction = listing.type === 'Auction'
   const labelOf = useAttributeLabels()
 
+  /*
+    onMouseEnter спрацьовує, коли курсор заходить на картку, onFocus — коли до
+    неї дійшли клавішею Tab. Обидва означають одне: людина, найпевніше, зараз
+    сюди натисне, тож файл сторінки авто варто почати вантажити вже.
+
+    Коментар стоїть тут, а не серед розмітки: усередині JSX коментар беруть
+    у фігурні дужки, і на самому початку return такий запис став би другим
+    елементом поряд із <Link> — а повернути можна лише один.
+  */
   return (
-    <Link to={`/listing/${listing.id}`} className="block">
+    <Link
+      to={`/listing/${listing.id}`}
+      onMouseEnter={prefetchListingPage}
+      onFocus={prefetchListingPage}
+      className="block"
+    >
       {/*
         transition + hover:-translate-y-px — картка ледь підводиться під
         курсором. Дрібниця, але вона показує, що на неї можна натиснути.

@@ -165,6 +165,37 @@
   --radius-control: 6px;
 
   --shadow-card: var(--shadow-soft);
+
+  /*
+    Смужка, що біжить під шапкою, поки вантажиться файл сторінки.
+
+    У Tailwind 4 анімацію оголошують прямо в темі: змінна --animate-page-load
+    сама створює клас animate-page-load, а @keyframes поруч описує рух. 300%
+    у кінці — бо смужка завширшки третину, і щоб вона зникла за правим краєм,
+    зсунутися треба на три свої ширини.
+  */
+  --animate-page-load: page-load 1.1s ease-in-out infinite;
+
+  @keyframes page-load {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(300%);
+    }
+  }
+}
+
+/*
+  Хтось вимикає анімації в налаштуваннях системи — через вестибулярні розлади
+  або просто щоб не відволікало. prefers-reduced-motion передає нам цей вибір,
+  і рух ми прибираємо: смужка лишається, але стоїть на місці на всю ширину.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .animate-page-load {
+    width: 100%;
+    animation: none;
+  }
 }
 
 body {

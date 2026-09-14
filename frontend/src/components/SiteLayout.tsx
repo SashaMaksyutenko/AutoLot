@@ -10,11 +10,12 @@ import {
   openSignInWithReason,
   useSignInPrompt,
 } from '../auth/signInPrompt'
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import type { MessageKey } from '../i18n/messages'
 import { useTranslation } from '../i18n/useTranslation'
 import { AuthDialog } from './AuthDialog'
 import { LanguageToggle } from './LanguageToggle'
+import { PageBoundary } from './PageBoundary'
 import { ThemeToggle } from './ThemeToggle'
 
 /** Спільна шапка для всіх сторінок; вміст підставляє маршрутизатор. */
@@ -28,7 +29,8 @@ export function SiteLayout() {
     «/» він вважав би активними обидві вкладки одразу.
   */
   const [params, setParams] = useSearchParams()
-  const onCatalog = useLocation().pathname === '/'
+  const path = useLocation().pathname
+  const onCatalog = path === '/'
   const auctionsOpen = onCatalog && params.get('Type') === 'Auction'
 
   /*
@@ -103,9 +105,45 @@ export function SiteLayout() {
         </div>
       </header>
 
-      <Outlet />
+      {/*
+        Suspense потрібен тому, що сторінки тепер вантажаться окремими
+        файлами (див. App.tsx). Поки файл летить, малювати нема чого — і
+        React бере «запасний вміст» із fallback. Шапка лишається поза ним
+        навмисно: вона вже на екрані, зникати їй нема причини.
+
+        PageBoundary ловить випадок, коли файл так і не долетів. key={path}
+        перестворює його на кожному переході: інакше він, спрацювавши один
+        раз, показував би напис про помилку вічно — навіть на сторінках,
+        які чудово відкриваються.
+      */}
+      <PageBoundary key={path}>
+        <Suspense fallback={<PageLoading />}>
+          <Outlet />
+        </Suspense>
+      </PageBoundary>
 
       {authOpen && <AuthDialog onClose={closeSignIn} />}
+    </div>
+  )
+}
+
+/**
+ * Смужка очікування, поки вантажиться файл сторінки.
+ *
+ * Напису тут немає навмисно: у мережі поблизу шматок приходить за мить, і
+ * текст «Завантажуємо…» встиг би блимнути й зникнути — око сприймає це як
+ * смикання. Тонка смужка під шапкою читається спокійніше.
+ *
+ * Але для того, хто користується читачем екрана, смужка — порожнє місце.
+ * Тому підпис усе-таки є: role="status" каже читачеві стежити за цим
+ * вузлом, а aria-label дає слова, яких на екрані не видно.
+ */
+function PageLoading() {
+  const { t } = useTranslation()
+
+  return (
+    <div role="status" aria-label={t('page.loading')} className="h-0.5 overflow-hidden bg-surface-3">
+      <div className="h-full w-1/3 animate-page-load rounded-full bg-accent" />
     </div>
   )
 }

@@ -111,8 +111,16 @@ internal static partial class SpaHosting
         // відкинуть. Різати краще самим — по цілому слову.
         var description = Shorten(listing.Description, 200);
 
+        /*
+            Головне фото, а якщо позначки «головне» немає — просто перше.
+
+            Друге звертання навмисно не FirstOrDefault(): список має
+            індексатор, тож [0] бере елемент напряму, а FirstOrDefault
+            заради того самого створював би перелічувач. Аналізатор
+            CA1826 саме про це й нагадує.
+        */
         var photo = listing.Photos.FirstOrDefault(item => item.IsPrimary)
-            ?? listing.Photos.FirstOrDefault();
+            ?? (listing.Photos.Count > 0 ? listing.Photos[0] : null);
 
         var tags = new List<string>
         {
