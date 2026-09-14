@@ -11,6 +11,7 @@ import {
 } from '../api/catalog'
 import { FilterRail } from '../components/catalog/FilterRail'
 import { ListingCard } from '../components/catalog/ListingCard'
+import { RecentlyViewed } from '../components/RecentlyViewed'
 import { formatCount } from '../format'
 import { useTranslation } from '../i18n/useTranslation'
 import { usePageMeta } from '../seo/usePageMeta'
@@ -45,6 +46,16 @@ export function CatalogPage() {
   const filters = useMemo(() => fromSearchParams(params), [params])
 
   usePageMeta(t('catalog.title'), t('seo.catalog'))
+
+  /*
+    Історію показуємо лише на чистому каталозі — коли жоден фільтр не
+    заданий. Людині, яка саме крутить фільтри, вона б заважала: та шукає
+    нове, а не повертається до старого.
+
+    Перевіряємо через ту саму функцію, що складає адресний рядок: порожній
+    результат і означає «нічого, крім типових значень».
+  */
+  const untouched = toBrowserParams(filters).size === 0
 
   const results = useQuery({
     queryKey: ['catalog', filters],
@@ -145,6 +156,8 @@ export function CatalogPage() {
             onPage={(page) => patchFilters({ page })}
           />
         )}
+
+        {untouched && <RecentlyViewed />}
       </main>
     </div>
   )

@@ -18,6 +18,7 @@ import { RatingLine } from '../components/listing/Stars'
 import { ReportButton } from '../components/listing/ReportButton'
 import { formatCount, formatMileage, formatPrice } from '../format'
 import { useTranslation } from '../i18n/useTranslation'
+import { RecentlyViewed } from '../components/RecentlyViewed'
 import { ListingSchema } from '../seo/ListingSchema'
 import { usePageMeta } from '../seo/usePageMeta'
 
@@ -317,6 +318,13 @@ function Loaded({ listing }: { listing: ListingDetails }) {
           </div>
         </aside>
       </div>
+
+      {/*
+        Історія — саме тут, під карткою: на цьому місці людина вирішує, чи
+        це те авто, і повертається до попередніх. Поточне з переліку
+        прибираємо — пропонувати його ж самому собі безглуздо.
+      */}
+      <RecentlyViewed excludeId={listing.id} />
     </div>
   )
 }

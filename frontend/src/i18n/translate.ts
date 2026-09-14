@@ -60,6 +60,7 @@ export type PluralKey =
   | 'favorites.count'
   | 'compare.cars'
   | 'compare.differences'
+  | 'viewed.count'
 
 /** Усі чотири форми кожного такого ключа мають бути у словнику. */
 type PluralForms = `${PluralKey}.${'one' | 'few' | 'many' | 'other'}`

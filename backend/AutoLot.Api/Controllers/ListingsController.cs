@@ -5,6 +5,7 @@ using AutoLot.Domain.Enums;
 using AutoLot.Domain.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using AutoLot.Domain.Listings;
 
 namespace AutoLot.Api.Controllers;
 
@@ -135,6 +136,34 @@ public sealed class ListingsController(
     }
 
     /// <summary>Що я купив на майданчику.</summary>
+    /// <summary>Історія переглядів: що людина відкривала останнім.</summary>
+    [HttpGet("recently-viewed")]
+    [Authorize]
+    [ProducesResponseType<IReadOnlyList<ListingSummary>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> RecentlyViewed(
+        [FromQuery] int take = 4,
+        CancellationToken cancellationToken = default)
+    {
+        if (currentUser.Id is not { } userId)
+        {
+            return Unauthorized();
+        }
+
+        /*
+          Скільки показати, вирішує сторінка: під карткою авто доречні
+          чотири, на окремій сторінці історії — усе, що ми взагалі
+          зберігаємо.
+
+          Але межу ставимо ми, а не той, хто питає: число приходить із
+          адресного рядка, і без обмеження будь-хто попросив би мільйон
+          рядків одним запитом.
+        */
+        var wanted = Math.Clamp(take, 1, ListingView.PerUserLimit);
+
+        return Ok(await listingService.GetRecentlyViewedAsync(userId, wanted, cancellationToken));
+    }
+
     [HttpGet("purchased")]
     [ProducesResponseType<IReadOnlyList<ListingSummary>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

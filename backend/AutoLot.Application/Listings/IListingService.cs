@@ -61,6 +61,18 @@ public interface IListingService
         IReadOnlyList<long> listingIds,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Що людина нещодавно дивилася, найсвіжіше зверху.
+    ///
+    /// Історію ведемо лише для тих, хто увійшов: гостя ми не впізнаємо між
+    /// заходами, а зберігати щось у його браузері — вже інша річ і з іншими
+    /// властивостями (на іншому пристрої такої історії не буде).
+    /// </summary>
+    Task<IReadOnlyList<ListingSummary>> GetRecentlyViewedAsync(
+        long userId,
+        int take,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ListingSummary>> GetPurchasedAsync(
         long buyerId,
         CancellationToken cancellationToken = default);

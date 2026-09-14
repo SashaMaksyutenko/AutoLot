@@ -43,8 +43,13 @@ export function ListingCard({ listing }: { listing: ListingSummary }) {
 
           {listing.dealer && <DealerLine dealer={listing.dealer} />}
 
-          <div className="flex items-end justify-between gap-2 border-t border-line pt-2">
-            <div>
+          {/*
+            flex-wrap тут не косметика: у вузькій колонці ціна й кнопка
+            поруч не вміщаються, і без переносу кнопка налазила б на
+            число. Так вона просто опускається під ціну.
+          */}
+          <div className="flex flex-wrap items-end justify-between gap-x-2 gap-y-1.5 border-t border-line pt-2">
+            <div className="min-w-0">
               {isAuction && <div className="eyebrow">{t('card.startingPrice')}</div>}
               <div
                 className={`font-display text-[19px] font-bold tabular-nums ${

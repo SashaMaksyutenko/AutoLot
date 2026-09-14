@@ -20,6 +20,7 @@ import { MyDealershipPage } from './pages/MyDealershipPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { ComparePage } from './pages/ComparePage'
 import { UserProfilePage } from './pages/UserProfilePage'
+import { ViewedPage } from './pages/ViewedPage'
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="sell" element={<ListingFormPage />} />
             <Route path="listing/:id/edit" element={<ListingFormPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
+            <Route path="viewed" element={<ViewedPage />} />
             <Route path="compare" element={<ComparePage />} />
             <Route path="account" element={<AccountPage />} />
             <Route path="chat" element={<ChatPage />} />

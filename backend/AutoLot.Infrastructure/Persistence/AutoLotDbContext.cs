@@ -80,6 +80,9 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
 
     public DbSet<BotLinkCode> BotLinkCodes => Set<BotLinkCode>();
 
+    /// <summary>Що людина дивилася — для історії переглядів.</summary>
+    public DbSet<ListingView> ListingViews => Set<ListingView>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

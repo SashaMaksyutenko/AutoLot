@@ -799,6 +799,17 @@ const uk = {
   'seo.catalog': 'Пошук авто за тридцятьма фільтрами: марка, ціна, рік, пробіг, кузов, пальне, регіон. Торги з автоставкою та перевірені салони.',
   'seo.dealers': 'Автосалони на AutoLot: вітрини, бейдж перевіреного, кількість авто в продажу.',
 
+  'viewed.title': 'Ви дивилися',
+  'viewed.loading': 'Завантажуємо…',
+  'viewed.signInFirst': 'Історія ведеться для тих, хто увійшов. Будь ласка,',
+  'viewed.empty': 'Тут поки порожньо.',
+  'viewed.emptyLead': 'Відкрийте будь-яке авто, і воно з’явиться тут —',
+  'viewed.limit': 'Зберігаються останні {limit} авто.',
+  'viewed.count.one': '{count} авто',
+  'viewed.count.few': '{count} авто',
+  'viewed.count.many': '{count} авто',
+  'viewed.count.other': '{count} авто',
+
   'error.network': 'Не вдалося зв’язатися з сервером.',
   'error.requestFailed': 'Запит {path} завершився помилкою',
   'error.badResponse': 'Некоректна відповідь від {path}',
@@ -1592,6 +1603,17 @@ const en: Record<MessageKey, string> = {
 
   'seo.catalog': 'Search cars across thirty filters: make, price, year, mileage, body, fuel, region. Auctions with automatic bidding and verified dealerships.',
   'seo.dealers': 'Dealerships on AutoLot: showcases, the verified badge, how many cars each has for sale.',
+
+  'viewed.title': 'You viewed',
+  'viewed.loading': 'Loading…',
+  'viewed.signInFirst': 'The history is kept for signed-in people. Please',
+  'viewed.empty': 'Nothing here yet.',
+  'viewed.emptyLead': 'Open any car and it will appear here —',
+  'viewed.limit': 'The last {limit} cars are kept.',
+  'viewed.count.one': '{count} car',
+  'viewed.count.few': '{count} cars',
+  'viewed.count.many': '{count} cars',
+  'viewed.count.other': '{count} cars',
 
   'error.network': 'Could not reach the server.',
   'error.requestFailed': 'The request to {path} failed',

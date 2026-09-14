@@ -165,9 +165,115 @@ internal sealed partial class ListingService(
                     cancellationToken);
 
             listing.ViewCount++;
+
+            if (actorId is { } viewerId)
+            {
+                await RememberViewAsync(viewerId, listingId, cancellationToken);
+            }
         }
 
         return await mapper.ToDetailsAsync(listing, isOwner || actorIsModerator, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ListingSummary>> GetRecentlyViewedAsync(
+        long userId,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        /*
+          Знято з публікації або продане в історії не показуємо: людина
+          побачила б рядок, який нікуди не веде.
+
+          Передаємо саме ЗАПИТ, а не готовий список: мапувальник домальовує
+          до кожного оголошення обране, салон і фото, і робить це одним
+          походом у базу замість походу на кожен рядок.
+        */
+        var query = dbContext.ListingViews
+            .AsNoTracking()
+            .Where(view => view.UserId == userId && view.Listing.Status == ListingStatus.Active)
+            .OrderByDescending(view => view.ViewedAt)
+            .Take(take)
+            .Select(view => view.Listing);
+
+        return await mapper.ToSummariesAsync(query, cancellationToken);
+    }
+
+    /// <summary>
+    /// Відмічає, що людина відкрила це оголошення.
+    ///
+    /// Повторний перегляд лише пересуває час: історія — це перелік авто, а
+    /// не журнал кліків.
+    /// </summary>
+    private async Task RememberViewAsync(
+        long userId,
+        long listingId,
+        CancellationToken cancellationToken)
+    {
+        var now = clock.UtcNow;
+
+        var seen = await dbContext.ListingViews.FirstOrDefaultAsync(
+            view => view.UserId == userId && view.ListingId == listingId,
+            cancellationToken);
+
+        if (seen is not null)
+        {
+            seen.ViewedAt = now;
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return;
+        }
+
+        dbContext.ListingViews.Add(new ListingView
+        {
+            UserId = userId,
+            ListingId = listingId,
+            ViewedAt = now,
+        });
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            /*
+              Той самий рядок устиг з'явитися паралельно — людина відкрила
+              авто у двох вкладках або двічі клацнула. Обмеження бази це
+              спіймало, і саме так і має бути; для нас же це не помилка:
+              потрібне вже записано, лишається тільки не падати.
+            */
+            dbContext.ChangeTracker.Clear();
+
+            return;
+        }
+
+        await TrimHistoryAsync(userId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Прибирає найдавніші пункти понад межу.
+    ///
+    /// Викликається лише після появи НОВОГО рядка: повторні перегляди
+    /// довжини історії не міняють, тож і чистити після них нема чого.
+    /// </summary>
+    private async Task TrimHistoryAsync(long userId, CancellationToken cancellationToken)
+    {
+        var total = await dbContext.ListingViews
+            .CountAsync(view => view.UserId == userId, cancellationToken);
+
+        if (total <= ListingView.PerUserLimit)
+        {
+            return;
+        }
+
+        var extra = await dbContext.ListingViews
+            .Where(view => view.UserId == userId)
+            .OrderBy(view => view.ViewedAt)
+            .Take(total - ListingView.PerUserLimit)
+            .ToListAsync(cancellationToken);
+
+        dbContext.ListingViews.RemoveRange(extra);
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<ListingDraft?> GetForEditAsync(

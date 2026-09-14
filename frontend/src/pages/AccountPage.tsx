@@ -17,6 +17,7 @@ import type { MessageKey } from '../i18n/messages'
 import { Billing } from '../components/account/Billing'
 import { MyListings } from '../components/account/MyListings'
 import { MyPurchases } from '../components/account/MyPurchases'
+import { RecentlyViewed } from '../components/RecentlyViewed'
 import { MyReputation } from '../components/account/MyReputation'
 import { TelegramCard } from '../components/account/TelegramCard'
 import { VerifiedMark } from '../components/catalog/ListingCard'
@@ -60,6 +61,7 @@ export function AccountPage() {
           <Billing />
           <MyListings />
           <MyPurchases />
+          <RecentlyViewed />
         </div>
 
         <div className="grid gap-4">
