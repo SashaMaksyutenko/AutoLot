@@ -1,0 +1,144 @@
+# Безперервна інтеграція: збірка й тести на кожен push.
+#
+# Що це дає. Досі єдиною перевіркою було «у мене на машині працює». Тепер
+# кожен push проганяє те саме на чистій машині: без user-secrets, без уже
+# встановлених пакетів, без бази, налаштованої рік тому. Саме там і вилазить
+# половина помилок, яких удома не видно.
+#
+# Два незалежні завдання — бекенд і фронтенд. Вони не залежать одне від
+# одного, тож GitHub запускає їх паралельно: чекати на .NET, щоб перевірити
+# TypeScript, немає жодних підстав.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+  # Дозволяє запустити перевірку вручну кнопкою у вкладці Actions —
+  # зручно, коли хочеш пересвідчитися, нічого не змінюючи.
+  workflow_dispatch:
+
+# Новий push у ту саму гілку скасовує попередній прогін: перевіряти код,
+# який уже застарів, — марно витрачені хвилини.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Бекенд
+    runs-on: ubuntu-latest
+
+    # Частина тестів вимагає СПРАВЖНЬОГО PostgreSQL: блокування рядка
+    # (SELECT … FOR UPDATE) — поведінка конкретної СУБД, і на SQLite головний
+    # ризик проєкту (ставки на аукціоні) перевірити неможливо.
+    #
+    # services піднімає контейнер поруч із завданням і чекає, доки база
+    # відповість на health-перевірку, — лише тоді починаються кроки.
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: autolot
+          POSTGRES_USER: autolot
+
+          # Пароль одноразової бази, яка живе кілька хвилин і нікуди не
+          # виходить за межі машини складання. Справжні секрети проєкту
+          # лежать у user-secrets і в репозиторій не потрапляють (SPEC §8).
+          POSTGRES_PASSWORD: autolot-ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U autolot -d autolot"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Подвійне підкреслення — те, як .NET читає вкладені налаштування зі
+      # змінних оточення: ConnectionStrings__AutoLot це те саме, що
+      # "ConnectionStrings": { "AutoLot": … } у файлі налаштувань.
+      ConnectionStrings__AutoLot: Host=localhost;Port=5432;Database=autolot;Username=autolot;Password=autolot-ci
+
+      # Вимикає збір телеметрії та привітання при першому запуску: зайвий
+      # шум у журналі складання й зайві мережеві звернення.
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Поставити .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # Тестовий проєкт посилається на всі інші, тож одна команда відновлює
+      # й збирає геть усе рішення. Окремого .sln у проєкті немає навмисно:
+      # чотири проєкти чудово живуть і без нього.
+      - name: Відновити пакети
+        run: dotnet restore backend/AutoLot.Tests/AutoLot.Tests.csproj
+
+      # -warnaserror перетворює попередження на помилки. Це не строгість
+      # заради строгості: у проєкті ввімкнені аналізатори (Directory.Build.props),
+      # і правило «збірка без попереджень» тримається лише доти, доки його
+      # хтось перевіряє. Тут його перевіряє машина.
+      #
+      # Єдиний виняток — NU1900. Це не про код: так NuGet повідомляє, що не
+      # зміг СКАЧАТИ перелік відомих вразливостей. Через нього хвилинна
+      # недоступність nuget.org валила б збірку, у якій нічого не зламано.
+      # Самі знахідки вразливостей мають інші номери (NU1901–NU1904) і
+      # лишаються помилками.
+      - name: Зібрати
+        run: >-
+          dotnet build backend/AutoLot.Tests/AutoLot.Tests.csproj
+          --configuration Release
+          --no-restore
+          -warnaserror
+          -warnnotaserror:NU1900
+
+      - name: Тести
+        run: >-
+          dotnet test backend/AutoLot.Tests/AutoLot.Tests.csproj
+          --configuration Release
+          --no-build
+          --logger "console;verbosity=normal"
+
+  frontend:
+    name: Фронтенд
+    runs-on: ubuntu-latest
+
+    # Усі команди виконуються в теці frontend — інакше довелося б писати
+    # cd frontend перед кожною.
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Поставити Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+          # Кеш завантажених пакетів між прогонами: npm ci інакше щоразу
+          # тягнув би ті самі сотні мегабайтів.
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # ci, а не install: ставить рівно те, що записано в package-lock.json,
+      # і падає, якщо lock розійшовся з package.json. Саме цього й хочеться
+      # від перевірки — відтворюваності, а не «постав найсвіжіше».
+      - name: Поставити залежності
+        run: npm ci
+
+      - name: Лінтер
+        run: npm run lint
+
+      # npm run build — це "tsc -b && vite build": спершу перевірка типів,
+      # потім збірка. Окремий крок для типів був би тим самим удруге.
+      - name: Типи та збірка
+        run: npm run build
