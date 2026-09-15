@@ -82,6 +82,10 @@ AutoLot/
 Потрібно: **.NET SDK 10** · **Node 24** · **PostgreSQL 18 на порту 5433** ·
 `dotnet-ef` (`dotnet tool install --global dotnet-ef`).
 
+На Linux додатково потрібен `libfontconfig1`: обробка фото йде через SkiaSharp,
+і його рідна бібліотека шукає системну службу пошуку шрифтів. Під Windows і
+macOS нічого ставити не треба.
+
 ### 1. База даних
 
 Локальна служба PostgreSQL:

@@ -27,6 +27,20 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="Quartz.Extensions.Hosting" Version="3.15.0" />
     <PackageReference Include="SkiaSharp" Version="4.151.1" />
+
+    <!--
+      Сам пакет SkiaSharp — це лише обгортка на C#; малює за нього рідна
+      бібліотека, скомпільована під конкретну операційну систему. Для Windows
+      і macOS вона приїжджає разом із пакетом, для Linux — ні, її треба
+      просити окремо.
+
+      Без цього рядка застосунок падає на Linux при першому ж зверненні до
+      фото: «Unable to load shared library 'libSkiaSharp'». На машині
+      розробника під Windows цього не видно взагалі — помилку спіймала
+      складальня (GitHub Actions працює на Ubuntu), і та сама вада чекала б
+      на будь-якому справжньому сервері.
+    -->
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.151.1" />
   </ItemGroup>
 
   <ItemGroup>
