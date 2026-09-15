@@ -28,9 +28,14 @@ RUN npm run build
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend
 WORKDIR /src
 
-# Той самий прийом, що й вище: спочатку файли проєктів, потім відновлення
-# пакетів, і лише тоді решта коду.
-COPY Directory.Build.props ./
+# Той самий прийом, що й вище: спочатку налаштування збірки й файли проєктів,
+# потім відновлення пакетів, і лише тоді решта коду.
+#
+# .editorconfig тут не заради відступів: у ньому задані суворості аналізаторів —
+# які попередження проєкт вважає за шум, а які ні. Без нього збірка всередині
+# образу йшла б за ІНШИМИ правилами, ніж збірка в репозиторії, і мовчки
+# розходилася б із тим, що бачить розробник.
+COPY Directory.Build.props .editorconfig ./
 COPY backend/AutoLot.Domain/AutoLot.Domain.csproj backend/AutoLot.Domain/
 COPY backend/AutoLot.Application/AutoLot.Application.csproj backend/AutoLot.Application/
 COPY backend/AutoLot.Infrastructure/AutoLot.Infrastructure.csproj backend/AutoLot.Infrastructure/
