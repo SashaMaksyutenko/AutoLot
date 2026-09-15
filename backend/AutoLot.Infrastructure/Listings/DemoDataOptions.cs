@@ -12,8 +12,6 @@ public sealed class DemoDataOptions
 
     public int ListingCount { get; set; } = 200;
 
-    public int SellerCount { get; set; } = 12;
-
     /// <summary>Одне зерно на всі випадкові значення — набір відтворюваний.</summary>
     public int Seed { get; set; } = 20260823;
 

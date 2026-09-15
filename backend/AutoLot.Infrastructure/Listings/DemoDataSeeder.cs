@@ -1,6 +1,7 @@
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Domain.Auctions;
 using AutoLot.Domain.Cars;
+using AutoLot.Domain.Dealers;
 using AutoLot.Domain.Enums;
 using AutoLot.Domain.Geo;
 using AutoLot.Domain.Identity;
@@ -20,6 +21,12 @@ namespace AutoLot.Infrastructure.Listings;
 ///
 /// Дані генеруються з фіксованим зерном, тож кожен запуск дає той самий набір —
 /// зручно, коли треба відтворити побачене.
+///
+/// Працює у два режими. Порожня база — створює все з нуля. Наповнена — нічого
+/// не додає, але **приводить наявне до ладу**: оживляє торги, яким вийшов
+/// строк, і доробляє те, чого в базі ще не було. Другий режим потрібен тому,
+/// що демо-дані псуються від часу: лот, засіяний місяць тому, давно закритий,
+/// і вкладка «Аукціони» зустрічає відвідувача порожнечею.
 /// </summary>
 public sealed partial class DemoDataSeeder(
     AutoLotDbContext dbContext,
@@ -32,6 +39,15 @@ public sealed partial class DemoDataSeeder(
 {
     private readonly DemoDataOptions settings = options.Value;
 
+    private const string ResourceName = "AutoLot.Infrastructure.Persistence.SeedData.demo-sellers.json";
+
+    /// <summary>
+    /// Спільний хвіст пошти всіх вигаданих продавців. За ним і тільки за ним
+    /// сідер упізнає свої дані: усе інше в базі могла створити людина руками,
+    /// і чіпати це ми не маємо права.
+    /// </summary>
+    private const string EmailDomain = "@autolot.local";
+
     /// <summary>Останній: потребує і довідників, і ролей.</summary>
     public int Order => 100;
 
@@ -42,18 +58,276 @@ public sealed partial class DemoDataSeeder(
             return;
         }
 
-        // Ідемпотентність тут груба, але доречна: якщо оголошення вже є,
-        // другий набір вигаданих лише заважатиме.
-        if (await dbContext.Listings.AnyAsync(cancellationToken))
+        var document = await SeedResource.ReadAsync<DemoSellersDocument>(ResourceName, cancellationToken);
+        var cities = await LoadCitiesAsync(cancellationToken);
+
+        if (document.Sellers.Count == 0 || cities.Count == 0)
         {
+            LogSkipped(logger);
+            return;
+        }
+
+        var sellers = await EnsureSellersAsync(document.Sellers, cancellationToken);
+
+        if (sellers.Count == 0)
+        {
+            LogSkipped(logger);
             return;
         }
 
         var random = new Random(settings.Seed);
 
-        var sellers = await CreateSellersAsync(random, cancellationToken);
+        await EnsureDealershipsAsync(sellers, cities, random, cancellationToken);
+
+        // Ідемпотентність тут груба, але доречна: якщо оголошення вже є,
+        // другий набір вигаданих лише заважатиме.
+        if (await dbContext.Listings.AnyAsync(cancellationToken))
+        {
+            await RefreshAsync(sellers, random, cancellationToken);
+            return;
+        }
+
+        await CreateListingsAsync(sellers, cities, random, cancellationToken);
+    }
+
+    // ─────────────────────────── Продавці й салони ───────────────────────────
+
+    /// <summary>
+    /// Зводить записи з файла з акаунтами в базі: кого немає — створює, у кого
+    /// розійшлося ім'я чи тип акаунта — виправляє.
+    ///
+    /// Виправляє навмисно. Файл тут джерело істини, і той, хто заповнював базу
+    /// торішньою версією файла, має отримати нинішні імена без видалення бази.
+    /// </summary>
+    private async Task<List<DemoSeller>> EnsureSellersAsync(
+        List<DemoSellerRow> rows,
+        CancellationToken cancellationToken)
+    {
+        var sellers = new List<DemoSeller>(rows.Count);
+
+        foreach (var row in rows)
+        {
+            if (string.IsNullOrWhiteSpace(row.Email) || string.IsNullOrWhiteSpace(row.Name))
+            {
+                continue;
+            }
+
+            var email = row.Email + EmailDomain;
+            var accountType = row.Dealership is null ? AccountType.Private : AccountType.Dealer;
+            var user = await userManager.FindByEmailAsync(email);
+
+            if (user is null)
+            {
+                user = new User
+                {
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = true,
+                    DisplayName = row.Name,
+                    AccountType = accountType,
+                };
+
+                if (!(await userManager.CreateAsync(user, settings.SellerPassword)).Succeeded)
+                {
+                    continue;
+                }
+
+                await userManager.AddToRoleAsync(user, RoleNames.User);
+            }
+            else if (user.DisplayName != row.Name || user.AccountType != accountType)
+            {
+                user.DisplayName = row.Name;
+                user.AccountType = accountType;
+
+                await userManager.UpdateAsync(user);
+            }
+
+            sellers.Add(new DemoSeller(user, row.Dealership));
+        }
+
+        return sellers;
+    }
+
+    /// <summary>
+    /// Створює автосалони для тих продавців, у кого в файлі описаний салон, і
+    /// записує їх власниками.
+    ///
+    /// Навіщо це взагалі. Тип акаунта «дилер» сам собою нічого не означає:
+    /// бейдж у видачі бере назву з САЛОНУ, і без нього оголошення дилера
+    /// підписувалося «приватна особа» — тобто демо-дані суперечили самі собі.
+    /// </summary>
+    private async Task EnsureDealershipsAsync(
+        List<DemoSeller> sellers,
+        List<CityRow> cities,
+        Random random,
+        CancellationToken cancellationToken)
+    {
+        var owners = sellers.Where(seller => seller.Row is not null).ToList();
+
+        if (owners.Count == 0)
+        {
+            return;
+        }
+
+        var slugs = owners.Select(owner => owner.Row!.Slug).ToList();
+
+        var existing = await dbContext.Dealerships
+            .Where(dealership => slugs.Contains(dealership.Slug))
+            .ToDictionaryAsync(dealership => dealership.Slug, cancellationToken);
+
+        var now = clock.UtcNow;
+        var created = 0;
+
+        foreach (var owner in owners)
+        {
+            var row = owner.Row!;
+
+            if (existing.TryGetValue(row.Slug, out var found))
+            {
+                owner.DealershipId = found.Id;
+                continue;
+            }
+
+            var dealership = new Dealership
+            {
+                Name = row.Name,
+                Slug = row.Slug,
+                Description = row.Description,
+                CityId = cities[random.Next(cities.Count)].Id,
+            };
+
+            /*
+                Перевірені й неперевірені разом: бейдж має бути видно, але й
+                салон без нього теж має траплятися, інакше різниці не побачити.
+
+                Поля виставляємо напряму, а не методом Verify: він вимагає
+                вказати модератора, який перевірив, а тут такого немає. Записати
+                туди самого власника означало б підробити слід у журналі рішень.
+            */
+            dealership.IsVerified = row.IsVerified;
+            dealership.VerifiedAt = row.IsVerified ? now : null;
+
+            dealership.Members.Add(new DealershipMember
+            {
+                User = owner.User,
+                Role = DealershipRole.Owner,
+                JoinedAt = now,
+            });
+
+            dbContext.Dealerships.Add(dealership);
+            created++;
+        }
+
+        if (created == 0)
+        {
+            return;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Ідентифікатори відомі лише після збереження — саме тому другий прохід.
+        foreach (var owner in owners.Where(item => item.DealershipId is null))
+        {
+            owner.DealershipId = await dbContext.Dealerships
+                .Where(dealership => dealership.Slug == owner.Row!.Slug)
+                .Select(dealership => (long?)dealership.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        LogDealerships(logger, created);
+    }
+
+    // ─────────────────────────── Наповнена база ───────────────────────────
+
+    /// <summary>
+    /// Приводить до ладу дані, які вже лежать у базі: прив'язує оголошення до
+    /// салонів, яких на момент сіду ще не існувало, і перезапускає торги, що
+    /// встигли завершитися.
+    /// </summary>
+    private async Task RefreshAsync(
+        List<DemoSeller> sellers,
+        Random random,
+        CancellationToken cancellationToken)
+    {
+        var linked = await LinkListingsToDealershipsAsync(sellers, cancellationToken);
+        var restarted = await RestartStaleAuctionsAsync(sellers, random, cancellationToken);
+
+        if (linked > 0 || restarted > 0)
+        {
+            LogRefreshed(logger, restarted, linked);
+        }
+    }
+
+    /// <summary>
+    /// Дописує оголошенням демо-дилерів їхній салон. Чужі оголошення й ті, де
+    /// салон уже проставлений, не чіпає.
+    /// </summary>
+    private async Task<int> LinkListingsToDealershipsAsync(
+        List<DemoSeller> sellers,
+        CancellationToken cancellationToken)
+    {
+        var changed = 0;
+
+        foreach (var seller in sellers.Where(item => item.DealershipId is not null))
+        {
+            changed += await dbContext.Listings
+                .Where(listing => listing.SellerId == seller.User.Id && listing.DealershipId == null)
+                .ExecuteUpdateAsync(
+                    update => update.SetProperty(listing => listing.DealershipId, seller.DealershipId),
+                    cancellationToken);
+        }
+
+        return changed;
+    }
+
+    /// <summary>
+    /// Знаходить демо-торги, яким вийшов час, і запускає їх наново — самі
+    /// правила перезапуску в <see cref="DemoAuctions.Restart"/>.
+    ///
+    /// Відбір навмисно вузький: беремо лише лоти продавців із сід-файла. Чужий
+    /// аукціон, який хтось створив руками, чіпати не можна — з боку бази він
+    /// виглядає так само, а для людини це була б утрачена робота.
+    /// </summary>
+    private async Task<int> RestartStaleAuctionsAsync(
+        List<DemoSeller> sellers,
+        Random random,
+        CancellationToken cancellationToken)
+    {
+        var now = clock.UtcNow;
+        var sellerIds = IdsOf(sellers);
+
+        var stale = await dbContext.Auctions
+            .Include(auction => auction.Listing)
+            .Include(auction => auction.Bids)
+            .Where(auction => sellerIds.Contains(auction.Listing.SellerId))
+            .Where(auction => auction.Status != AuctionStatus.Active || auction.EndsAt <= now)
+            .ToListAsync(cancellationToken);
+
+        if (stale.Count == 0)
+        {
+            return 0;
+        }
+
+        foreach (var auction in stale)
+        {
+            DemoAuctions.Restart(auction, random, now);
+            DemoAuctions.AddBids(auction, sellerIds, random, now);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return stale.Count;
+    }
+
+    // ─────────────────────────── Порожня база ───────────────────────────
+
+    private async Task CreateListingsAsync(
+        List<DemoSeller> sellers,
+        List<CityRow> cities,
+        Random random,
+        CancellationToken cancellationToken)
+    {
         var models = await LoadModelsAsync(cancellationToken);
-        var cities = await LoadCitiesAsync(cancellationToken);
         var featureIds = await dbContext.Features.Select(feature => feature.Id).ToListAsync(cancellationToken);
         var countryIds = await dbContext.Countries.Select(country => country.Id).ToListAsync(cancellationToken);
 
@@ -66,7 +340,7 @@ public sealed partial class DemoDataSeeder(
                 group => group.Select(district => district.Id).ToList(),
                 cancellationToken);
 
-        if (sellers.Count == 0 || models.Count == 0 || cities.Count == 0)
+        if (models.Count == 0)
         {
             LogSkipped(logger);
             return;
@@ -92,6 +366,7 @@ public sealed partial class DemoDataSeeder(
             var listing = await BuildListingAsync(
                 random,
                 sellers[random.Next(sellers.Count)],
+                sellers,
                 model,
                 year,
                 cities[random.Next(cities.Count)],
@@ -119,7 +394,8 @@ public sealed partial class DemoDataSeeder(
 
     private async Task<Listing> BuildListingAsync(
         Random random,
-        User seller,
+        DemoSeller seller,
+        List<DemoSeller> everyone,
         ModelRow model,
         int year,
         CityRow city,
@@ -130,7 +406,7 @@ public sealed partial class DemoDataSeeder(
         CancellationToken cancellationToken)
     {
         var isNew = year >= now.Year && random.Next(10) == 0;
-        var fuelType = PickFuelType(random);
+        var fuelType = DemoCars.PickFuelType(random);
         var currency = random.Next(4) == 0 ? Currency.Uah : Currency.Usd;
 
         // Ціна залежить від віку авто, а не береться навмання. Інакше
@@ -151,7 +427,11 @@ public sealed partial class DemoDataSeeder(
             Description =
                 $"{model.MakeName} {model.Name} {year} року. Технічний стан справний, " +
                 "обслуговування за регламентом. Демонстраційне оголошення, згенероване для наповнення каталогу.",
-            SellerId = seller.Id,
+            SellerId = seller.User.Id,
+
+            // Оголошення менеджера салону належить салону, а не йому особисто:
+            // саме на цьому тримається правило власності (SPEC §10а).
+            DealershipId = seller.DealershipId,
             CityId = city.Id,
             Price = price,
             Currency = currency,
@@ -167,7 +447,15 @@ public sealed partial class DemoDataSeeder(
             IsNegotiable = random.Next(3) == 0,
             AcceptsTrade = random.Next(4) == 0,
             IsUrgent = random.Next(8) == 0,
-            Car = BuildCar(random, model, year, isNew, fuelType, featureIds, countryIds),
+            Car = DemoCars.Build(
+                random,
+                model.MakeId,
+                model.Id,
+                year,
+                isNew,
+                fuelType,
+                featureIds,
+                countryIds),
         };
 
         // Район ставимо не завжди: у житті його вказує приблизно кожен другий.
@@ -178,22 +466,32 @@ public sealed partial class DemoDataSeeder(
             listing.CityDistrictId = districts[random.Next(districts.Count)];
         }
 
-        await AddPhotosAsync(listing, model, year, random, cancellationToken);
+        await DemoCars.AddPhotosAsync(
+            listing,
+            model.MakeName,
+            model.Name,
+            year,
+            random,
+            storage,
+            cancellationToken);
 
-        AddAuctionIfNeeded(listing, random, now);
+        AddAuctionIfNeeded(listing, everyone, random, now);
 
         return listing;
     }
+
+    // ─────────────────────────── Торги ───────────────────────────
 
     /// <summary>
     /// Демонстраційним лотам потрібні справжні торги, інакше сторінка лота
     /// відкривалася б порожньою. У житті аукціон стартує при схваленні
     /// модератором, але демо-дані модерацію оминають, тож створюємо тут.
-    ///
-    /// Строк розкидаємо: частина лотів має завершитися за кілька годин,
-    /// частина — за дні. Так на сторінці видно і майже дотліле, і свіже.
     /// </summary>
-    private void AddAuctionIfNeeded(Listing listing, Random random, DateTimeOffset now)
+    private void AddAuctionIfNeeded(
+        Listing listing,
+        List<DemoSeller> everyone,
+        Random random,
+        DateTimeOffset now)
     {
         if (listing.Type != ListingType.Auction)
         {
@@ -204,127 +502,20 @@ public sealed partial class DemoDataSeeder(
             ? decimal.Round(listing.Price * 1.2m, 2)
             : null;
 
-        dbContext.Auctions.Add(new Auction
+        var auction = new Auction
         {
             Listing = listing,
             Currency = listing.Currency,
             StartPrice = listing.Price,
             CurrentPrice = listing.Price,
             ReservePrice = listing.ReservePrice,
-            StartsAt = now,
-            EndsAt = now.AddHours(random.Next(3, 24 * 7)),
             Status = AuctionStatus.Active,
-        });
-    }
-
-    private static Car BuildCar(
-        Random random,
-        ModelRow model,
-        int year,
-        bool isNew,
-        FuelType fuelType,
-        List<long> featureIds,
-        List<long> countryIds)
-    {
-        var isElectric = fuelType is FuelType.Electric;
-        var hasBattery = fuelType is FuelType.Electric or FuelType.Hybrid or FuelType.PluginHybrid;
-
-        var car = new Car
-        {
-            Year = year,
-            Condition = isNew ? CarCondition.New : CarCondition.Used,
-            MakeId = model.MakeId,
-            ModelId = model.Id,
-            Mileage = isNew ? random.Next(0, 100) : random.Next(5, 400) * 1000,
-            OwnerCount = isNew ? null : random.Next(1, 4),
-            FuelType = fuelType,
-
-            // Набори полів мають лишатися узгодженими між собою — тими самими
-            // правилами, які перевіряє CarSpecificationValidator.
-            EngineVolume = isElectric ? null : Math.Round(random.Next(10, 45) / 10m, 1),
-            EnginePower = random.Next(75, 400),
-            FuelConsumptionCombined = isElectric ? null : Math.Round(random.Next(45, 130) / 10m, 1),
-            BatteryCapacity = hasBattery ? random.Next(8, 100) : null,
-            ElectricRange = hasBattery ? random.Next(40, 600) : null,
-            ChargingPort = hasBattery ? ChargingPortType.Type2 : null,
-            Transmission = (TransmissionType)random.Next(0, 4),
-            Drivetrain = (DrivetrainType)random.Next(0, 3),
-            BodyType = (BodyType)random.Next(0, 11),
-            Color = (CarColor)random.Next(0, 14),
-            IsMetallic = random.Next(2) == 0,
-            SeatCount = 5,
-            DoorCount = random.Next(2) == 0 ? 4 : 5,
-            EcologyStandard = (EcologyStandard)random.Next(3, 7),
-            IsCustomsCleared = random.Next(10) > 0,
-            IsLocatedInUkraine = random.Next(20) > 0,
-            WasInAccident = random.Next(5) == 0,
-            HasServiceBook = random.Next(3) > 0,
-            IsGarageKept = random.Next(3) > 0,
         };
 
-        if (countryIds.Count > 0 && random.Next(2) == 0)
-        {
-            car.ImportedFromCountryId = countryIds[random.Next(countryIds.Count)];
-        }
+        DemoAuctions.Schedule(auction, random, now);
+        DemoAuctions.AddBids(auction, IdsOf(everyone), random, now);
 
-        if (countryIds.Count > 0)
-        {
-            car.ManufacturerCountryId = countryIds[random.Next(countryIds.Count)];
-        }
-
-        // Стан фарби пов'язаний із ДТП: у битого «заводська фарба» траплялася б
-        // рідше, ніж у цілого, і дані не мають цьому суперечити.
-        car.PaintCondition = car.WasInAccident
-            ? (PaintCondition)random.Next(1, 3)
-            : (PaintCondition)random.Next(0, 2);
-
-        car.DamageState = car.WasInAccident && random.Next(4) == 0
-            ? DamageState.Damaged
-            : DamageState.NotDamaged;
-
-        foreach (var featureId in PickFeatures(random, featureIds))
-        {
-            car.Features.Add(new CarFeature { FeatureId = featureId });
-        }
-
-        return car;
-    }
-
-    private async Task AddPhotosAsync(
-        Listing listing,
-        ModelRow model,
-        int year,
-        Random random,
-        CancellationToken cancellationToken)
-    {
-        var count = random.Next(1, 4);
-
-        for (var index = 0; index < count; index++)
-        {
-            var source = PlaceholderImageFactory.Create(
-                model.MakeName,
-                model.Name,
-                year,
-                index,
-                random.Next());
-
-            // Проганяємо заглушку тим самим конвеєром, що й справжнє
-            // завантаження: демо-дані мають лежати в сховищі так само, як
-            // усе інше, разом із мініатюрами.
-            using var buffer = new MemoryStream(source);
-            var (full, thumbnail) = await ImageProcessor.ProcessAsync(buffer, cancellationToken);
-
-            var directory = "demo";
-            var name = Guid.CreateVersion7().ToString("n");
-
-            listing.Car.Photos.Add(new CarPhoto
-            {
-                Path = await storage.SaveAsync(directory, $"{name}.jpg", full, cancellationToken),
-                ThumbnailPath = await storage.SaveAsync(directory, $"{name}-thumb.jpg", thumbnail, cancellationToken),
-                SortOrder = index,
-                IsPrimary = index == 0,
-            });
-        }
+        dbContext.Auctions.Add(auction);
     }
 
     /// <summary>
@@ -370,79 +561,9 @@ public sealed partial class DemoDataSeeder(
         return combinations;
     }
 
-    private static FuelType PickFuelType(Random random) => random.Next(100) switch
-    {
-        < 45 => FuelType.Petrol,
-        < 75 => FuelType.Diesel,
-        < 84 => FuelType.PetrolGas,
-        < 92 => FuelType.Hybrid,
-        < 96 => FuelType.PluginHybrid,
-        _ => FuelType.Electric,
-    };
-
-    private static IEnumerable<long> PickFeatures(Random random, List<long> featureIds)
-    {
-        if (featureIds.Count == 0)
-        {
-            yield break;
-        }
-
-        var wanted = random.Next(3, 12);
-        var chosen = new HashSet<long>();
-
-        while (chosen.Count < wanted && chosen.Count < featureIds.Count)
-        {
-            chosen.Add(featureIds[random.Next(featureIds.Count)]);
-        }
-
-        foreach (var featureId in chosen)
-        {
-            yield return featureId;
-        }
-    }
-
-    private async Task<List<User>> CreateSellersAsync(Random random, CancellationToken cancellationToken)
-    {
-        var sellers = new List<User>();
-
-        for (var index = 1; index <= settings.SellerCount; index++)
-        {
-            var email = $"demo{index}@autolot.local";
-            var existing = await userManager.FindByEmailAsync(email);
-
-            if (existing is not null)
-            {
-                sellers.Add(existing);
-                continue;
-            }
-
-            // Кожен третій — дилер: у видачі має бути видно обидва типи продавця.
-            var isDealer = index % 3 == 0;
-
-            var user = new User
-            {
-                UserName = email,
-                Email = email,
-                EmailConfirmed = true,
-                DisplayName = isDealer ? $"Автосалон №{index}" : $"Продавець {index}",
-                AccountType = isDealer ? AccountType.Dealer : AccountType.Private,
-            };
-
-            var created = await userManager.CreateAsync(user, settings.SellerPassword);
-
-            if (!created.Succeeded)
-            {
-                continue;
-            }
-
-            await userManager.AddToRoleAsync(user, RoleNames.User);
-            sellers.Add(user);
-        }
-
-        _ = random;
-
-        return sellers;
-    }
+    /// <summary>Самі ідентифікатори: правилам торгів решта про продавця не потрібна.</summary>
+    private static List<long> IdsOf(List<DemoSeller> sellers) =>
+        [.. sellers.Select(seller => seller.User.Id)];
 
     private Task<List<ModelRow>> LoadModelsAsync(CancellationToken cancellationToken) =>
         dbContext.Models
@@ -460,6 +581,18 @@ public sealed partial class DemoDataSeeder(
             .Select(city => new CityRow(city.Id))
             .ToListAsync(cancellationToken);
 
+    /// <summary>Продавець із файла разом із його акаунтом і салоном.</summary>
+    private sealed class DemoSeller(User user, DemoDealershipRow? row)
+    {
+        public User User { get; } = user;
+
+        /// <summary>Опис салону з файла; null — звичайна приватна особа.</summary>
+        public DemoDealershipRow? Row { get; } = row;
+
+        /// <summary>Заповнюється після того, як салон збережено в базі.</summary>
+        public long? DealershipId { get; set; }
+    }
+
     private sealed record ModelRow(long Id, string Name, long MakeId, string MakeName);
 
     private sealed record CityRow(long Id);
@@ -468,6 +601,16 @@ public sealed partial class DemoDataSeeder(
         Level = LogLevel.Information,
         Message = "Демо-дані: {Listings} оголошень від {Sellers} продавців")]
     private static partial void LogSeeded(ILogger logger, int listings, int sellers);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Демо-дані: створено автосалонів — {Dealerships}")]
+    private static partial void LogDealerships(ILogger logger, int dealerships);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Демо-дані оновлено: перезапущено торгів — {Auctions}, прив'язано оголошень до салонів — {Listings}")]
+    private static partial void LogRefreshed(ILogger logger, int auctions, int listings);
 
     [LoggerMessage(
         Level = LogLevel.Warning,
