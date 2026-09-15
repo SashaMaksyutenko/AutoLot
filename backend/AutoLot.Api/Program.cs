@@ -12,6 +12,7 @@ using AutoLot.Application.Common.Abstractions;
 using AutoLot.Infrastructure;
 using AutoLot.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
 
@@ -75,6 +76,7 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+await MigrateDatabaseAsync(app);
 await SeedDatabaseAsync(app);
 
 // Найперший обробник у конвеєрі: усе, що станеться далі — зокрема
@@ -93,14 +95,21 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
-else
+else if (app.Configuration.GetValue("Https:Redirect", defaultValue: true))
 {
-    app.UseHsts();
+    /*
+        Перенаправлення на HTTPS лише поза розробкою. У профілі "http" немає
+        HTTPS-порту, тож ASP.NET не знав би, куди перенаправляти, і на кожному
+        запуску попереджав про це. До того ж у розробці фронтенд ходить через
+        проксі Vite звичайним HTTP — перенаправляти нікуди й не треба.
 
-    // Перенаправлення на HTTPS лише поза розробкою. У профілі "http" немає
-    // HTTPS-порту, тож ASP.NET не знав би, куди перенаправляти, і на кожному
-    // запуску попереджав про це. До того ж у розробці фронтенд ходить через
-    // проксі Vite звичайним HTTP — перенаправляти нікуди й не треба.
+        Вимикач Https:Redirect потрібен для контейнера. Там застосунок слухає
+        звичайний HTTP, а шифрування бере на себе те, що стоїть попереду —
+        проксі або хмара. Якби застосунок усередині ще й перенаправляв на
+        HTTPS, вийшло б коло: проксі розшифрував і передав по HTTP, застосунок
+        відправив назад на HTTPS.
+    */
+    app.UseHsts();
     app.UseHttpsRedirection();
 }
 app.UseCors(CorsPolicy);
@@ -182,6 +191,44 @@ static void ConfigureLogging(WebApplicationBuilder builder)
         options.IncludeScopes = true;
         options.UseUtcTimestamp = true;
     });
+}
+
+/// <summary>
+/// Накочує міграції на старті — але тільки якщо про це попросили.
+///
+/// Вимкнено за замовчуванням навмисно. Застосунок, який сам змінює схему
+/// бази при кожному запуску, — зручність з коротким строком придатності:
+/// два примірники, піднятих одночасно, почнуть мігрувати наввипередки, а
+/// відкотити невдалу міграцію автоматично неможливо. Тому на робочому
+/// сервері схему накочують окремою дією, свідомо й один раз.
+///
+/// А от у контейнері (docker compose up) це саме те, що треба: база щойно
+/// створена й порожня, примірник один, і вимагати від людини ще й окремої
+/// команди означало б, що «однією командою» не працює.
+/// </summary>
+static async Task MigrateDatabaseAsync(WebApplication app)
+{
+    if (!app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+    {
+        return;
+    }
+
+    await using var scope = app.Services.CreateAsyncScope();
+
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var context = scope.ServiceProvider.GetRequiredService<AutoLotDbContext>();
+
+    try
+    {
+        await context.Database.MigrateAsync();
+        logger.LogInformation("Міграції накочено");
+    }
+    catch (DbException exception)
+    {
+        // База може ще підніматися. Валити застосунок не варто: про проблему
+        // чесно розкаже /health/ready, а сід нижче теж це переживе.
+        logger.LogError(exception, "Міграції не накочено — база недоступна");
+    }
 }
 
 static async Task SeedDatabaseAsync(WebApplication app)

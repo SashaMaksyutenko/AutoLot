@@ -1,6 +1,15 @@
-# Альтернативний спосіб підняти базу — на випадок, якщо локальної служби
-# PostgreSQL немає. Порт назовні той самий 5433, що й у локальної інсталяції,
-# тож рядок підключення міняти не доведеться.
+# Увесь проєкт однією командою:
+#
+#   cp .env.example .env    (і заповнити значення)
+#   docker compose up --build
+#
+# Далі http://localhost:8080 — там і сайт, і API. Ставити .NET, Node чи
+# PostgreSQL для цього не треба: усе збереться всередині контейнерів.
+#
+# Тільки база, коли застосунок запускають локально через dotnet run:
+#
+#   docker compose up -d postgres
+
 services:
   postgres:
     image: postgres:18-alpine
@@ -11,6 +20,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-autolot}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD не заданий — скопіюйте .env.example у .env}
     ports:
+      # Назовні той самий 5433, що й у локальної інсталяції, тож рядок
+      # підключення в user-secrets міняти не доведеться.
       - '5433:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -20,5 +31,60 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autolot-api
+    restart: unless-stopped
+
+    # Чекаємо не просто на запуск бази, а на її health-перевірку: контейнер
+    # PostgreSQL вважається запущеним за секунду, а приймати з'єднання
+    # починає пізніше. Без service_healthy застосунок стукав би в порожнечу.
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    environment:
+      # Подвійне підкреслення — те, як .NET читає вкладені налаштування зі
+      # змінних оточення: ConnectionStrings__AutoLot це те саме, що
+      # "ConnectionStrings": { "AutoLot": … } у файлі налаштувань.
+      #
+      # Ім'я хоста — postgres, тобто назва служби вище: всередині мережі
+      # compose контейнери знаходять одне одного саме за нею. Порт тут 5432,
+      # внутрішній, а не 5433: 5433 — це те, під яким база видно з машини.
+      ConnectionStrings__AutoLot: Host=postgres;Port=5432;Database=${POSTGRES_DB:-autolot};Username=${POSTGRES_USER:-autolot};Password=${POSTGRES_PASSWORD}
+
+      Jwt__Key: ${JWT_KEY:?JWT_KEY не заданий — див. .env.example}
+
+      # Перший адміністратор. Без цих двох значень сід його не створює, і в
+      # адмінку не зайде ніхто.
+      Seed__Admin__Email: ${ADMIN_EMAIL:?ADMIN_EMAIL не заданий — див. .env.example}
+      Seed__Admin__Password: ${ADMIN_PASSWORD:?ADMIN_PASSWORD не заданий — див. .env.example}
+
+      # База щойно створена й порожня, тож схему накочує сам застосунок.
+      # Поза контейнером це вимкнено — див. пояснення в Program.cs.
+      Database__MigrateOnStartup: 'true'
+
+      # Наповнити каталог вигаданими оголошеннями: контейнер тут для показу,
+      # а порожній сайт показувати нема чого.
+      DemoData__Enabled: ${DEMO_DATA:-true}
+
+      # Застосунок слухає звичайний HTTP; шифрування — справа того, що стоїть
+      # попереду. Перенаправляти на HTTPS самому означало б зациклитися.
+      Https__Redirect: 'false'
+
+      # Адреса, яку сайт підставляє в листи, sitemap і теги для месенджерів.
+      Email__SiteUrl: ${SITE_URL:-http://localhost:8080}
+
+    ports:
+      - '8080:8080'
+
+    volumes:
+      # Завантажені фото живуть поза контейнером: інакше кожне оновлення
+      # образу стирало б усе, що додали користувачі.
+      - api-uploads:/app/uploads
+
 volumes:
   postgres-data:
+  api-uploads:

@@ -151,3 +151,52 @@ jobs:
       # потім збірка. Окремий крок для типів був би тим самим удруге.
       - name: Типи та збірка
         run: npm run build
+
+  docker:
+    name: Образ
+    runs-on: ubuntu-latest
+
+    # Це не «чи збереться Dockerfile», а «чи працює проєкт однією командою».
+    # Саме цю обіцянку дає README, і перевіряти її варто так само, як тести.
+    env:
+      POSTGRES_PASSWORD: autolot-ci
+      ADMIN_EMAIL: admin@autolot.local
+      ADMIN_PASSWORD: Ci-Password-1!
+
+      # Ключ підпису токенів, потрібен лише цим кільком хвилинам життя
+      # контейнера. Справжній лежить у секретах і сюди не потрапляє.
+      JWT_KEY: ci-only-signing-key-not-a-secret-32+
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Підняти проєкт
+        run: docker compose up --detach --build
+
+      # Застосунок піднімається не миттєво: накочуються міграції, потім сід
+      # малює дві сотні демонстраційних фото. Чекаємо на /health/ready —
+      # саме він каже, що база на місці, а не просто процес запустився.
+      - name: Дочекатися готовності
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:8080/health/ready > /dev/null; then
+              echo "готово з $attempt спроби"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "не дочекалися; ось журнали:"
+          docker compose logs --no-color
+          exit 1
+
+      # Три перевірки, по одній на кожну обіцянку образу: сторінка віддається,
+      # API відповідає, каталог наповнений демо-даними.
+      - name: Перевірити, що воно працює
+        run: |
+          curl --fail --silent http://localhost:8080/ | grep -q 'id="root"'
+          curl --fail --silent http://localhost:8080/api/cars/attributes > /dev/null
+          curl --fail --silent 'http://localhost:8080/api/catalog?PageSize=1' | grep -q '"totalCount":[1-9]'
+
+      - name: Прибрати за собою
+        if: always()
+        run: docker compose down --volumes
