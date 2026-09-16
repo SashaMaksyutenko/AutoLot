@@ -1,3 +1,7 @@
+using System.Globalization;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
 using AutoLot.Tests.TestDoubles;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -33,8 +37,18 @@ internal sealed class AutoLotApi : WebApplicationFactory<Program>
     public const string AdminPassword = "Admin-Password-1!";
 
     private readonly string connectionString;
+    private readonly int authPermitLimit;
 
-    public AutoLotApi(string connectionString) => this.connectionString = connectionString;
+    /// <param name="authPermitLimit">
+    /// Скільки спроб за хвилину дозволити на /api/auth. За замовчуванням
+    /// навмисно багато — див. пояснення нижче; низьке значення потрібне лише
+    /// тому тесту, який перевіряє сам обмежувач.
+    /// </param>
+    public AutoLotApi(string connectionString, int authPermitLimit = 10_000)
+    {
+        this.connectionString = connectionString;
+        this.authPermitLimit = authPermitLimit;
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -91,7 +105,7 @@ internal sealed class AutoLotApi : WebApplicationFactory<Program>
                 тож усі звернення до /api/auth ділили б один рахунок, і
                 половина тестів отримувала б 429 замість перевірки.
                 */
-            ["RateLimiting:AuthPermitLimit"] = "10000",
+            ["RateLimiting:AuthPermitLimit"] = authPermitLimit.ToString(CultureInfo.InvariantCulture),
         };
 }
 
@@ -110,6 +124,13 @@ public sealed class ApiFixture : IAsyncLifetime, IAsyncDisposable
 
     /// <summary>Клієнт без автоматичних перенаправлень: коди відповідей ми перевіряємо самі.</summary>
     public HttpClient Client { get; private set; } = null!;
+
+    /// <summary>
+    /// Та сама тимчасова схема. Потрібна тому тесту, який піднімає власний
+    /// застосунок з іншими налаштуваннями: створювати заради нього ще одну
+    /// схему було б марною роботою.
+    /// </summary>
+    public string ConnectionString => database.ConnectionString;
 
     public async Task InitializeAsync()
     {
@@ -160,6 +181,137 @@ public sealed class ApiFixture : IAsyncLifetime, IAsyncDisposable
         AllowAutoRedirect = false,
         HandleCookies = true,
     });
+
+    // ─────────────────────── Спільні кроки для тестів ───────────────────────
+
+    /// <summary>
+    /// Реєструє нову людину й повертає її токен.
+    ///
+    /// Пошта унікальна для кожного виклику: тести ділять одну базу, і двоє
+    /// однакових адрес посварилися б за той самий рядок.
+    /// </summary>
+    public async Task<string> SellerAsync()
+    {
+        using var response = await Client.PostAsJsonAsync(
+            new Uri("/api/auth/register", UriKind.Relative),
+            new
+            {
+                email = $"seller-{Guid.NewGuid():N}@autolot.test",
+                password = "Integration-Password-1!",
+                displayName = "Тестовий Продавець",
+                accountType = "Private",
+            });
+
+        response.EnsureSuccessStatusCode();
+
+        return await TokenAsync(response);
+    }
+
+    /// <summary>Токен адміністратора, якого створює сід на старті застосунку.</summary>
+    public async Task<string> AdminTokenAsync()
+    {
+        using var response = await Client.PostAsJsonAsync(
+            new Uri("/api/auth/login", UriKind.Relative),
+            new { email = AutoLotApi.AdminEmail, password = AutoLotApi.AdminPassword });
+
+        response.EnsureSuccessStatusCode();
+
+        return await TokenAsync(response);
+    }
+
+    /// <summary>
+    /// Ідентифікатори з довідників, потрібні, щоб створити оголошення.
+    ///
+    /// Беремо їх через API, а не з бази: по-перше, так заразом перевіряються
+    /// самі довідники, по-друге, тест не мусить знати про схему. Значення
+    /// запам'ятовуємо — довідники за час прогону не змінюються.
+    /// </summary>
+    public async Task<(long CityId, long MakeId, long ModelId)> ReferenceAsync()
+    {
+        if (reference is { } cached)
+        {
+            return cached;
+        }
+
+        var regionId = await FirstIdAsync("/api/geo/regions");
+        var cityId = await FirstIdAsync($"/api/geo/regions/{regionId}/cities");
+
+        var makeId = await FirstIdAsync("/api/cars/makes");
+        var modelId = await FirstIdAsync($"/api/cars/makes/{makeId}/models");
+
+        reference = (cityId, makeId, modelId);
+
+        return reference.Value;
+    }
+
+    /// <summary>
+    /// Створює чернетку оголошення від імені власника токена й повертає її
+    /// ідентифікатор. Мінімальний набір полів, який приймає валідатор.
+    /// </summary>
+    public async Task<long> DraftAsync(string token)
+    {
+        var (cityId, makeId, modelId) = await ReferenceAsync();
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            new Uri("/api/listings", UriKind.Relative))
+        {
+            Headers = { Authorization = new AuthenticationHeaderValue("Bearer", token) },
+            Content = JsonContent.Create(new
+            {
+                title = "Honda Pilot 2021",
+                description = "Оголошення, створене інтеграційним тестом.",
+                cityId,
+                price = 25_000m,
+                currency = "Usd",
+                type = "FixedPrice",
+                car = new
+                {
+                    year = 2021,
+                    condition = "Used",
+                    makeId,
+                    modelId,
+                    mileage = 60_000,
+                    ownerCount = 1,
+                    fuelType = "Petrol",
+                    engineVolume = 3.5m,
+                    enginePower = 280,
+                    transmission = "Automatic",
+                    drivetrain = "AllWheel",
+                    bodyType = "Crossover",
+                    color = "Black",
+                    seatCount = 7,
+                    doorCount = 5,
+                },
+            }),
+        };
+
+        using var response = await Client.SendAsync(request);
+
+        var body = await response.Content.ReadAsStringAsync();
+
+        // Тіло відповіді в повідомленні про невдачу: інакше «очікували 201,
+        // отримали 400» не каже нічого про те, яке поле сервер не прийняв.
+        Assert.True(response.StatusCode == System.Net.HttpStatusCode.Created, body);
+
+        return JsonDocument.Parse(body).RootElement.GetProperty("id").GetInt64();
+    }
+
+    private (long CityId, long MakeId, long ModelId)? reference;
+
+    private async Task<long> FirstIdAsync(string path)
+    {
+        var items = await Client.GetFromJsonAsync<JsonElement>(new Uri(path, UriKind.Relative));
+
+        Assert.True(items.GetArrayLength() > 0, $"довідник {path} порожній");
+
+        return items[0].GetProperty("id").GetInt64();
+    }
+
+    private static async Task<string> TokenAsync(HttpResponseMessage response) =>
+        (await response.Content.ReadFromJsonAsync<JsonElement>())
+            .GetProperty("accessToken")
+            .GetString()!;
 }
 
 /// <summary>

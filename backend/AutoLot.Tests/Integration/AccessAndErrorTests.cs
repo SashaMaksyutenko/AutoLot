@@ -37,7 +37,7 @@ public class AccessAndErrorTests(ApiFixture api)
     [Fact]
     public async Task An_ordinary_person_is_not_an_administrator()
     {
-        var token = await RegisterAsync();
+        var token = await api.SellerAsync();
 
         using var request = Authorized(HttpMethod.Get, "/api/admin/stats", token);
         using var response = await api.Client.SendAsync(request);
@@ -48,7 +48,7 @@ public class AccessAndErrorTests(ApiFixture api)
     [Fact]
     public async Task The_administrator_from_the_seed_can_get_in()
     {
-        var token = await AdminTokenAsync();
+        var token = await api.AdminTokenAsync();
 
         using var request = Authorized(HttpMethod.Get, "/api/admin/stats", token);
         using var response = await api.Client.SendAsync(request);
@@ -140,38 +140,6 @@ public class AccessAndErrorTests(ApiFixture api)
             .EnumerateObject()
             .First()
             .Value[0]
-            .GetString()!;
-    }
-
-    private async Task<string> RegisterAsync()
-    {
-        using var response = await api.Client.PostAsJsonAsync(
-            new Uri("/api/auth/register", UriKind.Relative),
-            new
-            {
-                email = $"visitor-{Guid.NewGuid():N}@autolot.test",
-                password = "Integration-Password-1!",
-                displayName = "Звичайний Відвідувач",
-                accountType = "Private",
-            });
-
-        response.EnsureSuccessStatusCode();
-
-        return (await response.Content.ReadFromJsonAsync<JsonElement>())
-            .GetProperty("accessToken")
-            .GetString()!;
-    }
-
-    private async Task<string> AdminTokenAsync()
-    {
-        using var response = await api.Client.PostAsJsonAsync(
-            new Uri("/api/auth/login", UriKind.Relative),
-            new { email = AutoLotApi.AdminEmail, password = AutoLotApi.AdminPassword });
-
-        response.EnsureSuccessStatusCode();
-
-        return (await response.Content.ReadFromJsonAsync<JsonElement>())
-            .GetProperty("accessToken")
             .GetString()!;
     }
 
