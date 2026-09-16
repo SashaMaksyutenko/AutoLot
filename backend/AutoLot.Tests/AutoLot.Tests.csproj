@@ -8,6 +8,14 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
+
+    <!--
+      Піднімає застосунок у пам'яті разом із усім його конвеєром: маршрутизацією,
+      фільтрами, автентифікацією, обробником помилок. HttpClient від нього ходить
+      без мережі, тож тести лишаються швидкими, а перевіряють справжні відповіді —
+      коди, заголовки, JSON.
+    -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.11" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.11" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.11" />
