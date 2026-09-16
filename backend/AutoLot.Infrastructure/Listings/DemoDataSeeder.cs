@@ -41,6 +41,8 @@ public sealed partial class DemoDataSeeder(
 
     private const string ResourceName = "AutoLot.Infrastructure.Persistence.SeedData.demo-sellers.json";
 
+    private const string WmiResourceName = "AutoLot.Infrastructure.Persistence.SeedData.demo-wmi.json";
+
     /// <summary>
     /// Спільний хвіст пошти всіх вигаданих продавців. За ним і тільки за ним
     /// сідер упізнає свої дані: усе інше в базі могла створити людина руками,
@@ -251,11 +253,62 @@ public sealed partial class DemoDataSeeder(
     {
         var linked = await LinkListingsToDealershipsAsync(sellers, cancellationToken);
         var restarted = await RestartStaleAuctionsAsync(sellers, random, cancellationToken);
+        var numbered = await BackfillVinsAsync(sellers, random, cancellationToken);
 
-        if (linked > 0 || restarted > 0)
+        if (linked > 0 || restarted > 0 || numbered > 0)
         {
-            LogRefreshed(logger, restarted, linked);
+            LogRefreshed(logger, restarted, linked, numbered);
         }
+    }
+
+    /// <summary>
+    /// Дописує номери кузова тим демо-авто, у яких їх ще немає.
+    ///
+    /// Потрібно рівно з тієї ж причини, що й перезапуск торгів: база, засіяна
+    /// раніше, лишилася б із порожнім полем VIN на кожній картці, і побачити
+    /// нову перевірку можна було б хіба що стерши всі дані.
+    ///
+    /// Чужого не чіпаємо: беремо лише авто продавців із сід-файла, і лише ті,
+    /// де номера справді немає.
+    /// </summary>
+    private async Task<int> BackfillVinsAsync(
+        List<DemoSeller> sellers,
+        Random random,
+        CancellationToken cancellationToken)
+    {
+        var sellerIds = IdsOf(sellers);
+
+        var cars = await dbContext.Listings
+            .Where(listing => sellerIds.Contains(listing.SellerId) && listing.Car.Vin == null)
+            .Select(listing => new { listing.Car, Slug = listing.Car.Make.Slug })
+            .ToListAsync(cancellationToken);
+
+        if (cars.Count == 0)
+        {
+            return 0;
+        }
+
+        var prefixes = (await SeedResource.ReadAsync<DemoWmiDocument>(WmiResourceName, cancellationToken))
+            .Prefixes;
+
+        var numbered = 0;
+
+        foreach (var row in cars)
+        {
+            var vin = DemoVins.Create(prefixes, row.Slug, row.Car.Year, random);
+
+            if (vin is null)
+            {
+                continue;
+            }
+
+            row.Car.Vin = vin;
+            numbered++;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return numbered;
     }
 
     /// <summary>
@@ -328,6 +381,7 @@ public sealed partial class DemoDataSeeder(
         CancellationToken cancellationToken)
     {
         var models = await LoadModelsAsync(cancellationToken);
+        var prefixes = (await SeedResource.ReadAsync<DemoWmiDocument>(WmiResourceName, cancellationToken)).Prefixes;
         var featureIds = await dbContext.Features.Select(feature => feature.Id).ToListAsync(cancellationToken);
         var countryIds = await dbContext.Countries.Select(country => country.Id).ToListAsync(cancellationToken);
 
@@ -369,6 +423,7 @@ public sealed partial class DemoDataSeeder(
                 sellers,
                 model,
                 year,
+                prefixes,
                 cities[random.Next(cities.Count)],
                 districtsByCity,
                 featureIds,
@@ -398,6 +453,7 @@ public sealed partial class DemoDataSeeder(
         List<DemoSeller> everyone,
         ModelRow model,
         int year,
+        IReadOnlyDictionary<string, string> prefixes,
         CityRow city,
         Dictionary<long, List<long>> districtsByCity,
         List<long> featureIds,
@@ -452,6 +508,7 @@ public sealed partial class DemoDataSeeder(
                 model.MakeId,
                 model.Id,
                 year,
+                DemoVins.Create(prefixes, model.MakeSlug, year, random),
                 isNew,
                 fuelType,
                 featureIds,
@@ -568,7 +625,12 @@ public sealed partial class DemoDataSeeder(
     private Task<List<ModelRow>> LoadModelsAsync(CancellationToken cancellationToken) =>
         dbContext.Models
             .AsNoTracking()
-            .Select(model => new ModelRow(model.Id, model.Name, model.MakeId, model.Make.Name))
+            .Select(model => new ModelRow(
+                model.Id,
+                model.Name,
+                model.MakeId,
+                model.Make.Name,
+                model.Make.Slug))
             .ToListAsync(cancellationToken);
 
     private Task<List<CityRow>> LoadCitiesAsync(CancellationToken cancellationToken) =>
@@ -593,7 +655,7 @@ public sealed partial class DemoDataSeeder(
         public long? DealershipId { get; set; }
     }
 
-    private sealed record ModelRow(long Id, string Name, long MakeId, string MakeName);
+    private sealed record ModelRow(long Id, string Name, long MakeId, string MakeName, string MakeSlug);
 
     private sealed record CityRow(long Id);
 
@@ -609,8 +671,8 @@ public sealed partial class DemoDataSeeder(
 
     [LoggerMessage(
         Level = LogLevel.Information,
-        Message = "Демо-дані оновлено: перезапущено торгів — {Auctions}, прив'язано оголошень до салонів — {Listings}")]
-    private static partial void LogRefreshed(ILogger logger, int auctions, int listings);
+        Message = "Демо-дані оновлено: перезапущено торгів — {Auctions}, прив'язано оголошень до салонів — {Listings}, дописано номерів кузова — {Vins}")]
+    private static partial void LogRefreshed(ILogger logger, int auctions, int listings, int vins);
 
     [LoggerMessage(
         Level = LogLevel.Warning,

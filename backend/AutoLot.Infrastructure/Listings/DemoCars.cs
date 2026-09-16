@@ -24,11 +24,17 @@ internal static class DemoCars
     /// бути не може. Тому набори полів тут тримаються тих самих правил, які
     /// перевіряє CarSpecificationValidator у справжній формі.
     /// </summary>
+    /// <param name="vin">
+    /// Готовий номер кузова або null. Складає його <see cref="DemoVins"/>:
+    /// це окрема робота зі своїми правилами, і мішати її з рештою
+    /// характеристик не варто.
+    /// </param>
     public static Car Build(
         Random random,
         long makeId,
         long modelId,
         int year,
+        string? vin,
         bool isNew,
         FuelType fuelType,
         List<long> featureIds,
@@ -39,6 +45,7 @@ internal static class DemoCars
 
         var car = new Car
         {
+            Vin = vin,
             Year = year,
             Condition = isNew ? CarCondition.New : CarCondition.Used,
             MakeId = makeId,

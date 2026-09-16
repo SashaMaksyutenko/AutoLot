@@ -122,11 +122,24 @@ public static class Vin
     /// дев'ятою. Помилка в одному символі майже завжди змінює результат —
     /// саме для цього така цифра й потрібна.
     /// </summary>
-    public static bool IsCheckDigitValid(string? vin)
+    public static bool IsCheckDigitValid(string? vin) =>
+        CheckDigitFor(vin) is { } expected && vin![CheckDigitPosition - 1] == expected;
+
+    /// <summary>
+    /// Яка контрольна цифра МАЄ стояти дев'ятою в цьому номері.
+    /// </summary>
+    /// <remarks>
+    /// Те, що стоїть там зараз, на результат не впливає: вага дев'ятої позиції
+    /// нульова, тож вона в підрахунок себе не додає. Саме тому одна функція
+    /// годиться і щоб перевірити номер, і щоб зібрати новий.
+    ///
+    /// null означає, що це взагалі не схоже на VIN.
+    /// </remarks>
+    public static char? CheckDigitFor(string? vin)
     {
         if (!HasValidShape(vin))
         {
-            return false;
+            return null;
         }
 
         var sum = 0;
@@ -135,20 +148,27 @@ public static class Vin
         {
             if (!ValueOf(vin![index], out var value))
             {
-                return false;
+                return null;
             }
 
             sum += value * Weights[index];
         }
 
         // Залишок 10 позначають літерою X — окремої цифри для десяти немає.
-        var expected = sum % 11;
-        var actual = vin![CheckDigitPosition - 1];
+        var remainder = sum % 11;
 
-        return expected == 10
-            ? actual == 'X'
-            : actual == (char)('0' + expected);
+        return remainder == 10 ? 'X' : (char)('0' + remainder);
     }
+
+    /// <summary>
+    /// Символ, яким позначають цей модельний рік у десятій позиції.
+    /// Зворотний бік <see cref="PossibleYears"/>.
+    /// </summary>
+    /// <returns>null для років, коли сімнадцятизначного VIN ще не існувало.</returns>
+    public static char? YearCode(int year) =>
+        year < FirstStandardYear
+            ? null
+            : YearCodes[(year - FirstCodedYear) % YearCycle];
 
     /// <summary>
     /// Роки, які може означати десята позиція.
