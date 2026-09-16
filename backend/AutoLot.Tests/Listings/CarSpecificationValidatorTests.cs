@@ -161,10 +161,67 @@ public class CarSpecificationValidatorTests
         Assert.Contains(result.Errors, error => error.PropertyName == nameof(CarSpecification.Year));
     }
 
+    /// <summary>
+    /// Німецький номер, десята позиція якого («F») означає 2015-й — саме той
+    /// рік, що стоїть у решті характеристик.
+    /// </summary>
+    private const string Golf2015 = "WVWZZZ1JZFW000001";
+
     [Fact]
     public void Accepts_a_well_formed_vin()
     {
-        Assert.True(validator.Validate(Petrol() with { Vin = "WVWZZZ1JZXW000001" }).IsValid);
+        Assert.True(validator.Validate(Petrol() with { Vin = Golf2015 }).IsValid);
+    }
+
+    /// <summary>
+    /// Контрольна цифра (дев'ятий символ) обов'язкова лише для номерів із
+    /// Північної Америки — перший символ від 1 до 5.
+    /// </summary>
+    [Fact]
+    public void Rejects_an_american_vin_with_a_broken_check_digit()
+    {
+        // Той самий номер, що й нижче, але з зіпсованою контрольною цифрою.
+        var result = validator.Validate(Petrol() with { Year = 1991, Vin = "1HGBH41J0MN109186" });
+
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(CarSpecification.Vin));
+    }
+
+    [Fact]
+    public void Accepts_an_american_vin_whose_check_digit_adds_up()
+    {
+        Assert.True(validator.Validate(Petrol() with { Year = 1991, Vin = "1HGBH41JXMN109186" }).IsValid);
+    }
+
+    /// <summary>
+    /// А з європейського номера контрольної цифри не вимагаємо: там її просто
+    /// немає, і сувора перевірка відхиляла б справжні авто.
+    /// </summary>
+    [Fact]
+    public void Does_not_demand_a_check_digit_from_a_european_vin()
+    {
+        Assert.True(validator.Validate(Petrol() with { Vin = Golf2015 }).IsValid);
+    }
+
+    [Fact]
+    public void Rejects_a_year_that_contradicts_the_vin()
+    {
+        // Номер каже 2015-й, продавець написав 2008-й.
+        var result = validator.Validate(Petrol() with { Year = 2008, Vin = Golf2015 });
+
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(CarSpecification.Vin));
+    }
+
+    /// <summary>
+    /// Розбіжність рівно на рік — не помилка: у VIN стоїть модельний рік, а він
+    /// починається восени попереднього календарного.
+    /// </summary>
+    [Theory]
+    [InlineData(2014)]
+    [InlineData(2015)]
+    [InlineData(2016)]
+    public void A_model_year_may_differ_from_the_calendar_one(int year)
+    {
+        Assert.True(validator.Validate(Petrol() with { Year = year, Vin = Golf2015 }).IsValid);
     }
 
     [Theory]

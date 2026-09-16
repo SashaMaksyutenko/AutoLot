@@ -68,6 +68,19 @@ internal sealed class CarConfiguration : IEntityTypeConfiguration<Car>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Найчастіші зв'язки фільтрів каталогу.
+        /*
+            Індекс на VIN, а НЕ унікальний.
+
+            Унікальність тут була б помилкою: те саме авто законно
+            перепродають, і через рік про нього з'явиться нове оголошення від
+            нового власника. Заборонити це означало б зламати звичайний
+            перепродаж заради ловлі рідкісного шахрая.
+
+            Правило «одночасно продається лише одне» перевіряє ListingService
+            при поданні на модерацію — а індекс просто робить цей пошук швидким.
+        */
+        builder.HasIndex(car => car.Vin);
+
         builder.HasIndex(car => new { car.MakeId, car.ModelId });
         builder.HasIndex(car => car.Year);
         builder.HasIndex(car => car.Mileage);

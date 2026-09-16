@@ -248,7 +248,11 @@ public sealed class ApiFixture : IAsyncLifetime, IAsyncDisposable
     /// Створює чернетку оголошення від імені власника токена й повертає її
     /// ідентифікатор. Мінімальний набір полів, який приймає валідатор.
     /// </summary>
-    public async Task<long> DraftAsync(string token)
+    /// <param name="vin">
+    /// Номер кузова; за замовчуванням не вказаний. Якщо передаєте свій — його
+    /// десята позиція має відповідати 2021 року, інакше валідатор відмовить.
+    /// </param>
+    public async Task<long> DraftAsync(string token, string? vin = null)
     {
         var (cityId, makeId, modelId) = await ReferenceAsync();
 
@@ -267,6 +271,7 @@ public sealed class ApiFixture : IAsyncLifetime, IAsyncDisposable
                 type = "FixedPrice",
                 car = new
                 {
+                    vin,
                     year = 2021,
                     condition = "Used",
                     makeId,

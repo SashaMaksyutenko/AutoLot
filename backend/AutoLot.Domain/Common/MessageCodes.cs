@@ -39,6 +39,9 @@ public static class MessageCodes
     public const string PlaceCityFirst = "place.city.first";
     public const string ProfileDisplayNameRequired = "profile.displayName.required";
     public const string CarVinFormat = "car.vin.format";
+    public const string CarVinCheckDigit = "car.vin.checkDigit";
+    public const string CarVinYearMismatch = "car.vin.year";
+    public const string CarVinDuplicate = "car.vin.duplicate";
     public const string CarMakeRequired = "car.make.required";
     public const string CarModelRequired = "car.model.required";
     public const string CarGenerationInvalid = "car.generation.invalid";

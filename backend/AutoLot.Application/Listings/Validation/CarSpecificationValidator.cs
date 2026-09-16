@@ -1,8 +1,9 @@
 using AutoLot.Application.Common.Abstractions;
 using AutoLot.Application.Listings.Dtos;
-using AutoLot.Domain.Enums;
-using FluentValidation;
 using AutoLot.Domain.Common;
+using AutoLot.Domain.Enums;
+using AutoLot.Domain.Listings;
+using FluentValidation;
 
 namespace AutoLot.Application.Listings.Validation;
 
@@ -19,8 +20,7 @@ public sealed class CarSpecificationValidator : AbstractValidator<CarSpecificati
     /// <summary>Перший серійний автомобіль з'явився значно раніше, але оголошення про них не подають.</summary>
     private const int EarliestYear = 1950;
 
-    /// <summary>У VIN не буває I, O та Q — їх плутають з одиницею та нулем.</summary>
-    private const string VinPattern = "^[A-HJ-NPR-Z0-9]{17}$";
+
 
     public CarSpecificationValidator(IDateTimeProvider clock)
     {
@@ -33,10 +33,43 @@ public sealed class CarSpecificationValidator : AbstractValidator<CarSpecificati
             .InclusiveBetween(EarliestYear, latestYear)
             .WithMessage($"Рік випуску має бути між {EarliestYear} та {latestYear}.");
 
+        /*
+            Три перевірки VIN, від грубої до тонкої. Кожна наступна працює лише
+            тоді, коли попередня пройшла: рахувати контрольну цифру в рядку з
+            п'ятнадцяти символів безглуздо.
+
+            Сам розбір живе в домені (Vin) — це чисті правила стандарту, до
+            яких ні база, ні HTTP стосунку не мають.
+        */
         RuleFor(car => car.Vin)
-            .Matches(VinPattern)
+            .Must(vin => Vin.HasValidShape(Vin.Normalize(vin)))
             .WithMessage(MessageCodes.CarVinFormat)
             .When(car => !string.IsNullOrWhiteSpace(car.Vin));
+
+        /*
+            Контрольну цифру вимагаємо лише там, де вона обов'язкова за
+            стандартом, — у номерах з Північної Америки. Європейські виробники
+            дев'яту позицію заповнюють як заманеться, і вимога до всіх поспіль
+            відхиляла б цілком справжні авто.
+        */
+        RuleFor(car => car.Vin)
+            .Must(vin => Vin.IsCheckDigitValid(Vin.Normalize(vin)))
+            .WithMessage(MessageCodes.CarVinCheckDigit)
+            .When(car => Vin.RequiresCheckDigit(Vin.Normalize(car.Vin)));
+
+        /*
+            Рік звіряємо з десятою позицією номера. Розбіжність на рік
+            допустима: у VIN стоїть МОДЕЛЬНИЙ рік, який починається восени
+            попереднього календарного.
+
+            Умова про 1981-й не зайва: сімнадцятизначних номерів до того не
+            існувало, і питати з них рік нема сенсу.
+        */
+        RuleFor(car => car.Vin)
+            .Must((car, vin) => Vin.MatchesYear(Vin.Normalize(vin), car.Year, latestYear))
+            .WithMessage(MessageCodes.CarVinYearMismatch)
+            .When(car => Vin.HasValidShape(Vin.Normalize(car.Vin))
+                && car.Year >= Vin.FirstStandardYear);
 
         RuleFor(car => car.MakeId).GreaterThan(0).WithMessage(MessageCodes.CarMakeRequired);
         RuleFor(car => car.ModelId).GreaterThan(0).WithMessage(MessageCodes.CarModelRequired);

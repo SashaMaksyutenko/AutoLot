@@ -399,11 +399,53 @@ internal sealed partial class ListingService(
         // місце в ліміті займає лише те, що йде у видачу.
         await EnsureLimitNotReachedAsync(actorId, cancellationToken, listing.Id);
 
+        await EnsureVinIsNotOnSaleAsync(listing, cancellationToken);
+
         listing.SubmitForModeration();
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
         LogSubmitted(logger, listingId, actorId);
+    }
+
+    /// <summary>
+    /// Не дає виставити авто, яке вже продається під тим самим VIN.
+    ///
+    /// Один номер кузова — одне авто на світі, тож два оголошення про нього
+    /// одночасно означають або дубль від самого продавця, або те, чого на
+    /// майданчику бути не повинно: чужі фото під чужим номером. Це класична
+    /// ознака шахрайства, і ловиться вона без жодного зовнішнього сервісу.
+    ///
+    /// Перевірка стоїть на ПОДАВАННІ, а не на створенні. Чернетку ніхто не
+    /// бачить, місця у видачі вона не займає, а поки людина заповнює форму,
+    /// попереднє оголошення цілком могло піти в архів. Відмовляти наперед
+    /// означало б заважати там, де проблеми ще немає.
+    ///
+    /// Перепродаж це не ламає: у проданого чи архівного оголошення статус уже
+    /// інший, тож новий власник виставить те саме авто спокійно.
+    /// </summary>
+    private async Task EnsureVinIsNotOnSaleAsync(Listing listing, CancellationToken cancellationToken)
+    {
+        var vin = listing.Car?.Vin;
+
+        if (string.IsNullOrEmpty(vin))
+        {
+            return;
+        }
+
+        var alreadyOnSale = await dbContext.Listings
+            .AsNoTracking()
+            .AnyAsync(
+                other => other.Id != listing.Id
+                    && other.Car.Vin == vin
+                    && (other.Status == ListingStatus.Active
+                        || other.Status == ListingStatus.PendingModeration),
+                cancellationToken);
+
+        if (alreadyOnSale)
+        {
+            throw new Domain.Common.DomainRuleException(MessageCodes.CarVinDuplicate);
+        }
     }
 
     public async Task<IReadOnlyList<ListingDetails>> GetManyAsync(
@@ -773,7 +815,7 @@ internal sealed partial class ListingService(
 
     private static void ApplyCarSpecification(Car car, CarSpecification specification)
     {
-        car.Vin = string.IsNullOrWhiteSpace(specification.Vin) ? null : specification.Vin.ToUpperInvariant();
+        car.Vin = Vin.Normalize(specification.Vin);
         car.Year = specification.Year;
         car.Condition = specification.Condition;
         car.MakeId = specification.MakeId;
