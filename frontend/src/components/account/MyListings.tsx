@@ -5,6 +5,7 @@ import {
   archiveListing,
   deleteDraft,
   fetchMyListings,
+  changePrice,
   submitForModeration,
 } from '../../api/myListings'
 import { ApiError } from '../../api/client'
@@ -67,6 +68,7 @@ function ListingRow({ listing }: { listing: ListingSummary }) {
 
   const queryClient = useQueryClient()
   const [selling, setSelling] = useState(false)
+  const [repricing, setRepricing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = () => {
@@ -93,6 +95,10 @@ function ListingRow({ listing }: { listing: ListingSummary }) {
   const canEdit = listing.status === 'Draft' || listing.status === 'Rejected'
   const canSubmit = canEdit
   const canSell = listing.status === 'Active'
+
+  // Ціну міняють лише в опублікованому, і лише там, де її задає продавець:
+  // у торгах ціну ведуть ставки.
+  const canReprice = listing.status === 'Active' && listing.type !== 'Auction'
   const canArchive = listing.status !== 'Draft' && listing.status !== 'Archived'
   const canDelete = listing.status === 'Draft'
 
@@ -145,6 +151,17 @@ function ListingRow({ listing }: { listing: ListingSummary }) {
             </button>
           )}
 
+          {canReprice && (
+            <button
+              type="button"
+              onClick={() => setRepricing((open) => !open)}
+              disabled={act.isPending}
+              className="btn"
+            >
+              {t('priceHistory.changePrice')}
+            </button>
+          )}
+
           {canSell && (
             <button
               type="button"
@@ -191,6 +208,16 @@ function ListingRow({ listing }: { listing: ListingSummary }) {
       )}
 
       {error && <p className="text-[12px] text-danger">{error}</p>}
+
+      {repricing && (
+        <PriceForm
+          listing={listing}
+          onDone={() => {
+            setRepricing(false)
+            refresh()
+          }}
+        />
+      )}
 
       {selling && (
         <SoldForm
@@ -246,5 +273,60 @@ function Thumbnail({ listing }: { listing: ListingSummary }) {
       alt=""
       className="h-[60px] w-[80px] shrink-0 rounded-control border border-line object-cover"
     />
+  )
+}
+
+/**
+ * Зміна ціни опублікованого оголошення.
+ *
+ * Валюту не питаємо: міняти її разом із ціною означало б зробити історію
+ * нечитабельною («було 5000, стало 200000» — це подорожчання чи зміна
+ * валюти?). Кому справді треба інша валюта, зніме оголошення й подасть
+ * наново.
+ */
+function PriceForm({ listing, onDone }: { listing: ListingSummary; onDone: () => void }) {
+  const { t } = useTranslation()
+  const [price, setPrice] = useState(String(listing.price))
+  const [error, setError] = useState<string | null>(null)
+
+  const save = useMutation({
+    mutationFn: () => changePrice(listing.id, Number(price), listing.currency),
+    onSuccess: onDone,
+    onError: (caught) =>
+      setError(caught instanceof ApiError ? caught.message : t('my.actionFailed')),
+  })
+
+  return (
+    <div className="grid gap-2 rounded-control bg-surface-2 p-2.5">
+      <label className="grid gap-1 text-[12.5px] text-ink-2">
+        {t('priceHistory.newPrice')}
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            value={price}
+            onChange={(event) => setPrice(event.target.value)}
+            inputMode="numeric"
+            className="control w-40 font-mono tabular-nums"
+          />
+          <span className="font-mono text-[13px]">{listing.currency}</span>
+        </div>
+      </label>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => save.mutate()}
+          disabled={save.isPending || Number(price) <= 0}
+          className="btn btn-primary"
+        >
+          {t('priceHistory.save')}
+        </button>
+
+        <button type="button" onClick={onDone} className="btn">
+          {t('priceHistory.cancel')}
+        </button>
+      </div>
+
+      {error && <p className="text-[12px] text-danger">{error}</p>}
+    </div>
   )
 }

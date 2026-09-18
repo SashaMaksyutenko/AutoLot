@@ -254,11 +254,51 @@ public sealed partial class DemoDataSeeder(
         var linked = await LinkListingsToDealershipsAsync(sellers, cancellationToken);
         var restarted = await RestartStaleAuctionsAsync(sellers, random, cancellationToken);
         var numbered = await BackfillVinsAsync(sellers, random, cancellationToken);
+        var priced = await BackfillPriceHistoryAsync(sellers, random, cancellationToken);
 
-        if (linked > 0 || restarted > 0 || numbered > 0)
+        if (linked > 0 || restarted > 0 || numbered > 0 || priced > 0)
         {
-            LogRefreshed(logger, restarted, linked, numbered);
+            LogRefreshed(logger, restarted, linked, numbered, priced);
         }
+    }
+
+    /// <summary>
+    /// Вигадує історію ціни тим демо-оголошенням, у яких її ще немає.
+    ///
+    /// Та сама причина, що й у номерів кузова: база, засіяна раніше, лишилася
+    /// б без жодного графіка, і побачити нову можливість можна було б хіба що
+    /// стерши всі дані.
+    /// </summary>
+    private async Task<int> BackfillPriceHistoryAsync(
+        List<DemoSeller> sellers,
+        Random random,
+        CancellationToken cancellationToken)
+    {
+        var sellerIds = IdsOf(sellers);
+        var now = clock.UtcNow;
+
+        // Беремо лише ті, де історії немає зовсім: дописувати до наявної
+        // означало б плутати вигадане зі справжнім.
+        var listings = await dbContext.Listings
+            .Where(listing => sellerIds.Contains(listing.SellerId))
+            .Where(listing => !dbContext.Set<PriceChange>()
+                .Any(change => change.ListingId == listing.Id))
+            .ToListAsync(cancellationToken);
+
+        if (listings.Count == 0)
+        {
+            return 0;
+        }
+
+        foreach (var listing in listings)
+        {
+            dbContext.Set<PriceChange>().AddRange(
+                DemoPrices.Create(listing, random, listing.PublishedAt ?? now, now));
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return listings.Count;
     }
 
     /// <summary>
@@ -523,6 +563,9 @@ public sealed partial class DemoDataSeeder(
             listing.CityDistrictId = districts[random.Next(districts.Count)];
         }
 
+        dbContext.Set<PriceChange>().AddRange(
+            DemoPrices.Create(listing, random, listing.PublishedAt ?? now, now));
+
         await DemoCars.AddPhotosAsync(
             listing,
             model.MakeName,
@@ -671,8 +714,13 @@ public sealed partial class DemoDataSeeder(
 
     [LoggerMessage(
         Level = LogLevel.Information,
-        Message = "Демо-дані оновлено: перезапущено торгів — {Auctions}, прив'язано оголошень до салонів — {Listings}, дописано номерів кузова — {Vins}")]
-    private static partial void LogRefreshed(ILogger logger, int auctions, int listings, int vins);
+        Message = "Демо-дані оновлено: перезапущено торгів — {Auctions}, прив'язано оголошень до салонів — {Listings}, дописано номерів кузова — {Vins}, історій ціни — {Prices}")]
+    private static partial void LogRefreshed(
+        ILogger logger,
+        int auctions,
+        int listings,
+        int vins,
+        int prices);
 
     [LoggerMessage(
         Level = LogLevel.Warning,

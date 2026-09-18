@@ -116,3 +116,19 @@ public sealed class RejectListingRequestValidator : AbstractValidator<RejectList
             .MaximumLength(500).WithMessage(MessageCodes.ModerationReasonTooLong);
     }
 }
+
+/// <summary>
+/// Зміна ціни в опублікованому оголошенні. Перевіряємо те саме, що й при
+/// створенні: більше нуля й у межах здорового глузду.
+/// </summary>
+public sealed class ChangePriceRequestValidator : AbstractValidator<ChangePriceRequest>
+{
+    public ChangePriceRequestValidator()
+    {
+        RuleFor(request => request.Price)
+            .GreaterThan(0).WithMessage(MessageCodes.ListingPricePositive)
+            .LessThanOrEqualTo(ListingRules.MaxPrice).WithMessage(MessageCodes.ListingPriceUnrealistic);
+
+        RuleFor(request => request.Currency).IsInEnum().WithMessage(MessageCodes.ListingCurrencyUnknown);
+    }
+}

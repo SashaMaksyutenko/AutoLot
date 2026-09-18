@@ -50,6 +50,11 @@ const dateTime = memoise(
     }),
 )
 
+/** «14 вересня» — для історії цін: година там нічого не додає. */
+const dayMonth = memoise(
+  (locale) => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long' }),
+)
+
 const monthYear = memoise(
   (locale) => new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }),
 )
@@ -70,6 +75,10 @@ export function formatCount(count: number): string {
 
 export function formatDateTime(iso: string): string {
   return dateTime(getLanguage()).format(new Date(iso))
+}
+
+export function formatDate(iso: string): string {
+  return dayMonth(getLanguage()).format(new Date(iso))
 }
 
 /**

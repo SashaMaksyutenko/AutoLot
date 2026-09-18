@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPost } from './client'
+import { apiDelete, apiGet, apiPost, apiPut } from './client'
 import type { ListingSummary } from './catalog'
 
 /**
@@ -50,6 +50,18 @@ export function submitForModeration(listingId: number): Promise<void> {
 
 export function archiveListing(listingId: number): Promise<void> {
   return apiPost<void>(`/api/listings/${listingId}/archive`)
+}
+
+/**
+ * Ціну опублікованого оголошення міняють окремо від решти.
+ *
+ * Причина в тому, що опубліковане редагувати не можна взагалі: інакше після
+ * модерації в ньому підмінили б і фото, і опис. А ціна рухається постійно —
+ * саме зниження ціни й продає авто, і ганяти оголошення через чергу щоразу
+ * було б безглуздо.
+ */
+export function changePrice(listingId: number, price: number, currency: string): Promise<void> {
+  return apiPut<void>(`/api/listings/${listingId}/price`, { price, currency })
 }
 
 /** Видалити можна лише чернетку — решта архівується. */

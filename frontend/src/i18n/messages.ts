@@ -24,6 +24,14 @@ const uk = {
   'nav.admin': 'Адмінка',
   'nav.auctions': 'Аукціони',
 
+  'priceHistory.changePrice': 'Змінити ціну',
+  'priceHistory.newPrice': 'Нова ціна',
+  'priceHistory.save': 'Зберегти',
+  'priceHistory.cancel': 'Скасувати',
+  'priceHistory.fell': 'Подешевшало на {percent}%',
+  'priceHistory.rose': 'Подорожчало на {percent}%',
+  'priceHistory.since': 'від {date}',
+
   'page.loading': 'Завантажуємо сторінку…',
   'page.loadFailed': 'Сторінку не вдалося завантажити. Найчастіше це минає після оновлення.',
   'page.reload': 'Оновити сторінку',
@@ -834,6 +842,14 @@ const en: Record<MessageKey, string> = {
   'nav.dealers': 'Dealerships',
   'nav.admin': 'Admin',
   'nav.auctions': 'Auctions',
+
+  'priceHistory.changePrice': 'Change the price',
+  'priceHistory.newPrice': 'New price',
+  'priceHistory.save': 'Save',
+  'priceHistory.cancel': 'Cancel',
+  'priceHistory.fell': 'Down {percent}%',
+  'priceHistory.rose': 'Up {percent}%',
+  'priceHistory.since': 'since {date}',
 
   'page.loading': 'Loading the page…',
   'page.loadFailed': 'The page could not be loaded. A refresh usually fixes it.',

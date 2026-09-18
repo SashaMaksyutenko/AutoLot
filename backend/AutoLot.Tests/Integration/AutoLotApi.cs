@@ -302,6 +302,44 @@ public sealed class ApiFixture : IAsyncLifetime, IAsyncDisposable
         return JsonDocument.Parse(body).RootElement.GetProperty("id").GetInt64();
     }
 
+    /// <summary>
+    /// Проводить оголошення весь шлях до видачі: подання плюс схвалення
+    /// адміністратором. Потрібно кільком класам тестів, тож живе тут.
+    /// </summary>
+    public async Task PublishAsync(long listingId, string token)
+    {
+        using var submitted = await SendAsync(HttpMethod.Post, $"/api/listings/{listingId}/submit", token);
+
+        submitted.EnsureSuccessStatusCode();
+
+        using var approved = await SendAsync(
+            HttpMethod.Post,
+            $"/api/moderation/listings/{listingId}/approve",
+            await AdminTokenAsync());
+
+        approved.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Запит від імені власника токена. Тіло — необов'язкове.</summary>
+    public Task<HttpResponseMessage> SendAsync(
+        HttpMethod method,
+        string path,
+        string token,
+        object? body = null)
+    {
+        var request = new HttpRequestMessage(method, new Uri(path, UriKind.Relative))
+        {
+            Headers = { Authorization = new AuthenticationHeaderValue("Bearer", token) },
+        };
+
+        if (body is not null)
+        {
+            request.Content = JsonContent.Create(body);
+        }
+
+        return Client.SendAsync(request);
+    }
+
     private (long CityId, long MakeId, long ModelId)? reference;
 
     private async Task<long> FirstIdAsync(string path)

@@ -73,6 +73,38 @@ public interface IListingService
         int take,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Змінює ціну вже опублікованого оголошення.
+    /// </summary>
+    /// <remarks>
+    /// Окремо від звичайного редагування, і це не примха. Опубліковане
+    /// оголошення правити не можна взагалі — інакше після модерації в ньому
+    /// підмінили б і фото, і опис. А от ціна змінюється весь час: саме
+    /// зниження ціни й рухає продаж, і ганяти оголошення через чергу
+    /// модерації щоразу було б безглуздо.
+    ///
+    /// Кожна зміна лягає в історію — її показує картка авто.
+    /// </remarks>
+    Task ChangePriceAsync(
+        long listingId,
+        long actorId,
+        decimal price,
+        Currency currency,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Як мінялася ціна оголошення, від давнішого до свіжішого.
+    /// </summary>
+    /// <remarks>
+    /// Видимість та сама, що й у самого оголошення: історія ціни чужої
+    /// чернетки має бути такою ж недоступною, як і сама чернетка. Тому метод
+    /// приймає того, хто питає, а не лише номер лота.
+    /// </remarks>
+    Task<IReadOnlyList<PriceHistoryPoint>> GetPriceHistoryAsync(
+        long listingId,
+        long? actorId,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ListingSummary>> GetPurchasedAsync(
         long buyerId,
         CancellationToken cancellationToken = default);

@@ -501,6 +501,114 @@ internal sealed partial class ListingService(
         ];
     }
 
+    public async Task ChangePriceAsync(
+        long listingId,
+        long actorId,
+        decimal price,
+        Currency currency,
+        CancellationToken cancellationToken = default)
+    {
+        var listing = await LoadForWriteAsync(listingId, cancellationToken);
+        await EnsureCanManageAsync(listing, actorId, cancellationToken);
+
+        if (listing.Status is not ListingStatus.Active)
+        {
+            throw new Domain.Common.DomainRuleException(MessageCodes.PriceChangeWrongStatus);
+        }
+
+        // У торгах ціну веде сама сутність аукціону: її рухають ставки, і
+        // переписати її збоку означало б підмінити результат торгів.
+        if (listing.Type is ListingType.Auction)
+        {
+            throw new Domain.Common.DomainRuleException(MessageCodes.PriceChangeAuction);
+        }
+
+        await EnsureStartingPointAsync(listing, cancellationToken);
+
+        await ApplyPriceAsync(listing, price, currency, reservePrice: null, cancellationToken);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        LogPriceChanged(logger, listingId, actorId, price, currency);
+    }
+
+    /// <summary>
+    /// Дописує в історію ціну, з якої оголошення починалося, — якщо історії
+    /// ще немає зовсім.
+    /// </summary>
+    /// <remarks>
+    /// Потрібно оголошенням, виставленим ДО того, як з'явилася історія цін:
+    /// у них немає жодної точки. Без цього кроку перша зміна дала б одну
+    /// точку — нову ціну, — і графік не показався б, бо малювати лінію з
+    /// однієї точки нема з чого. Продавцеві довелося б змінити ціну двічі,
+    /// щоб покупці побачили перше зниження.
+    ///
+    /// Датою ставимо момент публікації: саме тоді ця ціна й з'явилася перед
+    /// покупцями.
+    /// </remarks>
+    private async Task EnsureStartingPointAsync(Listing listing, CancellationToken cancellationToken)
+    {
+        var hasHistory = await dbContext.Set<PriceChange>()
+            .AnyAsync(change => change.ListingId == listing.Id, cancellationToken);
+
+        if (hasHistory)
+        {
+            return;
+        }
+
+        dbContext.Set<PriceChange>().Add(new PriceChange
+        {
+            ListingId = listing.Id,
+            Price = listing.Price,
+            Currency = listing.Currency,
+            PriceUah = listing.PriceUah,
+            ChangedAt = listing.PublishedAt ?? clock.UtcNow,
+        });
+    }
+
+    public async Task<IReadOnlyList<PriceHistoryPoint>> GetPriceHistoryAsync(
+        long listingId,
+        long? actorId,
+        CancellationToken cancellationToken = default)
+    {
+        var listing = await dbContext.Listings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == listingId, cancellationToken);
+
+        if (listing is null)
+        {
+            return [];
+        }
+
+        /*
+            Та сама межа видимості, що й у самого оголошення: опубліковане
+            бачать усі, решту — лише свої. Порожній перелік замість відмови
+            навмисно: історія ціни це доповнення до картки, і окрема помилка
+            тут нічого корисного не додала б.
+        */
+        var isPublic = listing.Status is ListingStatus.Active or ListingStatus.Sold;
+
+        var isOwner = actorId is { } id
+            && await access.CanManageAsync(listing, id, cancellationToken);
+
+        if (!isPublic && !isOwner)
+        {
+            return [];
+        }
+
+        return await dbContext.Set<PriceChange>()
+            .AsNoTracking()
+            .Where(change => change.ListingId == listingId)
+            .OrderBy(change => change.ChangedAt)
+            .ThenBy(change => change.Id)
+            .Select(change => new PriceHistoryPoint(
+                change.Price,
+                change.Currency,
+                change.PriceUah,
+                change.ChangedAt))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<ListingSummary>> GetPurchasedAsync(
         long buyerId,
         CancellationToken cancellationToken = default)
@@ -801,6 +909,10 @@ internal sealed partial class ListingService(
     {
         var rate = await exchangeRates.GetRateToUahAsync(currency, cancellationToken);
 
+        var priceUah = decimal.Round(price * rate, 2);
+
+        RecordPriceChange(listing, price, currency, priceUah);
+
         listing.Price = price;
         listing.Currency = currency;
 
@@ -810,7 +922,40 @@ internal sealed partial class ListingService(
 
         // Знімок у гривні рахуємо на момент збереження; щоденна задача
         // перерахує його, коли зміниться курс.
-        listing.PriceUah = decimal.Round(price * rate, 2);
+        listing.PriceUah = priceUah;
+    }
+
+    /// <summary>
+    /// Дописує рядок в історію ціни — але лише коли ціна справді інша.
+    /// </summary>
+    /// <remarks>
+    /// Порівнюємо і суму, і валюту: «5000 USD» та «5000 UAH» це різні ціни,
+    /// хоч число однакове.
+    ///
+    /// Перший запис з'являється разом із оголошенням: без нього графік
+    /// починався б із другої ціни, і перше зниження виглядало б так, ніби
+    /// авто одразу виставили дешевшим.
+    ///
+    /// Редагування, яке ціни не торкнулося, історію не засмічує — інакше
+    /// виправлена одруківка в описі додавала б у графік зайву точку.
+    /// </remarks>
+    private void RecordPriceChange(Listing listing, decimal price, Currency currency, decimal priceUah)
+    {
+        var isFirst = listing.Id == 0;
+
+        if (!isFirst && listing.Price == price && listing.Currency == currency)
+        {
+            return;
+        }
+
+        dbContext.Set<PriceChange>().Add(new PriceChange
+        {
+            Listing = listing,
+            Price = price,
+            Currency = currency,
+            PriceUah = priceUah,
+            ChangedAt = clock.UtcNow,
+        });
     }
 
     private static void ApplyCarSpecification(Car car, CarSpecification specification)
@@ -904,4 +1049,15 @@ internal sealed partial class ListingService(
         Level = LogLevel.Warning,
         Message = "Чернетку {ListingId} видалено користувачем {ActorId}")]
     private static partial void LogDraftDeleted(ILogger logger, long listingId, long actorId);
+
+    [LoggerMessage(
+        EventId = 203,
+        Level = LogLevel.Information,
+        Message = "Ціну оголошення {ListingId} змінено користувачем {ActorId} на {Price} {Currency}")]
+    private static partial void LogPriceChanged(
+        ILogger logger,
+        long listingId,
+        long actorId,
+        decimal price,
+        Currency currency);
 }

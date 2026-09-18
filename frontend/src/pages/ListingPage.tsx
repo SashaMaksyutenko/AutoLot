@@ -12,6 +12,7 @@ import { VerifiedMark } from '../components/catalog/ListingCard'
 import { AuctionPanel } from '../components/listing/AuctionPanel'
 import { Gallery } from '../components/listing/Gallery'
 import { DealReviews } from '../components/listing/DealReviews'
+import { PriceHistory } from '../components/listing/PriceHistory'
 import { PriceInsight } from '../components/listing/PriceInsight'
 import { Questions } from '../components/listing/Questions'
 import { RatingLine } from '../components/listing/Stars'
@@ -229,6 +230,13 @@ function Loaded({ listing }: { listing: ListingDetails }) {
 
             {/* Ринкова довідка одразу під ціною — саме там її шукають. */}
             {!isAuction && <PriceInsight listingId={listing.id} />}
+
+            {/*
+              Історія ціни — під довідкою про ринок. Обидва блоки відповідають
+              на одне питання «чи це добра ціна», але з різних боків: один
+              порівнює з іншими авто, другий — із тим, що було тут учора.
+            */}
+            {!isAuction && <PriceHistory listingId={listing.id} />}
 
             {(listing.isNegotiable || listing.acceptsTrade || listing.isUrgent) && (
               <div className="flex flex-wrap gap-1.5">

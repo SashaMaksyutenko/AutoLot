@@ -83,6 +83,9 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
     /// <summary>Що людина дивилася — для історії переглядів.</summary>
     public DbSet<ListingView> ListingViews => Set<ListingView>();
 
+    /// <summary>Як мінялася ціна оголошення.</summary>
+    public DbSet<PriceChange> PriceChanges => Set<PriceChange>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

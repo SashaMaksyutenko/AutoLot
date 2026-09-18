@@ -121,6 +121,51 @@ public sealed class ListingsController(
     }
 
     /// <summary>Власні оголошення, за потреби відфільтровані за статусом.</summary>
+    /// <summary>
+    /// Змінює ціну опублікованого оголошення.
+    ///
+    /// Окремо від PUT /api/listings/{id}: те редагує все й лише чернетку, а
+    /// це — саму ціну й лише в опублікованому. Модерацію зміна ціни не
+    /// проходить, бо ціна й є тим, що продавець рухає щодня.
+    /// </summary>
+    [HttpPut("{listingId:long}/price")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ChangePrice(
+        long listingId,
+        ChangePriceRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (currentUser.Id is not { } actorId)
+        {
+            return Unauthorized();
+        }
+
+        await listingService.ChangePriceAsync(
+            listingId,
+            actorId,
+            request.Price,
+            request.Currency,
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Як мінялася ціна. Доступно без входу — для опублікованого оголошення
+    /// це така сама частина картки, як пробіг чи рік.
+    /// </summary>
+    [HttpGet("{listingId:long}/price-history")]
+    [AllowAnonymous]
+    [ProducesResponseType<IReadOnlyList<PriceHistoryPoint>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> PriceHistory(long listingId, CancellationToken cancellationToken)
+    {
+        return Ok(await listingService.GetPriceHistoryAsync(listingId, currentUser.Id, cancellationToken));
+    }
+
     [HttpGet("mine")]
     [ProducesResponseType<IReadOnlyList<ListingSummary>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMine(

@@ -42,6 +42,8 @@ public static class MessageCodes
     public const string CarVinCheckDigit = "car.vin.checkDigit";
     public const string CarVinYearMismatch = "car.vin.year";
     public const string CarVinDuplicate = "car.vin.duplicate";
+    public const string PriceChangeWrongStatus = "listing.price.wrongStatus";
+    public const string PriceChangeAuction = "listing.price.auction";
     public const string CarMakeRequired = "car.make.required";
     public const string CarModelRequired = "car.model.required";
     public const string CarGenerationInvalid = "car.generation.invalid";
