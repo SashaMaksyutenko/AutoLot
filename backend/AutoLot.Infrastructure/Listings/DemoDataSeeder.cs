@@ -254,12 +254,84 @@ public sealed partial class DemoDataSeeder(
         var linked = await LinkListingsToDealershipsAsync(sellers, cancellationToken);
         var restarted = await RestartStaleAuctionsAsync(sellers, random, cancellationToken);
         var numbered = await BackfillVinsAsync(sellers, random, cancellationToken);
+        var rounded = await RoundDemoPricesAsync(sellers, cancellationToken);
         var priced = await BackfillPriceHistoryAsync(sellers, random, cancellationToken);
 
-        if (linked > 0 || restarted > 0 || numbered > 0 || priced > 0)
+        if (linked > 0 || restarted > 0 || numbered > 0 || rounded > 0 || priced > 0)
         {
-            LogRefreshed(logger, restarted, linked, numbered, priced);
+            LogRefreshed(logger, restarted, linked, numbered, priced + rounded);
         }
+    }
+
+    /// <summary>
+    /// Округлює ціни демо-оголошень, засіяних раніше, разом з їхньою історією.
+    /// </summary>
+    /// <remarks>
+    /// Ранні версії сідера ставили ціну з точністю до долара («13 992 $»), а
+    /// стару ціну в історії рахували множенням на відсоток («58 015 $»).
+    /// Справжні продавці так не пишуть, і вигадані дані видавали себе з
+    /// першого погляду.
+    ///
+    /// Записи історії загалом не редагує ніхто; це правило стосується
+    /// справжніх змін ціни. Ці ж записи вигадав сам сідер і лише для своїх,
+    /// демонстраційних оголошень. Правимо їх НА МІСЦІ, а не видаляємо: ті
+    /// самі авто лишаються з історією, з тією самою кількістю змін і тими
+    /// самими датами — див. DemoPrices.RoundInPlace.
+    ///
+    /// Після одного проходу все кругле, тож наступні запуски нічого не чіпають.
+    /// Лоти з торгами пропускаємо: їхня ціна прив'язана до стартової ціни
+    /// аукціону, і правити одне без іншого означало б розсинхронізувати їх.
+    /// </remarks>
+    private async Task<int> RoundDemoPricesAsync(
+        List<DemoSeller> sellers,
+        CancellationToken cancellationToken)
+    {
+        var sellerIds = IdsOf(sellers);
+
+        var listings = await dbContext.Listings
+            .Where(listing => sellerIds.Contains(listing.SellerId) && listing.Type == ListingType.FixedPrice)
+            .ToListAsync(cancellationToken);
+
+        var listingIds = listings.Select(listing => listing.Id).ToList();
+
+        var histories = (await dbContext.Set<PriceChange>()
+                .Where(change => listingIds.Contains(change.ListingId))
+                .OrderBy(change => change.ChangedAt)
+                .ThenBy(change => change.Id)
+                .ToListAsync(cancellationToken))
+            .GroupBy(change => change.ListingId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        var rounded = 0;
+
+        foreach (var listing in listings)
+        {
+            var history = histories.GetValueOrDefault(listing.Id) ?? [];
+
+            var isRound = listing.Price == DemoPrices.Round(listing.Price, listing.Currency)
+                && history.TrueForAll(point => point.Price == DemoPrices.Round(point.Price, point.Currency));
+
+            if (isRound)
+            {
+                continue;
+            }
+
+            var rate = await exchangeRates.GetRateToUahAsync(listing.Currency, cancellationToken);
+
+            listing.Price = DemoPrices.Round(listing.Price, listing.Currency);
+            listing.PriceUah = decimal.Round(listing.Price * rate, 2);
+
+            DemoPrices.RoundInPlace(history, listing.Price, listing.Currency, rate);
+
+            rounded++;
+        }
+
+        if (rounded > 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return rounded;
     }
 
     /// <summary>
@@ -513,9 +585,9 @@ public sealed partial class DemoDataSeeder(
         var spread = random.Next(-15, 16) / 100m;
         var usd = decimal.Round(baseUsd * (1 + spread), 0);
 
-        var price = currency is Currency.Uah
-            ? decimal.Round(usd * 42m, 0)
-            : usd;
+        var price = DemoPrices.Round(
+            currency is Currency.Uah ? usd * 42m : usd,
+            currency);
 
         var listing = new Listing
         {

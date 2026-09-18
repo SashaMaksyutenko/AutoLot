@@ -66,23 +66,35 @@ internal static class DemoPrices
             оголошення починалося. Тому список наприкінці розвертаємо —
             історія має читатися від давнішого до свіжішого.
         */
-        var points = new List<PriceChange>(changes + 1);
-        var price = listing.Price;
+        var interval = (now - publishedAt) / (changes + 1);
         var moment = now;
 
-        var window = now - publishedAt;
+        // Остання точка — нинішня ціна оголошення, її не чіпаємо.
+        var points = new List<PriceChange>(changes + 1) { Point(listing, listing.Price, moment) };
 
-        for (var step = 0; step <= changes; step++)
+        var exact = listing.Price;
+        var previous = listing.Price;
+
+        for (var step = 1; step <= changes; step++)
         {
-            points.Add(Point(listing, decimal.Round(price, 2), moment));
-
             var older = MinStepPercent + random.Next(MaxStepPercent - MinStepPercent + 1);
 
-            price *= 1 + (older / 100m);
+            exact *= 1 + (older / 100m);
+
+            /*
+                Округлюємо по-людськи — але не нижче за попередню точку плюс
+                один крок. Інакше в дешевого авто зниження на 3% (менше за
+                п'ятдесят доларів) після округлення злилося б із сусідньою
+                ціною, і в історії з'явилася б «зміна», якої не видно.
+            */
+            var rounded = Math.Max(Round(exact, listing.Currency), previous + StepOf(listing.Currency));
 
             // Кроки назад у часі рівномірні: точна дата тут нічого не важить,
             // а рівні проміжки дають охайний графік.
-            moment -= window / (changes + 1);
+            moment -= interval;
+
+            points.Add(Point(listing, rounded, moment));
+            previous = rounded;
         }
 
         points.Reverse();
@@ -93,6 +105,84 @@ internal static class DemoPrices
 
         return points;
     }
+
+    /// <summary>
+    /// Округлює вже записану історію на місці, не вигадуючи її наново.
+    /// </summary>
+    /// <remarks>
+    /// Навмисно НЕ «видалити й згенерувати»: нова генерація взяла б нову
+    /// випадковість, і історія з'явилася б в інших авто, ніж була. Хто вже
+    /// бачив графік у конкретному оголошенні, не знайшов би його там знову.
+    /// Тут лишаються ті самі авто, та сама кількість змін і ті самі дати —
+    /// міняються лише суми.
+    ///
+    /// Йдемо від кінця: остання точка — це нинішня ціна, вона задана. Кожна
+    /// раніша має бути вищою хоча б на крок, інакше після округлення дві
+    /// сусідні злилися б у «зміну», якої не видно.
+    /// </remarks>
+    /// <param name="ordered">Точки від давнішої до свіжішої.</param>
+    /// <param name="current">Нинішня ціна оголошення, вже округлена.</param>
+    /// <param name="rate">Скільки гривень коштує одиниця валюти оголошення.</param>
+    public static void RoundInPlace(
+        IReadOnlyList<PriceChange> ordered,
+        decimal current,
+        Currency currency,
+        decimal rate)
+    {
+        ArgumentNullException.ThrowIfNull(ordered);
+
+        if (ordered.Count == 0)
+        {
+            return;
+        }
+
+        var next = current;
+
+        for (var index = ordered.Count - 1; index >= 0; index--)
+        {
+            var point = ordered[index];
+
+            point.Price = index == ordered.Count - 1
+                ? current
+                : Math.Max(Round(point.Price, currency), next + StepOf(currency));
+
+            point.PriceUah = decimal.Round(point.Price * rate, 2);
+
+            next = point.Price;
+        }
+    }
+
+    /// <summary>
+    /// Округлює ціну так, як її виставила б людина.
+    /// </summary>
+    /// <remarks>
+    /// Справжні продавці не пишуть «58 015 $» чи «1 267 118 ₴»: ціну ставлять
+    /// круглою, до сотні доларів чи тисячі гривень. Точність до одиниць видає
+    /// вигадані дані з першого погляду — і саме це було видно в історії цін,
+    /// де стара ціна рахувалася множенням нинішньої на відсоток.
+    /// </remarks>
+    public static decimal Round(decimal price, Currency currency)
+    {
+        var step = StepOf(currency);
+
+        /*
+            AwayFromZero — так округлюють люди: рівно посередині йдемо вгору.
+            За замовчуванням .NET округлює «до парного» (банківське правило),
+            і 57 850 стало б 57 800, а не 57 900. Для грошей у звітах це має
+            сенс — похибки не накопичуються в один бік, — але ціну на авто так
+            ніхто не ставить.
+        */
+        var rounded = Math.Round(price / step, MidpointRounding.AwayFromZero) * step;
+
+        // Дешеве авто не має округлитися до нуля.
+        return Math.Max(rounded, step);
+    }
+
+    /// <summary>
+    /// Крок округлення. У гривні більший, бо й суми в ній у сорок разів більші:
+    /// тисяча гривень — приблизно те саме, що двадцять п'ять доларів.
+    /// </summary>
+    public static decimal StepOf(Currency currency) => currency is Currency.Uah ? 1_000m : 100m;
 
     private static PriceChange Point(Listing listing, decimal price, DateTimeOffset moment) =>
         new()
