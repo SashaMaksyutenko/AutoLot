@@ -252,9 +252,19 @@ public sealed class ApiFixture : IAsyncLifetime, IAsyncDisposable
     /// Номер кузова; за замовчуванням не вказаний. Якщо передаєте свій — його
     /// десята позиція має відповідати 2021 року, інакше валідатор відмовить.
     /// </param>
-    public async Task<long> DraftAsync(string token, string? vin = null)
+    /// <param name="make">
+    /// Марка й модель; за замовчуванням — перші з довідника. Свої передає
+    /// той тест, якому важливо, щоб чужі оголошення не потрапили в його вибірку.
+    /// </param>
+    /// <param name="price">Ціна в доларах.</param>
+    public async Task<long> DraftAsync(
+        string token,
+        string? vin = null,
+        (long MakeId, long ModelId)? make = null,
+        decimal price = 25_000m)
     {
-        var (cityId, makeId, modelId) = await ReferenceAsync();
+        var (cityId, defaultMake, defaultModel) = await ReferenceAsync();
+        var (makeId, modelId) = make ?? (defaultMake, defaultModel);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
@@ -266,7 +276,7 @@ public sealed class ApiFixture : IAsyncLifetime, IAsyncDisposable
                 title = "Honda Pilot 2021",
                 description = "Оголошення, створене інтеграційним тестом.",
                 cityId,
-                price = 25_000m,
+                price,
                 currency = "Usd",
                 type = "FixedPrice",
                 car = new
@@ -338,6 +348,35 @@ public sealed class ApiFixture : IAsyncLifetime, IAsyncDisposable
         }
 
         return Client.SendAsync(request);
+    }
+
+    /// <summary>
+    /// Марка з довідника, якої не торкаються інші тести, і дві її моделі.
+    ///
+    /// Решта тестів створює оголошення першої марки, а база в групи спільна.
+    /// Тест, що рахує «схожі» оголошення, побачив би й чужі — і результат
+    /// залежав би від того, які тести встигли пройти до нього. Тому беремо
+    /// марку з КІНЦЯ довідника, де нікого немає.
+    /// </summary>
+    public async Task<(long MakeId, long ModelA, long ModelB)> SpareMakeAsync()
+    {
+        var makes = await Client.GetFromJsonAsync<JsonElement>(new Uri("/api/cars/makes", UriKind.Relative));
+
+        foreach (var make in makes.EnumerateArray().Reverse())
+        {
+            if (make.GetProperty("modelCount").GetInt32() < 2)
+            {
+                continue;
+            }
+
+            var makeId = make.GetProperty("id").GetInt64();
+            var models = await Client.GetFromJsonAsync<JsonElement>(
+                new Uri($"/api/cars/makes/{makeId}/models", UriKind.Relative));
+
+            return (makeId, models[0].GetProperty("id").GetInt64(), models[1].GetProperty("id").GetInt64());
+        }
+
+        throw new InvalidOperationException("У довіднику немає марки з двома моделями.");
     }
 
     private (long CityId, long MakeId, long ModelId)? reference;

@@ -609,6 +609,70 @@ internal sealed partial class ListingService(
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Наскільки ціна схожого авто може відрізнятися — в обидва боки.
+    /// </summary>
+    /// <remarks>
+    /// Чверть — компроміс. Вужче, і для рідкісної моделі не знайдеться нічого;
+    /// ширше, і поруч з авто за 20 тисяч опиниться авто за 35, яке тому, хто
+    /// дивиться перше, просто не по кишені.
+    /// </remarks>
+    private const decimal SimilarPriceWindow = 0.25m;
+
+    public async Task<IReadOnlyList<ListingSummary>> GetSimilarAsync(
+        long listingId,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        var source = await dbContext.Listings
+            .AsNoTracking()
+            .Where(listing => listing.Id == listingId)
+            .Select(listing => new
+            {
+                listing.Status,
+                listing.PriceUah,
+                listing.Car.MakeId,
+                listing.Car.ModelId,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        /*
+            Продане теж годиться як відправна точка — і навіть найкраще:
+            людина, яка відкрила продане авто, саме й шукає, що купити
+            замість нього.
+        */
+        if (source is null || source.Status is not (ListingStatus.Active or ListingStatus.Sold))
+        {
+            return [];
+        }
+
+        // Ціни порівнюємо в гривні: оголошення в доларах і в гривні мають
+        // стояти поруч, якщо коштують однаково.
+        var lowest = source.PriceUah * (1 - SimilarPriceWindow);
+        var highest = source.PriceUah * (1 + SimilarPriceWindow);
+
+        /*
+            Одним запитом, а не двома («спершу модель, потім марка»). Сортування
+            ставить ту саму модель наперед, далі йдуть інші моделі тієї ж
+            марки, і в межах кожної групи — від найближчої ціни. Take забирає
+            перші кілька: якщо однакових моделей вистачає, до марки справа
+            просто не доходить.
+
+            Порівняння ModelId == ... у OrderBy EF перекладає в CASE WHEN у
+            SQL, а Math.Abs — у звичайну abs(), тож сортує сама база.
+        */
+        var query = dbContext.Listings
+            .Where(listing => listing.Id != listingId && listing.Status == ListingStatus.Active)
+            .Where(listing => listing.Car.MakeId == source.MakeId)
+            .Where(listing => listing.PriceUah >= lowest && listing.PriceUah <= highest)
+            .OrderBy(listing => listing.Car.ModelId == source.ModelId ? 0 : 1)
+            .ThenBy(listing => Math.Abs(listing.PriceUah - source.PriceUah))
+            .ThenBy(listing => listing.Id)
+            .Take(take);
+
+        return await mapper.ToSummariesAsync(query, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<ListingSummary>> GetPurchasedAsync(
         long buyerId,
         CancellationToken cancellationToken = default)

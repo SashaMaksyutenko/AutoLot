@@ -14,6 +14,7 @@ import { Gallery } from '../components/listing/Gallery'
 import { DealReviews } from '../components/listing/DealReviews'
 import { PriceHistory } from '../components/listing/PriceHistory'
 import { PriceInsight } from '../components/listing/PriceInsight'
+import { SimilarListings } from '../components/listing/SimilarListings'
 import { Questions } from '../components/listing/Questions'
 import { RatingLine } from '../components/listing/Stars'
 import { ReportButton } from '../components/listing/ReportButton'
@@ -326,6 +327,13 @@ function Loaded({ listing }: { listing: ListingDetails }) {
           </div>
         </aside>
       </div>
+
+      {/*
+        Схожі — вище за історію переглядів: це відповідь на питання «а що
+        ще є такого», яке людина ставить саме тут. Історія переглядів —
+        про те, що вона вже бачила, і їй місце нижче.
+      */}
+      <SimilarListings listingId={listing.id} />
 
       {/*
         Історія — саме тут, під карткою: на цьому місці людина вирішує, чи

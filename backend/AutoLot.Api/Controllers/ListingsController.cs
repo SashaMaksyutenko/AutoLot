@@ -122,6 +122,24 @@ public sealed class ListingsController(
 
     /// <summary>Власні оголошення, за потреби відфільтровані за статусом.</summary>
     /// <summary>
+    /// Схожі авто — для блоку під карткою. Без входу: це така сама частина
+    /// сторінки, як фото чи опис.
+    /// </summary>
+    [HttpGet("{listingId:long}/similar")]
+    [AllowAnonymous]
+    [ProducesResponseType<IReadOnlyList<ListingSummary>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Similar(
+        long listingId,
+        [FromQuery] int take = 4,
+        CancellationToken cancellationToken = default)
+    {
+        // Межа зверху — щоб запит не перетворився на другий каталог.
+        var wanted = Math.Clamp(take, 1, 12);
+
+        return Ok(await listingService.GetSimilarAsync(listingId, wanted, cancellationToken));
+    }
+
+    /// <summary>
     /// Змінює ціну опублікованого оголошення.
     ///
     /// Окремо від PUT /api/listings/{id}: те редагує все й лише чернетку, а

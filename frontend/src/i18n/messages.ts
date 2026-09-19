@@ -24,6 +24,8 @@ const uk = {
   'nav.admin': 'Адмінка',
   'nav.auctions': 'Аукціони',
 
+  'similar.title': 'Схожі авто',
+
   'priceHistory.changePrice': 'Змінити ціну',
   'priceHistory.newPrice': 'Нова ціна',
   'priceHistory.save': 'Зберегти',
@@ -842,6 +844,8 @@ const en: Record<MessageKey, string> = {
   'nav.dealers': 'Dealerships',
   'nav.admin': 'Admin',
   'nav.auctions': 'Auctions',
+
+  'similar.title': 'Similar cars',
 
   'priceHistory.changePrice': 'Change the price',
   'priceHistory.newPrice': 'New price',

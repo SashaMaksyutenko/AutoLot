@@ -105,6 +105,19 @@ public interface IListingService
         long? actorId,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Авто, схожі на це: тієї самої марки й у близькій ціні, спершу тієї
+    /// самої моделі.
+    /// </summary>
+    /// <remarks>
+    /// Порожньо, якщо саме оголошення стороннім не видно: схожі на чужу
+    /// чернетку видали б, що це за авто й скільки воно коштує.
+    /// </remarks>
+    Task<IReadOnlyList<ListingSummary>> GetSimilarAsync(
+        long listingId,
+        int take,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ListingSummary>> GetPurchasedAsync(
         long buyerId,
         CancellationToken cancellationToken = default);
