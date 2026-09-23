@@ -43,6 +43,8 @@ public sealed partial class DemoDataSeeder(
 
     private const string WmiResourceName = "AutoLot.Infrastructure.Persistence.SeedData.demo-wmi.json";
 
+    private const string CommentsResourceName = "AutoLot.Infrastructure.Persistence.SeedData.demo-comments.json";
+
     /// <summary>
     /// Спільний хвіст пошти всіх вигаданих продавців. За ним і тільки за ним
     /// сідер упізнає свої дані: усе інше в базі могла створити людина руками,
@@ -257,9 +259,13 @@ public sealed partial class DemoDataSeeder(
         var rounded = await RoundDemoPricesAsync(sellers, cancellationToken);
         var priced = await BackfillPriceHistoryAsync(sellers, random, cancellationToken);
 
-        if (linked > 0 || restarted > 0 || numbered > 0 || rounded > 0 || priced > 0)
+        // Після перезапуску торгів, а не до: перезапуск прибирає розмову
+        // попередніх торгів, і ці лоти теж мають отримати нову.
+        var talking = await EnsureCommentsAsync(sellers, random, cancellationToken);
+
+        if (linked > 0 || restarted > 0 || numbered > 0 || rounded > 0 || priced > 0 || talking > 0)
         {
-            LogRefreshed(logger, restarted, linked, numbered, priced + rounded);
+            LogRefreshed(logger, restarted, linked, numbered, priced + rounded, talking);
         }
     }
 
@@ -332,6 +338,77 @@ public sealed partial class DemoDataSeeder(
         }
 
         return rounded;
+    }
+
+    /// <summary>
+    /// Вигадує розмову тим демо-лотам, яким вона належить, але якої ще немає.
+    /// Повертає, скільки лотів заговорило.
+    /// </summary>
+    /// <remarks>
+    /// Єдине місце, де з'являються демо-коментарі, — і для нової бази, і для
+    /// засіяної раніше, і для торгів, щойно перезапущених.
+    ///
+    /// Колись їх було три, і одне з них перевіряло «чи є під демо-лотами хоч
+    /// один коментар», щоб спрацювати лише раз. Перезапуск торгів устигав
+    /// дописати розмову своїм лотам першим — і та перевірка вирішувала, що
+    /// все вже зроблено. Розмова з'явилася під дев'ятьма лотами з двадцяти
+    /// шести.
+    ///
+    /// Тепер перевірка по кожному лоту: мовчить він навмисно
+    /// (<see cref="DemoComments.IsQuiet"/>) чи йому бракує розмови. Запускати
+    /// можна скільки завгодно: лот, у якого розмова вже є, не чіпаємо, а
+    /// мовчазний і надалі мовчить.
+    /// </remarks>
+    private async Task<int> EnsureCommentsAsync(
+        List<DemoSeller> sellers,
+        Random random,
+        CancellationToken cancellationToken)
+    {
+        var sellerIds = IdsOf(sellers);
+
+        /*
+            Беремо лише ті лоти, під якими немає ЖОДНОГО коментаря. Якщо там
+            уже написала справжня людина, вигадана розмова навколо її слів
+            читалася б дивно, тож такі лоти теж не чіпаємо.
+
+            Вибір «мовчить навмисно» робимо вже в пам'яті: правило
+            DemoComments.IsQuiet — звичайний C#, і перекладати його на SQL
+            означало б тримати те саме правило у двох місцях.
+        */
+        var silent = await dbContext.Auctions
+            .Include(auction => auction.Listing)
+            .Where(auction => sellerIds.Contains(auction.Listing.SellerId) && auction.Status == AuctionStatus.Active)
+            .Where(auction => !dbContext.AuctionComments.Any(comment => comment.ListingId == auction.ListingId))
+            .OrderBy(auction => auction.ListingId)
+            .ToListAsync(cancellationToken);
+
+        var due = silent.Where(auction => !DemoComments.IsQuiet(auction.ListingId)).ToList();
+
+        if (due.Count == 0)
+        {
+            return 0;
+        }
+
+        var now = clock.UtcNow;
+        var lines = await SeedResource.ReadAsync<DemoCommentsDocument>(CommentsResourceName, cancellationToken);
+        var talking = 0;
+
+        foreach (var auction in due)
+        {
+            var talk = DemoComments.Create(
+                auction.Listing, auction.Listing.SellerId, sellerIds, lines, random, auction.StartsAt, now);
+
+            dbContext.AuctionComments.AddRange(talk);
+
+            if (talk.Count > 0)
+            {
+                talking++;
+            }
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return talking;
     }
 
     /// <summary>
@@ -473,6 +550,18 @@ public sealed partial class DemoDataSeeder(
             return 0;
         }
 
+        /*
+            Розмову попередніх торгів прибираємо разом зі ставками: «ставка вже
+            30 тисяч» під лотом, що почався наново з 20, читалася б як нісенітниця.
+            Нову розмову тут не пишемо — це зробить EnsureCommentsAsync, яка
+            йде слідом і побачить ці лоти порожніми.
+        */
+        var staleLots = stale.Select(auction => auction.ListingId).ToList();
+
+        await dbContext.AuctionComments
+            .Where(comment => staleLots.Contains(comment.ListingId))
+            .ExecuteDeleteAsync(cancellationToken);
+
         foreach (var auction in stale)
         {
             DemoAuctions.Restart(auction, random, now);
@@ -555,6 +644,10 @@ public sealed partial class DemoDataSeeder(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Розмову — лише тепер: чи мовчить лот, вирішує його номер, а номер
+        // база видає тільки під час збереження.
+        await EnsureCommentsAsync(sellers, random, cancellationToken);
 
         LogSeeded(logger, created, sellers.Count);
     }
@@ -786,13 +879,14 @@ public sealed partial class DemoDataSeeder(
 
     [LoggerMessage(
         Level = LogLevel.Information,
-        Message = "Демо-дані оновлено: перезапущено торгів — {Auctions}, прив'язано оголошень до салонів — {Listings}, дописано номерів кузова — {Vins}, історій ціни — {Prices}")]
+        Message = "Демо-дані оновлено: перезапущено торгів — {Auctions}, прив'язано оголошень до салонів — {Listings}, дописано номерів кузова — {Vins}, історій ціни — {Prices}, розмов під лотами — {Conversations}")]
     private static partial void LogRefreshed(
         ILogger logger,
         int auctions,
         int listings,
         int vins,
-        int prices);
+        int prices,
+        int conversations);
 
     [LoggerMessage(
         Level = LogLevel.Warning,

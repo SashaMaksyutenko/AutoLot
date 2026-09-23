@@ -16,6 +16,13 @@
       коди, заголовки, JSON.
     -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.11" />
+
+    <!--
+      Клієнт живого каналу. Тим самим способом, яким підключається браузер,
+      тест підключається до хаба на тестовому сервері й перевіряє, що новина
+      справді доходить — а не лише що сервіс «викликав розсилку».
+    -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.11" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.11" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.11" />

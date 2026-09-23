@@ -15,6 +15,7 @@ namespace AutoLot.Api.Controllers;
 [Route("api/listings/{listingId:long}/auction")]
 public sealed class AuctionsController(
     IAuctionService auctions,
+    IAuctionCommentService comments,
     ICurrentUser currentUser) : ControllerBase
 {
     /// <summary>Стан торгів. Дивитися можна без входу — торги публічні.</summary>
@@ -27,6 +28,44 @@ public sealed class AuctionsController(
         var auction = await auctions.GetAsync(listingId, currentUser.Id, cancellationToken);
 
         return auction is null ? NotFound() : Ok(auction);
+    }
+
+    /// <summary>
+    /// Жива розмова під лотом. Читати може будь-хто — як і стежити за
+    /// ставками.
+    /// </summary>
+    [HttpGet("comments")]
+    [AllowAnonymous]
+    [ProducesResponseType<IReadOnlyList<CommentRecord>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetComments(long listingId, CancellationToken cancellationToken)
+    {
+        return Ok(await comments.GetAsync(listingId, cancellationToken));
+    }
+
+    /// <summary>
+    /// Написати коментар. Лише поки торги тривають і не частіше за раз на
+    /// кілька секунд; відповідь іде і тому, хто написав, і всім глядачам лота.
+    /// </summary>
+    [HttpPost("comments")]
+    [Authorize]
+    [ProducesResponseType<CommentRecord>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> PostComment(
+        long listingId,
+        PostCommentRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (currentUser.Id is not { } authorId)
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await comments.PostAsync(listingId, authorId, request.Text, cancellationToken));
     }
 
     /// <summary>Публічна історія ставок — доказ, що торги справжні (SPEC §4).</summary>

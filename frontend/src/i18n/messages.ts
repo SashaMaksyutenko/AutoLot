@@ -26,6 +26,14 @@ const uk = {
 
   'similar.title': 'Схожі авто',
 
+  'comments.title': 'Розмова під лотом',
+  'comments.placeholder': 'Що ви помітили на фото? Що знаєте про таку модель?',
+  'comments.send': 'Надіслати',
+  'comments.empty': 'Поки ніхто нічого не написав.',
+  'comments.seller': 'Продавець',
+  'comments.signInToWrite': 'щоб долучитися до розмови.',
+  'comments.failed': 'Коментар не надіслався. Спробуйте ще раз.',
+
   'priceHistory.changePrice': 'Змінити ціну',
   'priceHistory.newPrice': 'Нова ціна',
   'priceHistory.save': 'Зберегти',
@@ -846,6 +854,14 @@ const en: Record<MessageKey, string> = {
   'nav.auctions': 'Auctions',
 
   'similar.title': 'Similar cars',
+
+  'comments.title': 'Talk about this lot',
+  'comments.placeholder': 'What did you notice in the photos? What do you know about this model?',
+  'comments.send': 'Send',
+  'comments.empty': 'Nobody has written anything yet.',
+  'comments.seller': 'Seller',
+  'comments.signInToWrite': 'to join the conversation.',
+  'comments.failed': 'The comment did not go through. Please try again.',
 
   'priceHistory.changePrice': 'Change the price',
   'priceHistory.newPrice': 'New price',

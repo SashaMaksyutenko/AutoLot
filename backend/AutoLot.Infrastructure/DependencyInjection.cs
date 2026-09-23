@@ -129,6 +129,7 @@ public static class DependencyInjection
         services.AddScoped<IDealershipService, DealershipService>();
         services.AddScoped<IFavoriteService, FavoriteService>();
         services.AddScoped<IAuctionService, AuctionService>();
+        services.AddScoped<IAuctionCommentService, AuctionCommentService>();
         services.AddScoped<IAuctionCloser, AuctionCloser>();
 
         services.AddAuctionScheduling();

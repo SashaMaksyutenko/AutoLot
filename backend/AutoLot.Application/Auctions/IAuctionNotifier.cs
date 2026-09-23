@@ -20,4 +20,10 @@ public interface IAuctionNotifier
     /// підсумок.
     /// </summary>
     Task AuctionEndedAsync(AuctionOutcome outcome, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Під лотом з'явився коментар. Тим самим каналом, що й ставки: хто
+    /// дивиться лот, той бачить і розмову навколо нього.
+    /// </summary>
+    Task CommentPostedAsync(CommentRecord comment, CancellationToken cancellationToken = default);
 }

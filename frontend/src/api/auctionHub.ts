@@ -1,6 +1,7 @@
 import { HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr'
 import type { HubConnection } from '@microsoft/signalr'
 import type { AuctionOutcome, AuctionUpdate } from './auction'
+import type { AuctionComment } from './auctionComments'
 
 /**
  * Живий канал торгів.
@@ -31,59 +32,88 @@ function getConnection(): HubConnection {
 }
 
 /**
+ * Скільки підписників зараз стежить за кожним лотом.
+ *
+ * На сторінці лота каналом користуються двоє: панель торгів і коментарі. Кожен
+ * при відході каже серверу «Unwatch» — і перший, хто зникне, мовчки відрізав
+ * би другого від новин: групу на сервері знімають із з'єднання цілком, а не
+ * «для одного підписника». Тому рахуємо самі й просимо сервер про Watch лише
+ * для першого підписника, а про Unwatch — лише коли пішов останній.
+ */
+const watchers = new Map<number, number>()
+
+export interface AuctionHandlers {
+  onUpdate?: (update: AuctionUpdate) => void
+  onEnded?: (outcome: AuctionOutcome) => void
+  onComment?: (comment: AuctionComment) => void
+}
+
+/**
  * Підписує на новини одного лота й повертає функцію відписки.
  *
  * Повертати саме відписку — домовленість React: він викличе її, коли
  * сторінка зникне з екрана, і канал не лишиться з мертвими підписниками.
+ *
+ * Обробники необов'язкові: коментарям не потрібні ставки, панелі торгів —
+ * коментарі. Кожен підписується лише на те, що показує.
  */
-export function watchAuction(
-  listingId: number,
-  handlers: {
-    onUpdate: (update: AuctionUpdate) => void
-    onEnded: (outcome: AuctionOutcome) => void
-  },
-): () => void {
+export function watchAuction(listingId: number, handlers: AuctionHandlers): () => void {
   const hub = getConnection()
 
   // Прапорець живе тут, бо підключення асинхронне: сторінку можуть закрити
   // швидше, ніж канал устигне відкритися, і тоді підписуватися вже нікуди.
   let cancelled = false
 
-  function handleBid(update: AuctionUpdate) {
-    // Група на сервері вже відсіює чуже, але перевірка дешева, а помилка
-    // в назві групи інакше проявилася б як чужі ставки на своєму лоті.
-    if (update.listingId === listingId) {
-      handlers.onUpdate(update)
-    }
+  // Група на сервері вже відсіює чуже, але перевірка дешева, а помилка
+  // в назві групи інакше проявилася б як чужі новини на своєму лоті.
+  const handleBid = (update: AuctionUpdate) => {
+    if (update.listingId === listingId) handlers.onUpdate?.(update)
   }
 
-  function handleEnd(outcome: AuctionOutcome) {
-    if (outcome.listingId === listingId) {
-      handlers.onEnded(outcome)
-    }
+  const handleEnd = (outcome: AuctionOutcome) => {
+    if (outcome.listingId === listingId) handlers.onEnded?.(outcome)
+  }
+
+  const handleComment = (comment: AuctionComment) => {
+    if (comment.listingId === listingId) handlers.onComment?.(comment)
   }
 
   hub.on('bidPlaced', handleBid)
   hub.on('auctionEnded', handleEnd)
+  hub.on('commentPosted', handleComment)
+
+  const count = (watchers.get(listingId) ?? 0) + 1
+  watchers.set(listingId, count)
 
   const ready =
     hub.state === HubConnectionState.Disconnected ? hub.start() : Promise.resolve()
 
   void ready
     .then(() => {
-      if (!cancelled) {
+      // Сервер просимо лише для першого підписника на цей лот: решта вже в групі.
+      if (!cancelled && count === 1) {
         return hub.invoke('Watch', listingId)
       }
     })
     .catch(() => {
-      // Канал не піднявся. Це не привід ламати сторінку: ціна й історія вже
-      // прийшли звичайним запитом, просто оновлюватися самі не будуть.
+      // Канал не піднявся. Це не привід ламати сторінку: ціна, історія й
+      // коментарі вже прийшли звичайним запитом, просто оновлюватися самі не будуть.
     })
 
   return () => {
     cancelled = true
     hub.off('bidPlaced', handleBid)
     hub.off('auctionEnded', handleEnd)
+    hub.off('commentPosted', handleComment)
+
+    const left = (watchers.get(listingId) ?? 1) - 1
+
+    if (left > 0) {
+      watchers.set(listingId, left)
+      return
+    }
+
+    watchers.delete(listingId)
 
     if (hub.state === HubConnectionState.Connected) {
       void hub.invoke('Unwatch', listingId).catch(() => {})

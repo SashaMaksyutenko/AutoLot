@@ -9,6 +9,7 @@ import { useAuth } from '../auth/useAuth'
 import { openSignIn } from '../auth/signInPrompt'
 import { FavoriteButton } from '../components/FavoriteButton'
 import { VerifiedMark } from '../components/catalog/ListingCard'
+import { AuctionComments } from '../components/listing/AuctionComments'
 import { AuctionPanel } from '../components/listing/AuctionPanel'
 import { Gallery } from '../components/listing/Gallery'
 import { DealReviews } from '../components/listing/DealReviews'
@@ -260,6 +261,14 @@ function Loaded({ listing }: { listing: ListingDetails }) {
           </div>
 
           {isAuction && <AuctionPanel listingId={listing.id} />}
+
+          {/*
+            Розмова — під самою панеллю торгів: її читають, стежачи за ставками,
+            а не десь унизу сторінки.
+          */}
+          {isAuction && (
+            <AuctionComments listingId={listing.id} open={listing.status === 'Active'} />
+          )}
 
           <div className="card grid gap-3 p-4">
             <span className="eyebrow">{t('listing.seller')}</span>

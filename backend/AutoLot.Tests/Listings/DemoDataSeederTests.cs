@@ -160,6 +160,67 @@ public class DemoDataSeederTests : IDisposable
         Assert.Equal(0, survivors);
     }
 
+    /// <summary>
+    /// Під кожним лотом, якому належить розмова, вона є, а під мовчазним — ні.
+    /// </summary>
+    [Fact]
+    public async Task Every_talkative_lot_has_a_conversation()
+    {
+        await RunAsync(Start);
+
+        await AssertConversationsAsync();
+    }
+
+    /// <summary>
+    /// Вада, яку цей тест і стереже. База засіяна ще до появи коментарів, і
+    /// один лот устиг закінчитися. Перезапуск торгів дописував розмову йому
+    /// першим, а одноразове «дописування» бачило цей коментар і вирішувало,
+    /// що робити вже нічого, — тож решта лотів, які й так ішли, лишалися
+    /// мовчазними. Так і вийшло: розмова під дев'ятьма лотами з двадцяти шести.
+    /// </summary>
+    [Fact]
+    public async Task Lots_that_were_already_running_get_a_conversation_too()
+    {
+        await RunAsync(Start);
+
+        // Така база, якою вона була до появи коментарів: жодного.
+        await context.AuctionComments.ExecuteDeleteAsync();
+
+        var auctions = await context.Auctions.OrderBy(auction => auction.ListingId).ToListAsync();
+
+        // Без двох таких лотів тест нічого не довів би: вада проявлялася лише
+        // тоді, коли поруч із перезапущеним лотом є ще один, що йде далі.
+        Assert.True(
+            auctions.Count(auction => !DemoComments.IsQuiet(auction.ListingId)) >= 2,
+            "у наборі замало лотів, які мають розмовляти");
+
+        auctions[0].EndsAt = Start;
+        await context.SaveChangesAsync();
+
+        await RunAsync(Start.AddMinutes(1));
+
+        await AssertConversationsAsync();
+    }
+
+    /// <summary>
+    /// Повторний запуск не дописує розмову вдруге: інакше після кожного
+    /// перезапуску застосунку під лотами множилися б однакові репліки.
+    /// </summary>
+    [Fact]
+    public async Task A_second_run_leaves_conversations_as_they_are()
+    {
+        await RunAsync(Start);
+
+        var before = await context.AuctionComments.Select(comment => comment.Id).OrderBy(id => id).ToListAsync();
+
+        await RunAsync(Start);
+
+        var after = await context.AuctionComments.Select(comment => comment.Id).OrderBy(id => id).ToListAsync();
+
+        Assert.NotEmpty(before);
+        Assert.Equal(before, after);
+    }
+
     [Fact]
     public async Task The_counter_matches_the_history_in_the_database()
     {
@@ -171,6 +232,25 @@ public class DemoDataSeederTests : IDisposable
     }
 
     // ─────────────────────────── Оснащення ───────────────────────────
+
+    /// <summary>
+    /// Кожен активний демо-лот: є під ним розмова рівно тоді, коли він не мовчить навмисно.
+    /// </summary>
+    private async Task AssertConversationsAsync()
+    {
+        var lots = await context.Auctions
+            .Where(auction => auction.Status == AuctionStatus.Active)
+            .Select(auction => auction.ListingId)
+            .ToListAsync();
+
+        var talking = await context.AuctionComments
+            .Select(comment => comment.ListingId)
+            .Distinct()
+            .ToListAsync();
+
+        Assert.NotEmpty(lots);
+        Assert.All(lots, id => Assert.Equal(!DemoComments.IsQuiet(id), talking.Contains(id)));
+    }
 
     /// <summary>
     /// Запускає сідер так само, як це робить застосунок при старті, тільки з

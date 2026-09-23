@@ -14,7 +14,11 @@ internal sealed class RecordingNotifier : IAuctionNotifier
 
     private readonly List<AuctionOutcome> outcomes = [];
 
+    private readonly List<CommentRecord> comments = [];
+
     public IReadOnlyList<AuctionUpdate> Updates => updates;
+
+    public IReadOnlyList<CommentRecord> Comments => comments;
 
     public IReadOnlyList<AuctionOutcome> Outcomes => outcomes;
 
@@ -41,6 +45,16 @@ internal sealed class RecordingNotifier : IAuctionNotifier
 
         return Task.CompletedTask;
     }
+
+    public Task CommentPostedAsync(CommentRecord comment, CancellationToken cancellationToken = default)
+    {
+        lock (comments)
+        {
+            comments.Add(comment);
+        }
+
+        return Task.CompletedTask;
+    }
 }
 
 /// <summary>
@@ -55,6 +69,11 @@ internal sealed class FailingNotifier : IAuctionNotifier
     }
 
     public Task AuctionEndedAsync(AuctionOutcome outcome, CancellationToken cancellationToken = default)
+    {
+        throw new InvalidOperationException("Канал недоступний.");
+    }
+
+    public Task CommentPostedAsync(CommentRecord comment, CancellationToken cancellationToken = default)
     {
         throw new InvalidOperationException("Канал недоступний.");
     }

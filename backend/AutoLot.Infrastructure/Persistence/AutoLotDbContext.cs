@@ -75,6 +75,9 @@ public class AutoLotDbContext(DbContextOptions<AutoLotDbContext> options)
 
     public DbSet<Bid> Bids => Set<Bid>();
 
+    /// <summary>Жива розмова під лотами з торгами.</summary>
+    public DbSet<AuctionComment> AuctionComments => Set<AuctionComment>();
+
     /// <summary>Прив'язки акаунтів до чатів у месенджерах.</summary>
     public DbSet<BotLink> BotLinks => Set<BotLink>();
 

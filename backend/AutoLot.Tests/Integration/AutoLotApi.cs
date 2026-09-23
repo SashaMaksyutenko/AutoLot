@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using AutoLot.Tests.TestDoubles;
+using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -175,6 +177,24 @@ public sealed class ApiFixture : IAsyncLifetime, IAsyncDisposable
 
     ValueTask IAsyncDisposable.DisposeAsync() => new(DisposeAsync());
 
+    /// <summary>
+    /// З'єднання з живим каналом торгів — так само, як його відкриває браузер.
+    /// </summary>
+    /// <remarks>
+    /// Тестовий сервер живе в пам'яті й мережевих сокетів не має, тому
+    /// з'єднання йде через його власний обробник запитів, а спосіб зв'язку —
+    /// довге опитування (long polling), а не WebSocket. Для перевірки це
+    /// байдуже: SignalR над будь-яким транспортом доставляє ті самі події.
+    /// </remarks>
+    public HubConnection AuctionHub() =>
+        new HubConnectionBuilder()
+            .WithUrl(new Uri(api.Server.BaseAddress, "hubs/auction"), options =>
+            {
+                options.HttpMessageHandlerFactory = _ => api.Server.CreateHandler();
+                options.Transports = HttpTransportType.LongPolling;
+            })
+            .Build();
+
     /// <summary>Свіжий клієнт із власним сховищем cookie — для окремої «людини».</summary>
     public HttpClient NewClient() => api.CreateClient(new WebApplicationFactoryClientOptions
     {
@@ -257,11 +277,16 @@ public sealed class ApiFixture : IAsyncLifetime, IAsyncDisposable
     /// той тест, якому важливо, щоб чужі оголошення не потрапили в його вибірку.
     /// </param>
     /// <param name="price">Ціна в доларах.</param>
+    /// <param name="auction">
+    /// Лот із торгами замість оголошення з фіксованою ціною. Самі торги
+    /// стартують, коли модератор схвалить лот, — див. PublishAsync.
+    /// </param>
     public async Task<long> DraftAsync(
         string token,
         string? vin = null,
         (long MakeId, long ModelId)? make = null,
-        decimal price = 25_000m)
+        decimal price = 25_000m,
+        bool auction = false)
     {
         var (cityId, defaultMake, defaultModel) = await ReferenceAsync();
         var (makeId, modelId) = make ?? (defaultMake, defaultModel);
@@ -278,7 +303,7 @@ public sealed class ApiFixture : IAsyncLifetime, IAsyncDisposable
                 cityId,
                 price,
                 currency = "Usd",
-                type = "FixedPrice",
+                type = auction ? "Auction" : "FixedPrice",
                 car = new
                 {
                     vin,

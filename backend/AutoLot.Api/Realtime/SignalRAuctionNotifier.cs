@@ -31,4 +31,13 @@ internal sealed class SignalRAuctionNotifier(IHubContext<AuctionHub> hub) : IAuc
             .Group(AuctionHub.GroupFor(outcome.ListingId))
             .SendAsync("auctionEnded", outcome, cancellationToken);
     }
+
+    public Task CommentPostedAsync(CommentRecord comment, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(comment);
+
+        return hub.Clients
+            .Group(AuctionHub.GroupFor(comment.ListingId))
+            .SendAsync("commentPosted", comment, cancellationToken);
+    }
 }
